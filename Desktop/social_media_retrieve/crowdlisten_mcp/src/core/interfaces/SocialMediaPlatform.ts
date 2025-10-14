@@ -1,0 +1,187 @@
+/**
+ * Core interface that all social media platform adapters must implement
+ * Provides a unified API for content retrieval across different platforms
+ */
+
+export interface Post {
+  id: string;
+  platform: PlatformType;
+  author: User;
+  content: string;
+  mediaUrl?: string;
+  engagement: EngagementMetrics;
+  timestamp: Date;
+  url: string;
+  hashtags?: string[];
+}
+
+export interface User {
+  id: string;
+  username: string;
+  displayName?: string;
+  followerCount?: number;
+  verified?: boolean;
+  profileImageUrl?: string;
+  bio?: string;
+}
+
+export interface EngagementMetrics {
+  likes: number;
+  comments: number;
+  shares?: number;
+  views?: number;
+  engagementRate?: number;
+}
+
+export interface Comment {
+  id: string;
+  author: User;
+  text: string;
+  timestamp: Date;
+  likes: number;
+  replies?: Comment[];
+}
+
+export interface ContentAnalysis {
+  postId: string;
+  platform: PlatformType;
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  themes?: string[];
+  summary?: string;
+  commentCount: number;
+  topComments: Comment[];
+  clustering?: CommentClustering;
+}
+
+export interface CommentCluster {
+  id: number;
+  theme: string;
+  sentiment: 'positive' | 'negative' | 'neutral' | 'mixed';
+  comments: Comment[];
+  summary: string;
+  size: number;
+}
+
+export interface CommentClustering {
+  totalComments: number;
+  clustersCount: number;
+  clusters: CommentCluster[];
+  overallAnalysis: string;
+  logs: string[];
+}
+
+export interface TrendingHashtag {
+  hashtag: string;
+  postCount: number;
+  engagementScore: number;
+}
+
+export type PlatformType = 'tiktok' | 'twitter' | 'reddit' | 'instagram';
+
+export interface PlatformCapabilities {
+  supportsTrending: boolean;
+  supportsUserContent: boolean;
+  supportsSearch: boolean;
+  supportsComments: boolean;
+  supportsAnalysis: boolean;
+}
+
+/**
+ * Main interface that all platform adapters must implement
+ */
+export interface SocialMediaPlatform {
+  /**
+   * Get trending/hot content from the platform
+   */
+  getTrendingContent(limit?: number): Promise<Post[]>;
+  
+  /**
+   * Get content from a specific user
+   */
+  getUserContent(userId: string, limit?: number): Promise<Post[]>;
+  
+  /**
+   * Search for content using keywords/hashtags
+   */
+  searchContent(query: string, limit?: number): Promise<Post[]>;
+  
+  /**
+   * Get comments for a specific piece of content
+   */
+  getContentComments(contentId: string, limit?: number): Promise<Comment[]>;
+  
+  /**
+   * Analyze content and extract insights with optional clustering
+   */
+  analyzeContent(contentId: string, enableClustering?: boolean): Promise<ContentAnalysis>;
+  
+  /**
+   * Get platform information
+   */
+  getPlatformName(): PlatformType;
+  
+  /**
+   * Get supported capabilities for this platform
+   */
+  getSupportedFeatures(): PlatformCapabilities;
+  
+  /**
+   * Initialize the platform adapter
+   */
+  initialize(): Promise<boolean>;
+  
+  /**
+   * Cleanup resources
+   */
+  cleanup(): Promise<void>;
+}
+
+/**
+ * Configuration interface for platform adapters
+ */
+export interface PlatformConfig {
+  platform: PlatformType;
+  credentials?: Record<string, string>;
+  options?: {
+    rateLimit?: number;
+    timeout?: number;
+    retries?: number;
+  };
+}
+
+/**
+ * Error types for unified error handling
+ */
+export class SocialMediaError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public platform: PlatformType,
+    public statusCode?: number,
+    public originalError?: Error
+  ) {
+    super(message);
+    this.name = 'SocialMediaError';
+  }
+}
+
+export class AuthenticationError extends SocialMediaError {
+  constructor(platform: PlatformType, originalError?: Error) {
+    super(`Authentication failed for ${platform}`, 'AUTH_ERROR', platform, undefined, originalError);
+    this.name = 'AuthenticationError';
+  }
+}
+
+export class RateLimitError extends SocialMediaError {
+  constructor(platform: PlatformType, originalError?: Error) {
+    super(`Rate limit exceeded for ${platform}`, 'RATE_LIMIT', platform, undefined, originalError);
+    this.name = 'RateLimitError';
+  }
+}
+
+export class NotFoundError extends SocialMediaError {
+  constructor(platform: PlatformType, resource: string, originalError?: Error) {
+    super(`${resource} not found on ${platform}`, 'NOT_FOUND', platform, undefined, originalError);
+    this.name = 'NotFoundError';
+  }
+}
