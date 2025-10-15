@@ -1,42 +1,44 @@
-# Local development files
+# ONLY DEPLOY ESSENTIAL FILES
+# Everything else is excluded
+
+# Development and build files
+src/
+dist/
+build/
+node_modules/
+
+# Documentation
+PROJECT_SUMMARY.md
+SETUP_GUIDE.md
+TEST_RESULTS.md
+TWITTER_USE_CASES.md
+vercel-env-setup.md
+deployment-guide.md
+
+# Test files
+simple-test.cjs
+test-server.cjs
+test-server.js
+test-deployment.sh
+
+# Python scripts
+*.py
+
+# Environment files
 .env
 .env.local
 .env.*.local
+.env.example
 
-# Dependencies
-node_modules/
-
-# Build outputs - EXCLUDE FROM DEPLOYMENT
-dist/
-build/
-src/
-
-# Test files - EXCLUDE FROM DEPLOYMENT
-test-*.js
-test-*.cjs
-simple-test.cjs
-
-# Documentation - EXCLUDE FROM DEPLOYMENT
-*.md
-!README.md
-
-# Python scripts - EXCLUDE FROM DEPLOYMENT
-*.py
-
-# Development scripts - EXCLUDE FROM DEPLOYMENT
-test-deployment.sh
-
-# IDE files - EXCLUDE FROM DEPLOYMENT
+# IDE and system files
 .vscode/
 .idea/
 .serena/
+.DS_Store
 
-# Logs - EXCLUDE FROM DEPLOYMENT
-*.log
-npm-debug.log*
-
-# Package files - EXCLUDE FROM DEPLOYMENT
+# Package management
 package-lock.json
 
-# Misc - EXCLUDE FROM DEPLOYMENT
-.DS_Store
+# Logs
+*.log
+npm-debug.log*
