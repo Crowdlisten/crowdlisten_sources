@@ -1,8 +1,8 @@
 // Vercel MCP server implementation for CrowdListen
 import { createMcpHandler } from 'mcp-handler';
 import { z } from 'zod';
-import { UnifiedSocialMediaService } from '../../../src/services/UnifiedSocialMediaService.js';
-import type { PlatformType } from '../../../src/core/interfaces/SocialMediaPlatform.js';
+import { UnifiedSocialMediaService } from '../../../src/services/UnifiedSocialMediaService';
+import type { PlatformType } from '../../../src/core/interfaces/SocialMediaPlatform';
 
 // Initialize the unified service
 const serviceConfig = {
