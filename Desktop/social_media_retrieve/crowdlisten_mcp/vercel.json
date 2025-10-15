@@ -1,5 +1,33 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "api/mcp.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/oauth.js", 
+      "use": "@vercel/node"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/mcp",
+      "dest": "/api/mcp.js"
+    },
+    {
+      "src": "/api/oauth",
+      "dest": "/api/oauth.js"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    }
+  ],
   "functions": {
     "api/mcp.js": {
       "maxDuration": 30
