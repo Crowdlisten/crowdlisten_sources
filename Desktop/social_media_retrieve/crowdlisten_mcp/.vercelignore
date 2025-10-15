@@ -9,6 +9,7 @@ node_modules/
 # Build outputs
 dist/
 build/
+src/
 
 # Test files
 test-*.js
@@ -28,6 +29,7 @@ test-deployment.sh
 # IDE files
 .vscode/
 .idea/
+.serena/
 
 # Logs
 *.log
