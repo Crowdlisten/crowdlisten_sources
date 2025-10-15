@@ -2,11 +2,12 @@
   "name": "crowdlisten_mcp",
   "version": "1.0.0",
   "description": "CrowdListen MCP server for social media content retrieval and analysis across multiple platforms",
-  "main": "app/api/mcp/route.ts",
+  "main": "api/mcp.js",
   "scripts": {
-    "build": "next build",
-    "start": "next start",
-    "dev": "next dev",
+    "build": "echo 'No build needed for serverless functions'",
+    "vercel-build": "echo 'Vercel serverless functions - no build needed'",
+    "start": "node api/mcp.js",
+    "dev": "node api/mcp.js",
     "test": "jest"
   },
   "dependencies": {
@@ -18,15 +19,10 @@
     "node-fetch": "^3.3.2",
     "openai": "^4.20.0",
     "mcp-handler": "^0.1.0",
-    "zod": "^3.22.0",
-    "next": "^14.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
     "tsx": "^4.7.0",
     "typescript": "^5.8.3",
     "jest": "^29.0.0"
