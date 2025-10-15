@@ -40,6 +40,13 @@ export interface Comment {
   timestamp: Date;
   likes: number;
   replies?: Comment[];
+  engagement?: {
+    upvotes?: number;      // Reddit upvotes
+    downvotes?: number;    // Reddit downvotes  
+    shares?: number;       // Platform shares/retweets
+    views?: number;        // View count if available
+    score?: number;        // Calculated engagement score
+  };
 }
 
 export interface ContentAnalysis {
