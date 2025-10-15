@@ -17,7 +17,9 @@
     "twitter-api-v2": "^1.22.0",
     "instagram-private-api": "^1.45.3",
     "node-fetch": "^3.3.2",
-    "openai": "^4.20.0"
+    "openai": "^4.20.0",
+    "mcp-handler": "^0.1.0",
+    "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",
