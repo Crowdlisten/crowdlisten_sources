@@ -1,0 +1,37 @@
+# Local development files
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Test files
+test-*.js
+test-*.cjs
+simple-test.cjs
+
+# Documentation
+*.md
+!README.md
+
+# Python scripts
+*.py
+
+# Development scripts
+test-deployment.sh
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+.DS_Store
