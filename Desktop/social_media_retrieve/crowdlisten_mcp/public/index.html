@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrowdListen MCP Server</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            line-height: 1.6;
+            background: #fafafa;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #555; margin-top: 2rem; }
+        .status { color: #22c55e; font-weight: bold; }
+        .endpoint { 
+            background: #f3f4f6; 
+            padding: 0.5rem 1rem; 
+            border-radius: 4px; 
+            font-family: monospace;
+            margin: 0.5rem 0;
+        }
+        .platform {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            margin: 0.25rem;
+            font-size: 0.875rem;
+        }
+        ul { padding-left: 1.5rem; }
+        li { margin: 0.5rem 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 CrowdListen MCP Server</h1>
+        <p>Social media content analysis with engagement-weighted opinion clustering</p>
+        <p><span class="status">🟢 Status: Online</span></p>
+
+        <h2>📡 API Endpoints</h2>
+        <div class="endpoint">GET/POST /api/mcp</div>
+        <div class="endpoint">GET /.well-known/oauth-protected-resource</div>
+
+        <h2>🛠️ MCP Tools</h2>
+        <ul>
+            <li><strong>analyze_content</strong> - Content analysis with clustering</li>
+            <li><strong>get_trending_content</strong> - Get trending posts</li>
+            <li><strong>search_content</strong> - Search across platforms</li>
+            <li><strong>get_content_comments</strong> - Get comments for content</li>
+            <li><strong>health_check</strong> - Check platform status</li>
+        </ul>
+
+        <h2>📱 Supported Platforms</h2>
+        <div>
+            <span class="platform">🎵 TikTok</span>
+            <span class="platform">🐦 Twitter/X</span>
+            <span class="platform">📱 Reddit</span>
+            <span class="platform">📸 Instagram</span>
+        </div>
+
+        <h2>🤖 OpenAI Integration</h2>
+        <p>This MCP server is ready for integration with ChatGPT and other OpenAI tools using the MCP (Model Context Protocol).</p>
+        
+        <h3>Integration Example:</h3>
+        <div class="endpoint">
+curl -X POST https://crowdlisten-mcp.vercel.app/api/mcp \<br>
+&nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+&nbsp;&nbsp;-d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"health_check"},"id":1}'
+        </div>
+
+        <h2>📚 Documentation</h2>
+        <p>Visit our <a href="https://github.com/terrylinhaochen/crowdlisten_mcp" target="_blank">GitHub repository</a> for complete documentation and setup instructions.</p>
+
+        <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e5e7eb;">
+        <p style="text-align: center; color: #6b7280; font-size: 0.875rem;">
+            Powered by Vercel Serverless Functions
+        </p>
+    </div>
+</body>
+</html>
