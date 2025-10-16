@@ -2,7 +2,6 @@
   "name": "crowdlisten_mcp",
   "version": "1.0.0",
   "description": "CrowdListen MCP server for social media content retrieval and analysis across multiple platforms",
-  "type": "module",
   "main": "api/mcp.js",
   "scripts": {
     "build": "echo 'No build step needed for Vercel Functions'",
