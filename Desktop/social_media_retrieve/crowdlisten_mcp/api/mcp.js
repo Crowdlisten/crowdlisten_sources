@@ -1,59 +1,210 @@
 // Vercel serverless function for CrowdListen MCP server
-// Working MCP server implementation that bypasses Next.js complexity
+// Modern MCP server implementation following official Vercel patterns
 
 export default async function handler(req, res) {
-  // Set CORS headers
+  // Set CORS headers for MCP compatibility
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Handle OPTIONS request
+  // Handle OPTIONS preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // GET request - Health check
+  // GET request - Server info and health check
   if (req.method === 'GET') {
     return res.status(200).json({
-      status: 'healthy',
-      service: 'CrowdListen MCP Server',
-      timestamp: new Date().toISOString(),
+      name: 'CrowdListen MCP Server',
       version: '1.0.0',
-      endpoints: {
-        mcp: '/api/mcp',
-        oauth: '/.well-known/oauth-protected-resource'
+      description: 'Social media content analysis with engagement-weighted opinion clustering across TikTok, Twitter, Reddit, and Instagram',
+      protocolVersion: '2024-11-05',
+      capabilities: {
+        tools: {}
+      },
+      serverInfo: {
+        name: 'CrowdListen',
+        version: '1.0.0'
       },
       tools: [
-        'analyze_content',
-        'get_trending_content', 
-        'search_content',
-        'get_content_comments',
-        'health_check'
+        {
+          name: 'health_check',
+          description: 'Check platform health status',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+            required: []
+          }
+        },
+        {
+          name: 'analyze_content',
+          description: 'Analyze social media content with opinion clustering',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              content: { type: 'string', description: 'Content to analyze' },
+              platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] }
+            },
+            required: ['content']
+          }
+        },
+        {
+          name: 'get_trending_content',
+          description: 'Get trending content from platforms',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+              limit: { type: 'number', minimum: 1, maximum: 50, default: 10 }
+            },
+            required: ['platform']
+          }
+        },
+        {
+          name: 'search_content',
+          description: 'Search content across platforms',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Search query' },
+              platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+              limit: { type: 'number', minimum: 1, maximum: 50, default: 10 }
+            },
+            required: ['query']
+          }
+        },
+        {
+          name: 'get_content_comments',
+          description: 'Get comments for specific content',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              content_id: { type: 'string', description: 'Content ID' },
+              platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+              limit: { type: 'number', minimum: 1, maximum: 100, default: 20 }
+            },
+            required: ['content_id', 'platform']
+          }
+        }
       ],
-      platforms: ['tiktok', 'twitter', 'reddit', 'instagram'],
-      clustering: !!process.env.OPENAI_API_KEY,
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
       environment: {
         vercel: !!process.env.VERCEL,
-        node_env: process.env.NODE_ENV,
         openai_key: !!process.env.OPENAI_API_KEY,
-        twitter_api: !!process.env.TWITTER_API_KEY,
-        instagram: !!process.env.INSTAGRAM_USERNAME,
-        tiktok: !!process.env.TIKTOK_MS_TOKEN
+        platforms: {
+          twitter: !!process.env.TWITTER_API_KEY,
+          instagram: !!process.env.INSTAGRAM_USERNAME,
+          tiktok: !!process.env.TIKTOK_MS_TOKEN,
+          reddit: true
+        }
       }
     });
   }
 
-  // POST request - MCP tool calls
+  // POST request - Handle MCP calls
   if (req.method === 'POST') {
     try {
-      const { method, params } = req.body;
+      const { jsonrpc, method, params, id } = req.body;
 
-      // Handle health_check tool
-      if (method === 'tools/call' && params?.name === 'health_check') {
+      // MCP Initialize
+      if (method === 'initialize') {
         return res.status(200).json({
           jsonrpc: '2.0',
-          id: req.body.id || 1,
+          id,
           result: {
+            protocolVersion: '2024-11-05',
+            capabilities: {
+              tools: {}
+            },
+            serverInfo: {
+              name: 'CrowdListen',
+              version: '1.0.0'
+            }
+          }
+        });
+      }
+
+      // List Tools
+      if (method === 'tools/list') {
+        return res.status(200).json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            tools: [
+              {
+                name: 'health_check',
+                description: 'Check platform health status',
+                inputSchema: {
+                  type: 'object',
+                  properties: {},
+                  required: []
+                }
+              },
+              {
+                name: 'analyze_content',
+                description: 'Analyze social media content with opinion clustering',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    content: { type: 'string', description: 'Content to analyze' },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] }
+                  },
+                  required: ['content']
+                }
+              },
+              {
+                name: 'get_trending_content',
+                description: 'Get trending content from platforms',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+                    limit: { type: 'number', minimum: 1, maximum: 50, default: 10 }
+                  },
+                  required: ['platform']
+                }
+              },
+              {
+                name: 'search_content',
+                description: 'Search content across platforms',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    query: { type: 'string', description: 'Search query' },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+                    limit: { type: 'number', minimum: 1, maximum: 50, default: 10 }
+                  },
+                  required: ['query']
+                }
+              },
+              {
+                name: 'get_content_comments',
+                description: 'Get comments for specific content',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    content_id: { type: 'string', description: 'Content ID' },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+                    limit: { type: 'number', minimum: 1, maximum: 100, default: 20 }
+                  },
+                  required: ['content_id', 'platform']
+                }
+              }
+            ]
+          }
+        });
+      }
+
+      // Tool Calls
+      if (method === 'tools/call') {
+        const toolName = params?.name;
+        const args = params?.arguments || {};
+
+        let result;
+        
+        if (toolName === 'health_check') {
+          result = {
             content: [{
               type: 'text',
               text: `# CrowdListen Health Status
@@ -78,18 +229,9 @@ export default async function handler(req, res) {
 
 *Last checked: ${new Date().toISOString()}*`
             }]
-          }
-        });
-      }
-
-      // Handle other tools with mock responses
-      if (method === 'tools/call') {
-        const toolName = params?.name || 'unknown';
-        
-        return res.status(200).json({
-          jsonrpc: '2.0',
-          id: req.body.id || 1,
-          result: {
+          };
+        } else {
+          result = {
             content: [{
               type: 'text',
               text: `# Tool: ${toolName}
@@ -112,32 +254,38 @@ This is a working MCP server deployed on Vercel. The full social media analysis 
 - ✅ OpenAI integration ready
 - 🚧 Full social media adapters in development
 
-**Next Steps:**
-1. Test with OpenAI Responses API
-2. Set up custom domain (api.crowdlisten.com)
-3. Submit for OpenAI connector review
+**Arguments received:**
+\`\`\`json
+${JSON.stringify(args, null, 2)}
+\`\`\`
 
 *Response generated at: ${new Date().toISOString()}*`
             }]
-          }
+          };
+        }
+
+        return res.status(200).json({
+          jsonrpc: '2.0',
+          id,
+          result
         });
       }
 
       // Unknown method
       return res.status(400).json({
         jsonrpc: '2.0',
-        id: req.body.id || 1,
+        id,
         error: {
           code: -32601,
           message: 'Method not found',
-          data: { method, available: ['tools/call'] }
+          data: { method, available: ['initialize', 'tools/list', 'tools/call'] }
         }
       });
 
     } catch (error) {
       return res.status(500).json({
         jsonrpc: '2.0',
-        id: req.body.id || 1,
+        id: req.body?.id || 1,
         error: {
           code: -32603,
           message: 'Internal error',

@@ -2,12 +2,12 @@
   "name": "crowdlisten_mcp",
   "version": "1.0.0",
   "description": "CrowdListen MCP server for social media content retrieval and analysis across multiple platforms",
+  "type": "module",
   "main": "api/mcp.js",
   "scripts": {
-    "build": "echo 'Static site with serverless functions - no build step needed'",
-    "start": "node -e \"console.log('MCP Server ready at /api/mcp')\"",
+    "build": "echo 'No build step needed for Vercel Functions'",
+    "start": "echo 'MCP Server ready at /api/mcp'",
     "dev": "vercel dev",
-    "test": "jest",
     "deploy": "vercel --prod"
   },
   "dependencies": {
