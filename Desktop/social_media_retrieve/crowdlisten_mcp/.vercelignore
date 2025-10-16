@@ -1,11 +1,9 @@
-# ONLY DEPLOY ESSENTIAL FILES
-# Everything else is excluded
+# Vercel ignore - exclude development and documentation files
 
 # Development and build files
 src/
 dist/
 build/
-node_modules/
 
 # Documentation
 PROJECT_SUMMARY.md
@@ -25,7 +23,6 @@ test-deployment.sh
 *.py
 
 # Environment files
-.env
 .env.local
 .env.*.local
 .env.example
@@ -35,9 +32,6 @@ test-deployment.sh
 .idea/
 .serena/
 .DS_Store
-
-# Package management
-package-lock.json
 
 # Logs
 *.log

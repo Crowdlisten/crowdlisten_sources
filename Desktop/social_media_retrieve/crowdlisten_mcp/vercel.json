@@ -1,16 +1,13 @@
 {
   "functions": {
-    "api/mcp.js": {
+    "api/*.js": {
       "maxDuration": 30
-    },
-    "api/.well-known/oauth-protected-resource.js": {
-      "maxDuration": 10
     }
   },
   "rewrites": [
     {
       "source": "/.well-known/oauth-protected-resource",
-      "destination": "/api/.well-known/oauth-protected-resource.js"
+      "destination": "/api/.well-known/oauth-protected-resource"
     }
   ]
 }
