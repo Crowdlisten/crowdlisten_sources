@@ -307,7 +307,7 @@ export class InstagramAdapter extends BaseAdapter {
       const hashtagFeed = this.ig.feed.tags(hashtag, 'recent');
       const posts = await hashtagFeed.items();
       
-      return posts.slice(0, limit).map(post => 
+      return posts.slice(0, limit).map((post: any) => 
         DataNormalizer.normalizePost(post, 'instagram')
       );
       
@@ -324,7 +324,7 @@ export class InstagramAdapter extends BaseAdapter {
       const exploreFeed = this.ig.feed.discover();
       const posts = await exploreFeed.items();
       
-      return posts.slice(0, limit).map(post => 
+      return posts.slice(0, limit).map((post: any) => 
         DataNormalizer.normalizePost(post, 'instagram')
       );
       

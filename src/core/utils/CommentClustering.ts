@@ -180,7 +180,7 @@ export class CommentClusteringService {
       });
 
       logs.push("Embeddings generated successfully");
-      return response.data.map(embedding => embedding.embedding);
+      return response.data.map((embedding: any) => embedding.embedding);
     } catch (error) {
       logs.push(`Error generating embeddings: ${error}`);
       return null;

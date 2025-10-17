@@ -78,11 +78,6 @@ const server = new Server(
   {
     name: 'crowdlisten-mcp-server',
     version: '1.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
   }
 );
 
