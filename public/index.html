@@ -45,21 +45,53 @@
 <body>
     <div class="container">
         <h1>🎤 CrowdListen MCP Server</h1>
-        <p>Social media content analysis with engagement-weighted opinion clustering</p>
+        <p style="font-size: 1.1rem; color: #4b5563; margin-bottom: 1.5rem;">Advanced social media intelligence platform that transforms conversations into actionable insights</p>
         <p><span class="status">🟢 Status: Online</span></p>
+
+        <h2>🧠 What is CrowdListen?</h2>
+        <p>CrowdListen solves the "Insight Paradox" facing modern organizations: the need for both broad social media awareness and deep, nuanced understanding of audience conversations. Traditional social listening tools provide either superficial metrics requiring manual interpretation or expensive, limited content analysis that misses critical context.</p>
+        
+        <p>Our platform goes beyond counting mentions to understanding conversation contexts, audience perspectives, and emerging trends. Using advanced multi-modal analysis that integrates video, audio, text, and engagement data, CrowdListen transforms weeks of social media research into minutes of actionable intelligence.</p>
+
+        <h2>🎯 Core Capabilities</h2>
+        <p><strong>Vertical Slice Analysis:</strong> Unlike horizontal tools that skim surface-level metrics, CrowdListen performs deep vertical analysis through multiple content layers - extracting semantic meaning, identifying expert voices, tracking sentiment evolution, and mapping conversation flows across platforms.</p>
+
+        <p><strong>Multi-Modal Intelligence:</strong> Process not just text, but audio from videos, visual content patterns, and engagement behaviors to create a comprehensive understanding of how audiences truly respond to content and brands.</p>
+
+        <p><strong>Real-Time Trend Detection:</strong> Identify microtrends before they become mainstream, track sentiment shifts as they happen, and understand competitive movements across the social landscape with unprecedented granularity.</p>
 
         <h2>📡 API Endpoints</h2>
         <div class="endpoint">GET/POST /api/mcp</div>
         <div class="endpoint">GET /api/index</div>
 
-        <h2>🛠️ MCP Tools</h2>
+        <h2>🛠️ MCP Tools (12 Advanced Analysis Functions)</h2>
+        
+        <h3 style="color: #6366f1; margin-top: 1.5rem;">Core Content Tools</h3>
         <ul>
-            <li><strong>health_check</strong> - Check platform status</li>
-            <li><strong>analyze_content</strong> - Content analysis with clustering</li>
-            <li><strong>get_trending_content</strong> - Get trending posts</li>
-            <li><strong>search_content</strong> - Search across platforms</li>
-            <li><strong>get_content_comments</strong> - Get comments for content</li>
+            <li><strong>health_check</strong> - Check platform connectivity and system status</li>
+            <li><strong>search_content</strong> - Search across all platforms with unified results</li>
+            <li><strong>get_trending_content</strong> - Get trending posts with engagement analysis</li>
+            <li><strong>get_content_comments</strong> - Extract comment threads with context</li>
+            <li><strong>analyze_content</strong> - Enhanced multi-modal content analysis</li>
         </ul>
+
+        <h3 style="color: #6366f1; margin-top: 1.5rem;">Advanced Intelligence Tools</h3>
+        <ul>
+            <li><strong>cluster_opinions</strong> - Semantic opinion clustering using embeddings to identify distinct viewpoint themes</li>
+            <li><strong>deep_platform_analysis</strong> - Comprehensive vertical slice analysis with platform-specific insights and expert identification</li>
+            <li><strong>sentiment_evolution_tracker</strong> - Temporal sentiment analysis with trend prediction and event correlation</li>
+            <li><strong>expert_identification</strong> - Authority scoring and expert voice identification using multi-criteria analysis</li>
+            <li><strong>cross_platform_synthesis</strong> - Strategic synthesis across platforms to identify universal themes and content flow patterns</li>
+        </ul>
+
+        <h2>🎯 Who Benefits from CrowdListen?</h2>
+        <p><strong>Brand Strategists & Marketers:</strong> Transform social conversations into strategic advantages. Understand not just what people say about your brand, but why they say it, who influences those opinions, and how sentiment evolves across different communities and platforms.</p>
+
+        <p><strong>Product Teams & Researchers:</strong> Reduce complex social media research from weeks to minutes. Identify emerging user needs, track feature reception across platforms, and understand competitive positioning through authentic user conversations rather than surveys or focus groups.</p>
+
+        <p><strong>Competitive Intelligence Teams:</strong> Monitor competitor movements, track industry sentiment, and identify market opportunities through comprehensive cross-platform analysis that reveals patterns invisible to traditional monitoring tools.</p>
+
+        <p><strong>Academic & Market Researchers:</strong> Access powerful analysis tools that handle the complexity of modern social media data - from TikTok's visual storytelling to Reddit's technical discussions - all through a unified research interface.</p>
 
         <h2>📱 Supported Platforms</h2>
         <div>
@@ -68,20 +100,48 @@
             <span class="platform">📱 Reddit</span>
             <span class="platform">📸 Instagram</span>
         </div>
+        <p style="margin-top: 1rem; color: #6b7280; font-size: 0.9rem;">Each platform analyzed through its unique lens - TikTok's viral trends, Twitter's real-time conversations, Reddit's deep discussions, and Instagram's visual culture.</p>
 
         <h2>🤖 Test MCP Endpoint</h2>
+        <p style="margin-bottom: 1rem; color: #6b7280;">Try our advanced analysis capabilities:</p>
+        
+        <h3 style="color: #6366f1; font-size: 1rem; margin-bottom: 0.5rem;">Health Check</h3>
         <div class="endpoint">
 curl -X POST https://crowdlisten-mcp.vercel.app/api/mcp \<br>
 &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
 &nbsp;&nbsp;-d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"health_check"},"id":1}'
         </div>
 
-        <h2>📚 Documentation</h2>
-        <p>Visit our <a href="https://github.com/terrylinhaochen/crowdlisten_mcp" target="_blank">GitHub repository</a> for complete documentation and setup instructions.</p>
+        <h3 style="color: #6366f1; font-size: 1rem; margin-bottom: 0.5rem; margin-top: 1.5rem;">Cross-Platform Search</h3>
+        <div class="endpoint">
+curl -X POST https://crowdlisten-mcp.vercel.app/api/mcp \<br>
+&nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+&nbsp;&nbsp;-d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"search_content","arguments":{"query":"AI","platform":"all","limit":10}},"id":2}'
+        </div>
+
+        <h3 style="color: #6366f1; font-size: 1rem; margin-bottom: 0.5rem; margin-top: 1.5rem;">Expert Identification</h3>
+        <div class="endpoint">
+curl -X POST https://crowdlisten-mcp.vercel.app/api/mcp \<br>
+&nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+&nbsp;&nbsp;-d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"expert_identification","arguments":{"platform":"twitter","topic":"artificial intelligence","maxExperts":10}},"id":3}'
+        </div>
+
+        <h2>🚀 Technical Innovation</h2>
+        <p><strong>Model Context Protocol (MCP) Architecture:</strong> Built on cutting-edge MCP technology that dynamically determines analytical capabilities while maintaining context awareness throughout complex research workflows. This enables seamless integration with AI systems while preserving the nuanced understanding required for social media analysis.</p>
+
+        <p><strong>Embedding-Based Intelligence:</strong> Uses advanced topic modeling and Large Language Model capabilities to process unstructured social media data, transforming raw conversations into structured research insights that would take human analysts weeks to compile.</p>
+
+        <p><strong>Multi-Modal Processing:</strong> Unlike text-only solutions, CrowdListen analyzes video content, audio patterns, visual elements, and engagement behaviors to understand the full context of how audiences respond to and share content across platforms.</p>
+
+        <h2>📚 Documentation & Integration</h2>
+        <p>CrowdListen is designed for seamless integration into existing workflows. Whether you're building custom applications, integrating with business intelligence tools, or conducting research through MCP-compatible AI systems, our comprehensive API makes social intelligence accessible and actionable.</p>
+        
+        <p>Visit our <a href="https://github.com/terrylinhaochen/crowdlisten_mcp" target="_blank">GitHub repository</a> for complete documentation, setup instructions, and integration examples.</p>
 
         <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e5e7eb;">
         <p style="text-align: center; color: #6b7280; font-size: 0.875rem;">
-            Powered by Vercel Serverless Functions
+            <strong>CrowdListen MCP Server</strong> - Transforming social conversations into strategic intelligence<br>
+            Powered by Vercel Serverless Functions & Advanced AI Analysis
         </p>
     </div>
 </body>
