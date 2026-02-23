@@ -17,6 +17,7 @@ import { TikTokAdapter } from '../platforms/TikTokAdapter.js';
 import { TwitterAdapter } from '../platforms/TwitterAdapter.js';
 import { RedditAdapter } from '../platforms/RedditAdapter.js';
 import { InstagramAdapter } from '../platforms/InstagramAdapter.js';
+import { YouTubeAdapter } from '../platforms/YouTubeAdapter.js';
 
 export interface UnifiedServiceConfig {
   platforms: {
@@ -24,6 +25,7 @@ export interface UnifiedServiceConfig {
     twitter?: PlatformConfig;
     reddit?: PlatformConfig;
     instagram?: PlatformConfig;
+    youtube?: PlatformConfig;
   };
   globalOptions?: {
     timeout?: number;
@@ -107,8 +109,23 @@ export class UnifiedSocialMediaService {
       }
     }
 
+    // Initialize YouTube
+    if (this.config.platforms.youtube) {
+      try {
+        const adapter = new YouTubeAdapter(this.config.platforms.youtube);
+        const success = await adapter.initialize();
+        if (success) {
+          this.adapters.set('youtube', adapter);
+        }
+        results.youtube = success;
+      } catch (error) {
+        console.error('Failed to initialize YouTube adapter:', error);
+        results.youtube = false;
+      }
+    }
+
     this.isInitialized = true;
-    console.log(`Unified Service initialized with ${this.adapters.size} platforms:`, 
+    console.log(`Unified Service initialized with ${this.adapters.size} platforms:`,
                 Array.from(this.adapters.keys()));
     
     return results;

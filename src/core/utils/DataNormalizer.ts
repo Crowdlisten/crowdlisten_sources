@@ -33,6 +33,8 @@ export class DataNormalizer {
         return this.normalizeRedditPost(rawData);
       case 'instagram':
         return this.normalizeInstagramPost(rawData);
+      case 'youtube':
+        return this.normalizeYouTubePost(rawData);
       default:
         throw new Error(`Unsupported platform: ${platform}`);
     }
@@ -54,6 +56,8 @@ export class DataNormalizer {
         return this.normalizeRedditUser(rawData);
       case 'instagram':
         return this.normalizeInstagramUser(rawData);
+      case 'youtube':
+        return this.normalizeYouTubeUser(rawData);
       default:
         throw new Error(`Unsupported platform: ${platform}`);
     }
@@ -75,6 +79,8 @@ export class DataNormalizer {
         return this.normalizeRedditComment(rawData);
       case 'instagram':
         return this.normalizeInstagramComment(rawData);
+      case 'youtube':
+        return this.normalizeYouTubeComment(rawData);
       default:
         throw new Error(`Unsupported platform: ${platform}`);
     }
@@ -260,6 +266,73 @@ export class DataNormalizer {
       timestamp: new Date((data.created_at || data.created_at_utc || Date.now() / 1000) * 1000),
       likes: data.comment_like_count || 0,
       replies: data.child_comment_count ? [] : [] // Instagram API complex for replies
+    };
+  }
+
+  // YouTube normalization methods
+  private static normalizeYouTubePost(data: any): Post {
+    const snippet = data.snippet || {};
+    const stats = data.statistics || {};
+    const videoId = data.id?.videoId || data.id || '';
+    return {
+      id: videoId,
+      platform: 'youtube',
+      author: this.normalizeYouTubeUser(snippet),
+      content: snippet.title || '',
+      mediaUrl: snippet.thumbnails?.high?.url || snippet.thumbnails?.default?.url || '',
+      engagement: {
+        likes: parseInt(stats.likeCount || '0', 10),
+        comments: parseInt(stats.commentCount || '0', 10),
+        shares: 0,
+        views: parseInt(stats.viewCount || '0', 10)
+      },
+      timestamp: new Date(snippet.publishedAt || Date.now()),
+      url: `https://www.youtube.com/watch?v=${videoId}`,
+      hashtags: this.extractHashtags(snippet.title || '')
+    };
+  }
+
+  private static normalizeYouTubeUser(data: any): User {
+    return {
+      id: data.channelId || '',
+      username: data.channelTitle || '',
+      displayName: data.channelTitle || '',
+      followerCount: 0,
+      verified: false,
+      profileImageUrl: '',
+      bio: ''
+    };
+  }
+
+  private static normalizeYouTubeComment(data: any): Comment {
+    const topLevel = data.snippet?.topLevelComment?.snippet || {};
+    const replies: Comment[] = (data.replies?.comments || []).map((reply: any) => {
+      const rs = reply.snippet || {};
+      return {
+        id: reply.id || '',
+        author: {
+          id: rs.authorChannelId?.value || '',
+          username: rs.authorDisplayName || '',
+          displayName: rs.authorDisplayName || ''
+        },
+        text: rs.textDisplay || rs.textOriginal || '',
+        timestamp: new Date(rs.publishedAt || Date.now()),
+        likes: rs.likeCount || 0,
+        replies: []
+      } as Comment;
+    });
+
+    return {
+      id: data.id || '',
+      author: {
+        id: topLevel.authorChannelId?.value || '',
+        username: topLevel.authorDisplayName || '',
+        displayName: topLevel.authorDisplayName || ''
+      },
+      text: topLevel.textDisplay || topLevel.textOriginal || '',
+      timestamp: new Date(topLevel.publishedAt || Date.now()),
+      likes: topLevel.likeCount || 0,
+      replies
     };
   }
 

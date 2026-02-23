@@ -83,7 +83,7 @@ export interface TrendingHashtag {
   engagementScore: number;
 }
 
-export type PlatformType = 'tiktok' | 'twitter' | 'reddit' | 'instagram';
+export type PlatformType = 'tiktok' | 'twitter' | 'reddit' | 'instagram' | 'youtube';
 
 export interface PlatformCapabilities {
   supportsTrending: boolean;

@@ -70,6 +70,16 @@ serviceConfig.platforms.reddit = {
   credentials: {}
 };
 
+// YouTube configuration (requires API key)
+if (process.env.YOUTUBE_API_KEY) {
+  serviceConfig.platforms.youtube = {
+    platform: 'youtube',
+    credentials: {
+      apiKey: process.env.YOUTUBE_API_KEY
+    }
+  };
+}
+
 // Initialize the unified service
 const unifiedService = new UnifiedSocialMediaService(serviceConfig);
 
@@ -91,7 +101,7 @@ const tools = [
       properties: {
         platform: {
           type: 'string',
-          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'all'],
+          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'all'],
           description: 'Platform to get trending content from, or "all" for all platforms'
         },
         limit: {
@@ -113,7 +123,7 @@ const tools = [
       properties: {
         platform: {
           type: 'string',
-          enum: ['tiktok', 'twitter', 'reddit', 'instagram'],
+          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'],
           description: 'Platform to get user content from'
         },
         userId: {
@@ -139,7 +149,7 @@ const tools = [
       properties: {
         platform: {
           type: 'string',
-          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'all'],
+          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'all'],
           description: 'Platform to search on, or "all" for all platforms'
         },
         query: {
@@ -165,7 +175,7 @@ const tools = [
       properties: {
         platform: {
           type: 'string',
-          enum: ['tiktok', 'twitter', 'reddit', 'instagram'],
+          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'],
           description: 'Platform where the content is located'
         },
         contentId: {
@@ -191,7 +201,7 @@ const tools = [
       properties: {
         platform: {
           type: 'string',
-          enum: ['tiktok', 'twitter', 'reddit', 'instagram'],
+          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'],
           description: 'Platform where the content is located'
         },
         contentId: {
@@ -257,7 +267,7 @@ const tools = [
       properties: {
         platform: {
           type: 'string',
-          enum: ['tiktok', 'twitter', 'reddit', 'instagram'],
+          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'],
           description: 'Platform where the content is located'
         },
         contentId: {
@@ -293,7 +303,7 @@ const tools = [
       properties: {
         platform: {
           type: 'string',
-          enum: ['tiktok', 'twitter', 'reddit', 'instagram'],
+          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'],
           description: 'Platform to perform deep analysis on'
         },
         query: {
@@ -345,7 +355,7 @@ const tools = [
       properties: {
         platform: {
           type: 'string',
-          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'all'],
+          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'all'],
           description: 'Platform to track sentiment on'
         },
         topic: {
@@ -386,7 +396,7 @@ const tools = [
       properties: {
         platform: {
           type: 'string',
-          enum: ['tiktok', 'twitter', 'reddit', 'instagram'],
+          enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'],
           description: 'Platform to identify experts on'
         },
         topic: {
@@ -440,7 +450,7 @@ const tools = [
             type: 'string',
             enum: ['tiktok', 'twitter', 'reddit', 'instagram']
           },
-          default: ['tiktok', 'twitter', 'reddit', 'instagram'],
+          default: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'],
           description: 'Platforms to include in synthesis'
         },
         synthesisType: {
@@ -1237,7 +1247,7 @@ async function handleExpertIdentification(args: any) {
 async function handleCrossPlatformSynthesis(args: any) {
   const { 
     topic, 
-    platforms = ['tiktok', 'twitter', 'reddit', 'instagram'],
+    platforms = ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'],
     synthesisType = 'theme_convergence',
     identifyGaps = true,
     includeMetrics = true

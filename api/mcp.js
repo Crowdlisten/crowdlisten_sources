@@ -312,22 +312,132 @@ class PlatformManager {
     }
   }
 
+  // YouTube implementation using Data API v3
+  async searchYouTube(query, limit = 10) {
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!apiKey) {
+      throw new Error('YouTube API not configured');
+    }
+
+    try {
+      // Search for videos
+      const searchRes = await axios.get('https://www.googleapis.com/youtube/v3/search', {
+        params: {
+          part: 'snippet',
+          q: query,
+          type: 'video',
+          order: 'relevance',
+          maxResults: Math.min(limit, 50),
+          key: apiKey
+        },
+        timeout: 15000
+      });
+
+      const items = searchRes.data.items || [];
+      const videoIds = items.map(i => i.id?.videoId).filter(Boolean).join(',');
+
+      // Get statistics for the videos
+      let statsMap = {};
+      if (videoIds) {
+        const statsRes = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
+          params: { part: 'statistics', id: videoIds, key: apiKey },
+          timeout: 15000
+        });
+        for (const v of statsRes.data.items || []) {
+          statsMap[v.id] = v.statistics;
+        }
+      }
+
+      return items.map(item => {
+        const videoId = item.id?.videoId || '';
+        const stats = statsMap[videoId] || {};
+        return {
+          id: videoId,
+          content: item.snippet?.title || '',
+          author: {
+            id: item.snippet?.channelId || '',
+            username: item.snippet?.channelTitle || '',
+            displayName: item.snippet?.channelTitle || ''
+          },
+          engagement: {
+            likes: parseInt(stats.likeCount || '0', 10),
+            comments: parseInt(stats.commentCount || '0', 10),
+            shares: 0,
+            views: parseInt(stats.viewCount || '0', 10)
+          },
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+          platform: 'youtube',
+          timestamp: item.snippet?.publishedAt || new Date().toISOString()
+        };
+      });
+    } catch (error) {
+      console.error('YouTube search error:', error.message);
+      throw error;
+    }
+  }
+
+  async getYouTubeTrending(limit = 10) {
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!apiKey) {
+      throw new Error('YouTube API not configured');
+    }
+
+    try {
+      const response = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
+        params: {
+          part: 'snippet,statistics',
+          chart: 'mostPopular',
+          regionCode: 'US',
+          maxResults: Math.min(limit, 50),
+          key: apiKey
+        },
+        timeout: 15000
+      });
+
+      return (response.data.items || []).map(item => ({
+        id: item.id,
+        content: item.snippet?.title || '',
+        author: {
+          id: item.snippet?.channelId || '',
+          username: item.snippet?.channelTitle || '',
+          displayName: item.snippet?.channelTitle || ''
+        },
+        engagement: {
+          likes: parseInt(item.statistics?.likeCount || '0', 10),
+          comments: parseInt(item.statistics?.commentCount || '0', 10),
+          shares: 0,
+          views: parseInt(item.statistics?.viewCount || '0', 10)
+        },
+        url: `https://www.youtube.com/watch?v=${item.id}`,
+        platform: 'youtube',
+        timestamp: item.snippet?.publishedAt || new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('YouTube trending error:', error.message);
+      throw error;
+    }
+  }
+
   // Get available platforms
   getAvailablePlatforms() {
     const platforms = ['reddit']; // Reddit always available
-    
+
     if (this.twitterClient) {
       platforms.push('twitter');
     }
-    
+
     if (process.env.INSTAGRAM_USERNAME && process.env.INSTAGRAM_PASSWORD) {
       platforms.push('instagram');
     }
-    
+
     if (process.env.TIKTOK_MS_TOKEN) {
       platforms.push('tiktok');
     }
-    
+
+    if (process.env.YOUTUBE_API_KEY) {
+      platforms.push('youtube');
+    }
+
     return platforms;
   }
 
@@ -373,7 +483,17 @@ class PlatformManager {
         console.error('TikTok search failed:', error.message);
       }
     }
-    
+
+    // Search YouTube if configured
+    if (process.env.YOUTUBE_API_KEY) {
+      try {
+        const youtubeResults = await this.searchYouTube(query, platformLimit);
+        results.push(...youtubeResults);
+      } catch (error) {
+        console.error('YouTube search failed:', error.message);
+      }
+    }
+
     // Sort by engagement and recency
     results.sort((a, b) => {
       const aEngagement = (a.engagement.likes || 0) + (a.engagement.comments || 0);
@@ -420,7 +540,8 @@ module.exports = async (req, res) => {
           node_version: process.version,
           twitter_configured: !!platformManager.twitterClient,
           instagram_configured: !!process.env.INSTAGRAM_USERNAME,
-          tiktok_configured: !!process.env.TIKTOK_MS_TOKEN
+          tiktok_configured: !!process.env.TIKTOK_MS_TOKEN,
+          youtube_configured: !!process.env.YOUTUBE_API_KEY
         }
       });
     }
@@ -474,10 +595,10 @@ module.exports = async (req, res) => {
                     query: { type: 'string', description: 'Search query' },
                     platforms: { 
                       type: 'array', 
-                      items: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+                      items: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'] },
                       description: 'Platforms to search on'
                     },
-                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'all'] },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'all'] },
                     limit: { type: 'number', description: 'Number of results to return', default: 20 }
                   },
                   required: ['query']
@@ -489,7 +610,7 @@ module.exports = async (req, res) => {
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'all'] },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'all'] },
                     limit: { type: 'number', description: 'Number of items to return', default: 10 }
                   },
                   required: ['platform']
@@ -502,7 +623,7 @@ module.exports = async (req, res) => {
                   type: 'object',
                   properties: {
                     content_url: { type: 'string', description: 'URL of the content to analyze' },
-                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] }
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'] }
                   },
                   required: ['content_url', 'platform']
                 }
@@ -514,7 +635,7 @@ module.exports = async (req, res) => {
                   type: 'object',
                   properties: {
                     content_url: { type: 'string', description: 'URL of the content' },
-                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'] },
                     limit: { type: 'number', description: 'Number of comments to return', default: 50 }
                   },
                   required: ['content_url', 'platform']
@@ -526,7 +647,7 @@ module.exports = async (req, res) => {
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'] },
                     contentId: { type: 'string', description: 'ID of the content to analyze comments from' },
                     clusterCount: { type: 'number', default: 5, minimum: 2, maximum: 15 },
                     includeExamples: { type: 'boolean', default: true },
@@ -541,7 +662,7 @@ module.exports = async (req, res) => {
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'] },
                     query: { type: 'string', description: 'Search query or topic to analyze deeply' },
                     analysisType: { type: 'string', enum: ['trending_analysis', 'topic_deep_dive', 'competitor_analysis', 'brand_sentiment'], default: 'topic_deep_dive' },
                     extractAudio: { type: 'boolean', default: false },
@@ -559,7 +680,7 @@ module.exports = async (req, res) => {
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'all'] },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'all'] },
                     topic: { type: 'string', description: 'Topic or keyword to track sentiment for' },
                     timeGranularity: { type: 'string', enum: ['hourly', 'daily', 'weekly'], default: 'daily' },
                     trackingPeriod: { type: 'string', enum: ['24h', '7d', '30d', '90d'], default: '7d' },
@@ -575,7 +696,7 @@ module.exports = async (req, res) => {
                 inputSchema: {
                   type: 'object',
                   properties: {
-                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'] },
                     topic: { type: 'string', description: 'Topic or domain to find experts in' },
                     scoringCriteria: { 
                       type: 'array', 
@@ -598,8 +719,8 @@ module.exports = async (req, res) => {
                     topic: { type: 'string', description: 'Topic to synthesize insights across platforms' },
                     platforms: { 
                       type: 'array', 
-                      items: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram'] },
-                      default: ['tiktok', 'twitter', 'reddit', 'instagram']
+                      items: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'] },
+                      default: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube']
                     },
                     synthesisType: { type: 'string', enum: ['theme_convergence', 'platform_comparison', 'audience_segmentation', 'content_flow_analysis'], default: 'theme_convergence' },
                     identifyGaps: { type: 'boolean', default: true },
@@ -627,7 +748,7 @@ module.exports = async (req, res) => {
               result: {
                 content: [{
                   type: 'text',
-                  text: `# CrowdListen Health Status\n\n✅ MCP Server is working!\n\n**Protocol**: 2024-11-05\n**Available Platforms**: ${platforms.join(', ')}\n**Twitter**: ${platformManager.twitterClient ? '✅ Connected' : '❌ Not configured'}\n**Instagram**: ${process.env.INSTAGRAM_USERNAME ? '✅ Configured' : '❌ Not configured'}\n**TikTok**: ${process.env.TIKTOK_MS_TOKEN ? '✅ Configured' : '❌ Not configured'}\n**Reddit**: ✅ Always available\n**Timestamp**: ${new Date().toISOString()}`
+                  text: `# CrowdListen Health Status\n\n✅ MCP Server is working!\n\n**Protocol**: 2024-11-05\n**Available Platforms**: ${platforms.join(', ')}\n**Twitter**: ${platformManager.twitterClient ? '✅ Connected' : '❌ Not configured'}\n**Instagram**: ${process.env.INSTAGRAM_USERNAME ? '✅ Configured' : '❌ Not configured'}\n**TikTok**: ${process.env.TIKTOK_MS_TOKEN ? '✅ Configured' : '❌ Not configured'}\n**YouTube**: ${process.env.YOUTUBE_API_KEY ? '✅ Configured' : '❌ Not configured'}\n**Reddit**: ✅ Always available\n**Timestamp**: ${new Date().toISOString()}`
                 }]
               }
             });
@@ -672,6 +793,11 @@ module.exports = async (req, res) => {
                 results = await platformManager.searchInstagram(query, limit);
               } else if (platform === 'tiktok') {
                 results = await platformManager.searchTikTok(query, limit);
+              } else if (platform === 'youtube') {
+                if (!process.env.YOUTUBE_API_KEY) {
+                  throw new Error('YouTube API not configured. Please add YOUTUBE_API_KEY to environment variables.');
+                }
+                results = await platformManager.searchYouTube(query, limit);
               } else {
                 throw new Error(`Platform "${platform}" not supported. Available platforms: ${platformManager.getAvailablePlatforms().join(', ')}`);
               }
@@ -727,6 +853,9 @@ module.exports = async (req, res) => {
                     } else if (platform === 'twitter') {
                       const twitterResults = await platformManager.getTwitterTrending(platformLimit);
                       results.push(...twitterResults);
+                    } else if (platform === 'youtube') {
+                      const youtubeResults = await platformManager.getYouTubeTrending(platformLimit);
+                      results.push(...youtubeResults);
                     }
                   } catch (error) {
                     console.error(`Failed to get trending from ${platform}:`, error.message);
@@ -739,6 +868,11 @@ module.exports = async (req, res) => {
                   throw new Error('Twitter API not configured');
                 }
                 results = await platformManager.getTwitterTrending(trendLimit);
+              } else if (trendPlatform === 'youtube') {
+                if (!process.env.YOUTUBE_API_KEY) {
+                  throw new Error('YouTube API not configured');
+                }
+                results = await platformManager.getYouTubeTrending(trendLimit);
               } else {
                 throw new Error(`Platform "${trendPlatform}" not supported for trending content`);
               }
