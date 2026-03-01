@@ -654,7 +654,9 @@ async function handleAnalyzeContent(args: any) {
     const baseAnalysis = await unifiedService.analyzeContent(platform as PlatformType, contentId, enableClustering);
     
     // Enhanced vertical slice analysis
-    const enhancedAnalysis = {
+    // Typed as any so we can attach extra fields (opinionClusters, expertVoices, etc.)
+    // without extending the ContentAnalysis interface.
+    const enhancedAnalysis: any = {
       ...baseAnalysis,
       verticalSliceAnalysis: {
         analysisDepth,
@@ -1206,7 +1208,7 @@ async function handleExpertIdentification(args: any) {
             displayName: expert.displayName,
             authorityScore: expert.authorityScore,
             ...(includeMetrics && expert.metrics ? { metrics: expert.metrics } : {}),
-            recentPosts: expert.posts.slice(0, 3).map(post => ({
+            recentPosts: expert.posts.slice(0, 3).map((post: any) => ({
               content: post.content.substring(0, 100) + '...',
               engagement: post.engagement,
               timestamp: post.timestamp
@@ -1255,8 +1257,8 @@ async function handleCrossPlatformSynthesis(args: any) {
   
   try {
     // Get data from all specified platforms
-    const platformData = {};
-    const searchPromises = platforms.map(async (platform) => {
+    const platformData: Record<string, any> = {};
+    const searchPromises = platforms.map(async (platform: any) => {
       try {
         const posts = await unifiedService.searchContent(platform as PlatformType, topic, 50);
         return { platform, posts, success: true };
@@ -1272,13 +1274,13 @@ async function handleCrossPlatformSynthesis(args: any) {
         posts: result.posts,
         success: result.success,
         totalPosts: result.posts.length,
-        totalEngagement: result.posts.reduce((sum, post) => 
+        totalEngagement: result.posts.reduce((sum: any, post: any) =>
           sum + (post.engagement.likes || 0) + (post.engagement.comments || 0), 0)
       };
     });
 
     // Perform synthesis based on type
-    let synthesisResults = {};
+    let synthesisResults: any = {};
     
     switch (synthesisType) {
       case 'theme_convergence':
@@ -1286,24 +1288,24 @@ async function handleCrossPlatformSynthesis(args: any) {
           convergentThemes: [
             {
               theme: 'User Experience Feedback',
-              platforms: platforms.filter(p => platformData[p].success),
+              platforms: platforms.filter((p: any) => platformData[p].success),
               prevalence: '78%',
               sentiment: 'mixed',
               keyInsights: ['ease_of_use', 'feature_requests', 'bug_reports']
             },
             {
               theme: 'Pricing Discussions',
-              platforms: platforms.filter(p => platformData[p].success && Math.random() > 0.3),
+              platforms: platforms.filter((p: any) => platformData[p].success && Math.random() > 0.3),
               prevalence: '45%',
               sentiment: 'negative',
               keyInsights: ['value_for_money', 'competitor_comparison', 'subscription_model']
             }
           ],
-          platformSpecificThemes: platforms.map(platform => ({
+          platformSpecificThemes: platforms.map((platform: any) => ({
             platform,
             uniqueThemes: [`${platform}_specific_theme_1`, `${platform}_specific_theme_2`],
-            dominantNarrative: `${platform} users focus on ${platform === 'twitter' ? 'real-time updates' : 
-              platform === 'reddit' ? 'detailed discussions' : 
+            dominantNarrative: `${platform} users focus on ${platform === 'twitter' ? 'real-time updates' :
+              platform === 'reddit' ? 'detailed discussions' :
               platform === 'tiktok' ? 'visual content' : 'lifestyle integration'}`
           }))
         };
@@ -1311,7 +1313,7 @@ async function handleCrossPlatformSynthesis(args: any) {
         
       case 'platform_comparison':
         synthesisResults = {
-          platformMetrics: platforms.map(platform => {
+          platformMetrics: platforms.map((platform: any) => {
             const data = platformData[platform];
             return {
               platform,
@@ -1326,9 +1328,9 @@ async function handleCrossPlatformSynthesis(args: any) {
             };
           }),
           crossPlatformInsights: {
-            mostEngaged: platforms.reduce((max, platform) => 
+            mostEngaged: platforms.reduce((max: any, platform: any) =>
               platformData[platform].totalEngagement > (platformData[max]?.totalEngagement || 0) ? platform : max, platforms[0]),
-            mostVoluminous: platforms.reduce((max, platform) => 
+            mostVoluminous: platforms.reduce((max: any, platform: any) =>
               platformData[platform].totalPosts > (platformData[max]?.totalPosts || 0) ? platform : max, platforms[0]),
             sentimentConsistency: 'moderate',
             narrativeAlignment: '67%'
@@ -1403,7 +1405,7 @@ async function handleCrossPlatformSynthesis(args: any) {
         'Enterprise users underrepresented on TikTok',
         'Younger demographics missing from Reddit discussions'
       ],
-      platformGaps: platforms.filter(p => !platformData[p].success).map(p => `${p} data unavailable`)
+      platformGaps: platforms.filter((p: any) => !platformData[p].success).map((p: any) => `${p} data unavailable`)
     } : null;
 
     return {
@@ -1412,13 +1414,13 @@ async function handleCrossPlatformSynthesis(args: any) {
         text: JSON.stringify({
           topic,
           synthesisType,
-          platformsCovered: platforms.filter(p => platformData[p].success),
+          platformsCovered: platforms.filter((p: any) => platformData[p].success),
           totalContentAnalyzed: Object.values(platformData).reduce((sum: any, data: any) => sum + data.totalPosts, 0),
           ...synthesisResults,
           ...(gaps && { gaps }),
           ...(includeMetrics && {
             metrics: {
-              platformSuccess: platforms.filter(p => platformData[p].success).length / platforms.length,
+              platformSuccess: platforms.filter((p: any) => platformData[p].success).length / platforms.length,
               dataQuality: 'high',
               analysisConfidence: '85%',
               lastUpdated: new Date().toISOString()

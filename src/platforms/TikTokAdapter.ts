@@ -1,72 +1,73 @@
 /**
  * TikTok Platform Adapter
- * Refactored to use unified interface, removing content strategy and mock data
+ *
+ * Provides TikTok content retrieval through two complementary strategies:
+ *
+ *   searchContent()      → TikTokBrowserSearchService (Playwright + Claude Vision)
+ *                          Launches a real browser, navigates to TikTok search,
+ *                          and uses Claude to select the most relevant videos.
+ *
+ *   getTrendingContent() → HTTP fallback against TikTok's internal API.
+ *   getUserContent()     → HTTP fallback (limited without advanced API access).
+ *   getContentComments() → HTTP fallback against TikTok's comment API.
+ *
+ * The browser-based search approach replaces the previous searchViaHttp()
+ * implementation, which could not reliably sign TikTok's internal API requests.
  */
 
+import axios from 'axios';
 import { BaseAdapter } from '../core/base/BaseAdapter.js';
 import { DataNormalizer } from '../core/utils/DataNormalizer.js';
+import { TikTokBrowserSearchService } from '../core/utils/TikTokBrowserSearch.js';
 import {
   Post,
   Comment,
   PlatformCapabilities,
   PlatformType,
   PlatformConfig,
-  AuthenticationError,
-  NotFoundError
 } from '../core/interfaces/SocialMediaPlatform.js';
-import fetch from 'node-fetch';
 
 export class TikTokAdapter extends BaseAdapter {
-  private api: any = null;
-  private session: any = null;
   private msToken?: string;
-  private proxy?: string;
 
   constructor(config: PlatformConfig) {
     super(config);
     this.msToken = config.credentials?.ms_token;
-    this.proxy = config.credentials?.proxy;
-    this.maxRequestsPerWindow = 30; // Conservative rate limiting for TikTok
+    // Conservative rate limiting — TikTok's APIs are sensitive to high request volume
+    this.maxRequestsPerWindow = 30;
   }
 
   async initialize(): Promise<boolean> {
     try {
-      this.log('Initializing TikTok HTTP adapter...', 'info');
-      
-      // TikTok will use HTTP-only approach since Python TikTokApi is not available in Node.js
+      this.log('Initializing TikTok adapter...', 'info');
+
       if (this.msToken) {
-        this.log('TikTok ms_token available for enhanced functionality', 'info');
+        this.log('TikTok ms_token available — enhanced HTTP functionality enabled', 'info');
       } else {
-        this.log('No ms_token provided, TikTok functionality will be limited', 'warn');
+        this.log('No ms_token provided — HTTP endpoints will have limited functionality', 'warn');
       }
-      
+
       this.isInitialized = true;
-      this.log('TikTok adapter initialized successfully (HTTP mode)', 'info');
+      this.log('TikTok adapter initialized successfully', 'info');
       return true;
-      
     } catch (error) {
-      this.log('Failed to initialize TikTok adapter', 'error');
+      this.log(`Failed to initialize TikTok adapter: ${error}`, 'error');
       this.isInitialized = false;
       return false;
     }
   }
 
+  // ─── SocialMediaPlatform interface ───────────────────────────────────────
+
   async getTrendingContent(limit: number = 10): Promise<Post[]> {
     this.ensureInitialized();
     this.validateLimit(limit);
-    
+
     try {
       await this.enforceRateLimit();
-      
-      const videos: any[] = [];
-      
-      // Use HTTP method for trending videos
-      const httpVideos = await this.getTrendingViaHttp(limit);
-      videos.push(...httpVideos);
-
+      const videos = await this.getTrendingViaHttp(limit);
       this.log(`Retrieved ${videos.length} trending TikTok videos`, 'info');
       return videos.map(video => DataNormalizer.normalizePost(video, 'tiktok'));
-      
     } catch (error) {
       this.handleError(error, 'getTrendingContent');
     }
@@ -76,40 +77,56 @@ export class TikTokAdapter extends BaseAdapter {
     this.ensureInitialized();
     this.validateUserId(userId);
     this.validateLimit(limit);
-    
+
     try {
       await this.enforceRateLimit();
-      
-      // Use HTTP method for user content
       const videos = await this.getUserViaHttp(userId, limit);
-
-      this.log(`Retrieved ${videos.length} videos from TikTok user ${userId}`, 'info');
+      this.log(`Retrieved ${videos.length} videos from TikTok user @${userId}`, 'info');
       return videos.map(video => DataNormalizer.normalizePost(video, 'tiktok'));
-      
     } catch (error) {
       this.handleError(error, 'getUserContent');
     }
   }
 
-  async searchContent(query: string, limit: number = 10): Promise<Post[]> {
+  /**
+   * Search TikTok by keyword using browser automation + Claude Vision selection.
+   *
+   * This method drives a real Chromium browser to perform the search, extracts
+   * video candidates from the DOM, then asks Claude Vision to select the most
+   * relevant results. The selected videos are mapped to the standard Post format.
+   *
+   * The limit parameter is passed as the target number of videos Claude should
+   * select (capped at 5 to keep browser sessions fast and costs low).
+   */
+  async searchContent(query: string, limit: number = 5): Promise<Post[]> {
     this.ensureInitialized();
     this.validateLimit(limit);
-    
+
     if (!query || query.trim().length === 0) {
       throw new Error('Search query cannot be empty');
     }
-    
+
     try {
       await this.enforceRateLimit();
-      
-      const cleanQuery = query.trim();
-      
-      // Use HTTP search method
-      const videos = await this.searchViaHttp(cleanQuery, limit);
 
-      this.log(`Found ${videos.length} TikTok videos for query: ${query}`, 'info');
-      return videos.map(video => DataNormalizer.normalizePost(video, 'tiktok'));
-      
+      const searcher = new TikTokBrowserSearchService();
+      // Cap at 5 — browser sessions are slow; more videos come from multiple searches
+      const videosToSelect = Math.min(limit, 5);
+
+      const result = await searcher.searchAndSelect(query.trim(), videosToSelect);
+
+      // Convert TikTokVideoCandidate objects to standard Post format
+      const posts: Post[] = result.selectedVideos.map(candidate =>
+        this.candidateToPost(candidate)
+      );
+
+      this.log(
+        `Browser search for "${query}" returned ${posts.length} selected videos ` +
+        `(from ${result.totalCandidates} candidates)`,
+        'info'
+      );
+
+      return posts;
     } catch (error) {
       this.handleError(error, 'searchContent');
     }
@@ -119,16 +136,12 @@ export class TikTokAdapter extends BaseAdapter {
     this.ensureInitialized();
     this.validateContentId(contentId);
     this.validateLimit(limit);
-    
+
     try {
       await this.enforceRateLimit();
-      
-      // Use HTTP method for comments
       const comments = await this.getCommentsViaHttp(contentId, limit);
-
       this.log(`Retrieved ${comments.length} comments for TikTok video ${contentId}`, 'info');
       return comments.map(comment => DataNormalizer.normalizeComment(comment, 'tiktok'));
-      
     } catch (error) {
       this.handleError(error, 'getContentComments');
     }
@@ -142,119 +155,84 @@ export class TikTokAdapter extends BaseAdapter {
     return {
       supportsTrending: true,
       supportsUserContent: true,
-      supportsSearch: true,
+      supportsSearch: true,    // Browser-based search via TikTokBrowserSearchService
       supportsComments: true,
-      supportsAnalysis: true
+      supportsAnalysis: true,
     };
+  }
+
+  async cleanup(): Promise<void> {
+    try {
+      await super.cleanup();
+    } catch (error) {
+      this.log(`Error during TikTok cleanup: ${error}`, 'warn');
+    }
+  }
+
+  // ─── Private: HTTP fallbacks ──────────────────────────────────────────────
+
+  /**
+   * Fetch trending videos from TikTok's internal recommendation API.
+   * Returns an empty array if the request fails — callers handle degraded state.
+   */
+  private async getTrendingViaHttp(limit: number): Promise<any[]> {
+    const url =
+      `https://www.tiktok.com/api/recommend/item_list/` +
+      `?aid=1988&count=${limit}&app_language=en&device_platform=web_pc`;
+
+    try {
+      const response = await axios.get(url, { headers: this.buildHttpHeaders() });
+      return response.data?.itemList || response.data?.items || [];
+    } catch (error) {
+      this.log(`HTTP trending request failed: ${error}`, 'warn');
+    }
+    return [];
   }
 
   /**
-   * HTTP methods for TikTok content retrieval
+   * Fetch a user's recent videos from TikTok's internal API.
+   * Note: this endpoint requires advanced API access; returns empty array otherwise.
    */
   private async getUserViaHttp(userId: string, limit: number): Promise<any[]> {
-    const headers = this.getHttpHeaders();
-    
-    try {
-      // TikTok user content endpoint would require specific API access
-      // For now, return empty array with log message
-      this.log(`TikTok user content for ${userId} requires advanced API access`, 'warn');
-      return [];
-      
-    } catch (error) {
-      this.log('HTTP user request failed', 'warn');
-      return [];
-    }
-  }
-
-  private async getTrendingViaHttp(limit: number): Promise<any[]> {
-    const headers = this.getHttpHeaders();
-    const params = {
-      aid: '1988',
-      count: limit.toString(),
-      app_language: 'en',
-      device_platform: 'web_pc'
-    };
-
-    try {
-      const response = await fetch('https://www.tiktok.com/api/recommend/item_list/', {
-        method: 'GET',
-        headers,
-        // Add params to URL
-      });
-
-      if (response.ok) {
-        const data: any = await response.json();
-        return data.itemList || data.items || [];
-      }
-    } catch (error) {
-      this.log('HTTP trending request failed', 'warn');
-    }
-    
+    this.log(
+      `TikTok user content for @${userId} requires advanced API access — ` +
+      `returning empty. Limit requested: ${limit}`,
+      'warn'
+    );
     return [];
   }
 
-  private async searchViaHttp(query: string, limit: number): Promise<any[]> {
-    const headers = this.getHttpHeaders();
-    const params = {
-      aid: '1988',
-      keyword: query.replace('#', ''),
-      count: limit.toString(),
-      cursor: '0',
-      type: '1'
-    };
-
-    try {
-      const response = await fetch('https://www.tiktok.com/api/search/item/', {
-        method: 'GET',
-        headers,
-        // Add params to URL
-      });
-
-      if (response.ok) {
-        const data: any = await response.json();
-        return data.item_list || data.data?.videos || [];
-      }
-    } catch (error) {
-      this.log('HTTP search request failed', 'warn');
-    }
-    
-    return [];
-  }
-
+  /**
+   * Fetch comments for a video from TikTok's comment API.
+   * Returns an empty array if the request fails.
+   */
   private async getCommentsViaHttp(videoId: string, limit: number): Promise<any[]> {
-    const headers = this.getHttpHeaders();
-    const params = {
-      aid: '1988',
-      aweme_id: videoId,
-      count: limit.toString(),
-      cursor: '0'
-    };
+    const url =
+      `https://www.tiktok.com/api/comment/list/` +
+      `?aid=1988&aweme_id=${videoId}&count=${limit}&cursor=0`;
 
     try {
-      const response = await fetch('https://www.tiktok.com/api/comment/list/', {
-        method: 'GET',
-        headers,
-        // Add params to URL
-      });
-
-      if (response.ok) {
-        const data: any = await response.json();
-        return data.comments || [];
-      }
+      const response = await axios.get(url, { headers: this.buildHttpHeaders() });
+      return response.data?.comments || [];
     } catch (error) {
-      this.log('HTTP comments request failed', 'warn');
+      this.log(`HTTP comments request failed for video ${videoId}: ${error}`, 'warn');
     }
-    
     return [];
   }
 
-  private getHttpHeaders(): Record<string, string> {
+  /**
+   * Build HTTP request headers that mimic a real browser session.
+   * Includes msToken cookie when available for authenticated requests.
+   */
+  private buildHttpHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
+        'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
       'Accept': 'application/json, text/plain, */*',
       'Accept-Language': 'en-US,en;q=0.9',
       'Referer': 'https://www.tiktok.com/',
-      'Origin': 'https://www.tiktok.com'
+      'Origin': 'https://www.tiktok.com',
     };
 
     if (this.msToken) {
@@ -264,44 +242,68 @@ export class TikTokAdapter extends BaseAdapter {
     return headers;
   }
 
+  // ─── Private: data conversion ─────────────────────────────────────────────
+
   /**
-   * Error detection methods
+   * Convert a TikTokVideoCandidate (from browser search) into a standard Post object.
+   *
+   * Browser-extracted candidates have limited metadata compared to API responses
+   * (no engagement counts, no timestamps), so those fields are set to zero/now.
+   * The video ID and URL are always available via URL parsing.
    */
+  private candidateToPost(candidate: {
+    title: string;
+    author: string;
+    url: string;
+  }): Post {
+    // Extract the numeric video ID from the URL: /@username/video/{id}
+    const videoIdMatch = candidate.url.match(/\/video\/(\d+)/);
+    const videoId = videoIdMatch ? videoIdMatch[1] : candidate.url;
+
+    return {
+      id: videoId,
+      platform: 'tiktok',
+      author: {
+        id: candidate.author,
+        username: candidate.author,
+        displayName: candidate.author,
+      },
+      content: candidate.title,
+      mediaUrl: '',
+      // Engagement metrics are not available from browser-scraped search results
+      engagement: {
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        views: 0,
+      },
+      timestamp: new Date(),
+      url: candidate.url,
+      hashtags: [],
+    };
+  }
+
+  // ─── Protected: error detection (overrides BaseAdapter) ──────────────────
+
   protected isRateLimitError(error: any): boolean {
-    return error.name === 'IgRequestsLimitError' || 
-           error.message?.includes('rate limit') ||
-           error.status === 429;
+    return (
+      error.message?.includes('rate limit') ||
+      error.status === 429
+    );
   }
 
   protected isAuthError(error: any): boolean {
-    return error.name === 'IgLoginRequiredError' ||
-           error.name === 'IgCheckpointError' ||
-           error.message?.includes('authentication');
+    return (
+      error.message?.includes('authentication') ||
+      error.status === 401 ||
+      error.status === 403
+    );
   }
 
   protected isNotFoundError(error: any): boolean {
-    return error.name === 'IgNotFoundError' ||
-           error.status === 404 ||
-           error.message?.includes('not found');
-  }
-
-  async cleanup(): Promise<void> {
-    try {
-      if (this.session) {
-        // Close TikTok sessions
-        if (Array.isArray(this.session)) {
-          for (const session of this.session) {
-            await session.close();
-          }
-        }
-        this.session = null;
-      }
-      
-      this.api = null;
-      await super.cleanup();
-      
-    } catch (error) {
-      this.log('Error during TikTok cleanup', 'warn');
-    }
+    return (
+      error.status === 404 ||
+      error.message?.includes('not found')
+    );
   }
 }
