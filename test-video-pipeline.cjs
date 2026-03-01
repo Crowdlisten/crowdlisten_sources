@@ -233,9 +233,9 @@ async function testModule1(keyword) {
 // ─── Full pipeline ────────────────────────────────────────────────────────────
 
 async function testAll(keyword) {
-  header('FULL PIPELINE — Modules 1 + 2 + 3');
+  header('FULL PIPELINE — Modules 1 + 2 + 3 (parallel)');
 
-  // ── Step 1: Browser search → up to 5 videos ────────────────────────────────
+  // ── Step 1: Browser search → up to 5 videos (sequential — single browser) ──
   const searchResult = await testModule1(keyword || 'cooking tips');
   if (!searchResult || searchResult.selectedVideos.length === 0) {
     fail('Pipeline aborted — Module 1 did not return any videos');
@@ -244,33 +244,45 @@ async function testAll(keyword) {
 
   const { VideoDownloaderService } = require('./dist/core/utils/VideoDownloader');
   const downloader = new VideoDownloaderService();
-  const processed = [];
 
-  // ── Steps 2 + 3: Try each selected video in order; skip on failure ──────────
+  // ── Steps 2 + 3: Download + VLM for all videos in parallel ─────────────────
   // Note: Module 1 has no duration info — some videos may be skipped here if
   // they exceed maxDurationSeconds (1200s). That is expected behaviour.
-  for (let i = 0; i < searchResult.selectedVideos.length; i++) {
-    const video = searchResult.selectedVideos[i];
-    header(`VIDEO ${i + 1}/${searchResult.selectedVideos.length} — @${video.author}`);
-    info(`URL: ${video.url}`);
+  // Logs from concurrent videos will be interleaved — this is expected.
+  header(`PARALLEL PROCESSING — launching ${searchResult.selectedVideos.length} videos simultaneously`);
 
-    const downloadResult = await testModule2(video.url);
-    if (!downloadResult) {
-      fail(`Skipped video ${i + 1} — download failed (may exceed duration limit)`);
-      continue;
-    }
+  const tasks = searchResult.selectedVideos.map((video, i) =>
+    (async () => {
+      info(`[V${i + 1}] Starting @${video.author} — ${video.url}`);
 
-    const context = await testModule3(downloadResult.filePath);
-    downloader.cleanup(downloadResult.filePath);
-    pass('Local video file cleaned up');
+      const downloadResult = await testModule2(video.url);
+      if (!downloadResult) {
+        fail(`[V${i + 1}] Skipped — download failed (may exceed duration limit)`);
+        return null;
+      }
 
-    if (!context) {
-      fail(`Skipped video ${i + 1} — VLM understanding failed`);
-      continue;
-    }
+      const context = await testModule3(downloadResult.filePath);
+      downloader.cleanup(downloadResult.filePath);
+      pass(`[V${i + 1}] Local video file cleaned up`);
 
-    processed.push({ video, downloadResult, context });
-  }
+      if (!context) {
+        fail(`[V${i + 1}] Skipped — VLM understanding failed`);
+        return null;
+      }
+
+      return { video, downloadResult, context };
+    })()
+  );
+
+  const settled = await Promise.allSettled(tasks);
+
+  const processed = settled
+    .filter(r => r.status === 'fulfilled' && r.value !== null)
+    .map(r => r.value);
+
+  settled
+    .filter(r => r.status === 'rejected')
+    .forEach(r => fail(`Unexpected error: ${r.reason?.message ?? r.reason}`));
 
   // ── Summary ─────────────────────────────────────────────────────────────────
   header(`PIPELINE COMPLETE — ${processed.length}/${searchResult.selectedVideos.length} videos processed`);
