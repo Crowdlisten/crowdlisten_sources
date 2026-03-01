@@ -87,11 +87,12 @@ export class TikTokBrowserSearchService {
   private readonly anthropic: Anthropic;
 
   /**
-   * Path to a persistent Chromium/Chrome profile directory.
+   * Path to a persistent Playwright Chromium profile directory.
    * When set, Playwright reuses the existing TikTok login session, avoiding
    * login walls and bot-detection challenges.
    *
-   * macOS default: ~/Library/Application Support/Google/Chrome/Default
+   * Recommended: use a dedicated directory (e.g. ~/.playwright-tiktok-profile),
+   * log into TikTok once in the opened Chromium, then reuse on every subsequent run.
    * Set via env var: TIKTOK_CHROME_PROFILE_PATH
    */
   private readonly chromiumProfilePath: string | undefined;
@@ -195,15 +196,30 @@ export class TikTokBrowserSearchService {
     const commonArgs = [
       '--no-sandbox',
       '--disable-blink-features=AutomationControlled',
+      '--ignore-certificate-errors', // Bypass SSL errors caused by proxies/VPNs
     ];
 
     if (this.chromiumProfilePath) {
       console.log(`[TikTokSearch] Using persistent Chrome profile: ${this.chromiumProfilePath}`);
-      // launchPersistentContext manages both launch + context in one call
-      return chromium.launchPersistentContext(this.chromiumProfilePath, {
+
+      // Chrome's profile path can be either:
+      //   a) The full user data dir: ~/Library/Application Support/Google/Chrome/
+      //   b) A specific profile subdir:  .../Chrome/Profile 7   (or .../Chrome/Default)
+      // Playwright's launchPersistentContext wants the user data dir as the first arg,
+      // and the profile name must be passed via --profile-directory=<name>.
+      const profileMatch = this.chromiumProfilePath.match(/[/\\](Default|Profile \d+)$/);
+      const userDataDir = profileMatch
+        ? path.dirname(this.chromiumProfilePath)
+        : this.chromiumProfilePath;
+      const profileArgs = profileMatch ? [`--profile-directory=${profileMatch[1]}`] : [];
+
+      // launchPersistentContext manages both launch + context in one call.
+      // Uses Playwright's bundled Chromium with a persistent profile directory —
+      // log into TikTok once and the session is saved for all future runs.
+      return chromium.launchPersistentContext(userDataDir, {
         headless: false, // Must be headed when reusing a real Chrome profile
         viewport: { width: 1280, height: 900 },
-        args: commonArgs,
+        args: [...commonArgs, ...profileArgs],
       });
     }
 
@@ -226,20 +242,50 @@ export class TikTokBrowserSearchService {
   /**
    * Navigate to TikTok search, wait for the page to fully render,
    * and extract video candidates from the DOM.
+   *
+   * If TikTok shows a login wall (0 candidates extracted) and a Chrome profile
+   * path is configured (headed mode), this method waits up to 3 minutes for
+   * the user to log in manually, then retries the search automatically.
    */
   private async loadSearchResults(
     page: Page,
     keyword: string
   ): Promise<TikTokVideoCandidate[]> {
-    const url = `${TIKTOK_SEARCH_URL}${encodeURIComponent(keyword)}`;
-    console.log(`[TikTokSearch] Navigating to: ${url}`);
+    const searchUrl = `${TIKTOK_SEARCH_URL}${encodeURIComponent(keyword)}`;
+    console.log(`[TikTokSearch] Navigating to: ${searchUrl}`);
 
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 30000 });
 
     // TikTok's React app needs extra time to populate the video grid
     await page.waitForTimeout(POST_LOAD_WAIT_MS);
 
-    return this.extractCandidatesFromDOM(page);
+    let candidates = await this.extractCandidatesFromDOM(page);
+
+    // If no candidates and we're in headed mode (profile path set), TikTok is
+    // likely showing a login wall. Wait up to 3 minutes for the user to log in,
+    // then navigate back to the search page and retry.
+    if (candidates.length === 0 && this.chromiumProfilePath) {
+      console.log('[TikTokSearch] No results — TikTok may be showing a login wall.');
+      console.log('[TikTokSearch] Please log in to TikTok in the opened browser.');
+      console.log('[TikTokSearch] Will retry automatically once login is detected (timeout: 3 min)...');
+
+      const deadline = Date.now() + 180_000;
+      while (Date.now() < deadline && candidates.length === 0) {
+        await page.waitForTimeout(5_000);
+        // After login TikTok may redirect away — navigate back to search if needed
+        if (!page.url().includes('/search/')) {
+          await page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 30000 });
+          await page.waitForTimeout(POST_LOAD_WAIT_MS);
+        }
+        candidates = await this.extractCandidatesFromDOM(page);
+      }
+
+      if (candidates.length > 0) {
+        console.log('[TikTokSearch] Login detected — continuing with search results.');
+      }
+    }
+
+    return candidates;
   }
 
   /**

@@ -3,7 +3,7 @@
 This document describes the three new modules added to CrowdListen MCP:
 **Module 1** (`TikTokBrowserSearch` — browser search + Claude Vision selection),
 **Module 2** (`VideoDownloader` — yt-dlp wrapper), and
-**Module 3** (`VideoUnderstanding` — Gemini 1.5 Pro video analysis).
+**Module 3** (`VideoUnderstanding` — Gemini 2.5 Flash video analysis).
 
 ---
 
@@ -24,7 +24,7 @@ This document describes the three new modules added to CrowdListen MCP:
 
 [Module 3] VideoUnderstanding           src/core/utils/VideoUnderstanding.ts
     Uploads each .mp4 to Gemini Files API → polls until ready
-    → Gemini 1.5 Pro returns structured VideoContext
+    → Gemini 2.5 Flash returns structured VideoContext
     (timeline, key moments, entities, mood, implicit context)
 
         ↓  VideoContext[] (one per video)
@@ -49,14 +49,15 @@ This document describes the three new modules added to CrowdListen MCP:
 
 ### What it does
 
-1. Launches a Chromium browser via Playwright (headed with a saved Chrome profile, or headless as fallback)
+1. Launches a Playwright Chromium browser (headed with a saved profile, or headless as fallback)
 2. Navigates to `https://www.tiktok.com/search/video?q=<keyword>`
 3. Waits for TikTok's React app to finish rendering (`networkidle` + 4s extra wait)
-4. Extracts video candidates from `a[href*="/video/"]` DOM elements — title, author, URL
-5. Takes a viewport screenshot of the results page
-6. Sends the screenshot + candidate list to Claude (`claude-sonnet-4-6`) with vision
-7. Claude returns the indices of the most relevant videos
-8. Returns a `BrowserSearchResult` with the selected `TikTokVideoCandidate[]`
+4. If TikTok shows a login wall, waits up to 3 minutes for the user to log in, then retries
+5. Extracts video candidates from `a[href*="/video/"]` DOM elements — title, author, URL
+6. Takes a viewport screenshot of the results page
+7. Sends the screenshot + candidate list to Claude (`claude-sonnet-4-6`) with vision
+8. Claude returns the indices of the most relevant videos
+9. Returns a `BrowserSearchResult` with the selected `TikTokVideoCandidate[]`
 
 ### Usage
 
@@ -70,6 +71,16 @@ console.log(result.selectedVideos);
 // [{ index: 0, title: '...', author: 'username', url: 'https://...' }, ...]
 ```
 
+### Known limitation — video duration
+
+Module 1 selects videos based on visual relevance only. It has **no access to video duration**
+at search time (TikTok does not expose duration in the search results DOM). Duration is checked
+in Module 2 via `yt-dlp --print duration` before downloading.
+
+This means some selected videos may be skipped by Module 2 if they exceed `maxDurationSeconds`.
+The full pipeline (`testAll`) handles this gracefully — it skips the failed video and continues
+with the remaining ones rather than aborting.
+
 ### Environment variables
 
 | Variable | Required | Description |
@@ -77,12 +88,31 @@ console.log(result.selectedVideos);
 | `ANTHROPIC_API_KEY` | Yes | Claude API key for Vision-based video selection |
 | `TIKTOK_CHROME_PROFILE_PATH` | Recommended | Path to a Chrome profile with TikTok already logged in. Without this, TikTok may show a login wall. |
 
-### Chrome profile path (macOS)
+### First-time TikTok login setup (required)
 
-```
-# Log into TikTok in your regular Chrome first, then set:
-TIKTOK_CHROME_PROFILE_PATH=/Users/YOUR_USERNAME/Library/Application Support/Google/Chrome/Default
-```
+Module 1 uses **Playwright's bundled Chromium** — not your regular Chrome. You must log into
+TikTok inside that Chromium once so the session is saved to the profile directory.
+
+**Steps:**
+
+1. Set `TIKTOK_CHROME_PROFILE_PATH` to a new dedicated directory in your `.env`:
+   ```
+   TIKTOK_CHROME_PROFILE_PATH=/Users/YOUR_USERNAME/.playwright-tiktok-profile
+   ```
+
+2. Run the test — a Chromium window will open and navigate to TikTok search:
+   ```bash
+   node test-video-pipeline.cjs module1
+   ```
+
+3. TikTok will show a login wall. Log in to your TikTok account in the opened Chromium window.
+
+4. Once logged in, the search will resume automatically. The session is saved to the profile
+   directory — all future runs will skip the login step entirely.
+
+> **Note:** Do not point `TIKTOK_CHROME_PROFILE_PATH` at your real Chrome profile
+> (`~/Library/Application Support/Google/Chrome/...`). Playwright's Chromium and Google Chrome
+> have incompatible profile formats. Use a dedicated directory as shown above.
 
 ### Install Playwright browsers (one-time setup)
 
@@ -144,7 +174,7 @@ downloader.cleanupAll();                    // delete all files in output dir
 | `outputDir` | `/tmp/crowdlisten_videos` | Where to save video files |
 | `maxHeight` | `720` | Max dimension (px) for format selection — applied to width first (portrait TikTok), then height (landscape). TikTok's smallest portrait format is 576px wide. |
 | `useChromecookies` | `true` | Reuse Chrome TikTok session to avoid region blocks |
-| `maxDurationSeconds` | `600` | Skip videos longer than this (10 min default) |
+| `maxDurationSeconds` | `600` | Skip videos longer than this (10 min default). In the full pipeline test (`testAll`) this is set to **1200s (20 min)**. Videos exceeding this limit are skipped and the pipeline moves to the next candidate. |
 
 ---
 
@@ -156,7 +186,7 @@ downloader.cleanupAll();                    // delete all files in output dir
 
 1. Uploads the local `.mp4` file to the **Gemini Files API** (handles large files up to 2 GB)
 2. Polls the file state until Gemini finishes server-side processing (`ACTIVE`)
-3. Calls **Gemini 1.5 Pro** with the video file + structured understanding prompt
+3. Calls **Gemini 2.5 Flash** with the video file + structured understanding prompt
 4. Parses the response into a typed `VideoContext` object
 
 ### The `VideoContext` structure
@@ -224,6 +254,14 @@ console.log(context.keyMoments);
 
 TikTok videos downloaded at 480p are typically 5–30 MB, well within these limits.
 
+### generateContent timeout
+
+Gemini 2.5 Flash is a **thinking model** — it reasons internally before producing output.
+For longer videos (60–120s) with the full structured prompt, the API call can take
+**3–8 minutes**. A hard timeout of **5 minutes** (`GENERATE_TIMEOUT_MS = 300_000`) is set
+in the code. If Gemini does not respond within 5 minutes, the call throws and the pipeline
+skips that video rather than hanging indefinitely.
+
 ---
 
 ## End-to-end example
@@ -248,7 +286,7 @@ const downloadResults = await downloader.downloadVideos(
   { maxHeight: 480, maxDurationSeconds: 300 } // skip videos over 5 min
 );
 
-// Step 3: Understand each downloaded video with Gemini 1.5 Pro
+// Step 3: Understand each downloaded video with Gemini 2.5 Flash
 const understanding = new VideoUnderstandingService();
 
 for (const download of downloadResults) {

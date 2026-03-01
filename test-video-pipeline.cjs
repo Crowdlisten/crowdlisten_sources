@@ -72,7 +72,7 @@ async function testModule2(videoUrl) {
     const result = await downloader.downloadVideo(testUrl, {
       maxHeight: 480,
       useChromecookies: true,
-      maxDurationSeconds: 120,   // skip videos over 2 min for this test
+      maxDurationSeconds: 1200,  // skip videos over 20 min
     });
 
     pass(`Download complete`);
@@ -95,7 +95,7 @@ async function testModule2(videoUrl) {
 // ─── Module 3: VideoUnderstanding ────────────────────────────────────────────
 
 async function testModule3(localFilePath) {
-  header('MODULE 3 — VideoUnderstanding (Gemini 1.5 Pro)');
+  header('MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)');
 
   // 1. Check API key
   if (!checkEnv('GEMINI_API_KEY')) return null;
@@ -203,7 +203,7 @@ async function testModule1(keyword) {
 
   try {
     const searcher = new TikTokBrowserSearchService();
-    const result = await searcher.searchAndSelect(searchKeyword, 3); // select 3 for faster test
+    const result = await searcher.searchAndSelect(searchKeyword, 5);
 
     if (result.selectedVideos.length === 0) {
       fail('No videos selected — TikTok may have shown a login wall');
@@ -232,41 +232,58 @@ async function testModule1(keyword) {
 
 // ─── Full pipeline ────────────────────────────────────────────────────────────
 
-async function testAll() {
+async function testAll(keyword) {
   header('FULL PIPELINE — Modules 1 + 2 + 3');
 
-  // Step 1: Search
-  const searchResult = await testModule1('cooking tips');
+  // ── Step 1: Browser search → up to 5 videos ────────────────────────────────
+  const searchResult = await testModule1(keyword || 'cooking tips');
   if (!searchResult || searchResult.selectedVideos.length === 0) {
     fail('Pipeline aborted — Module 1 did not return any videos');
     return;
   }
 
-  // Step 2: Download first selected video only (for speed)
-  const firstUrl = searchResult.selectedVideos[0].url;
-  const downloadResult = await testModule2(firstUrl);
-  if (!downloadResult) {
-    fail('Pipeline aborted — Module 2 download failed');
-    return;
-  }
-
-  // Step 3: Understand the downloaded video
-  const context = await testModule3(downloadResult.filePath);
-  if (!context) {
-    fail('Pipeline aborted — Module 3 understanding failed');
-    return;
-  }
-
-  // Cleanup
   const { VideoDownloaderService } = require('./dist/core/utils/VideoDownloader');
-  new VideoDownloaderService().cleanup(downloadResult.filePath);
-  pass('Local video file cleaned up');
+  const downloader = new VideoDownloaderService();
+  const processed = [];
 
-  header('PIPELINE COMPLETE');
-  pass(`Searched TikTok for: "${searchResult.searchQuery}"`);
-  pass(`Downloaded video  : ${downloadResult.videoId}`);
-  pass(`Video topic       : ${context.mainTopic}`);
-  pass(`Key moments found : ${context.keyMoments.length}`);
+  // ── Steps 2 + 3: Try each selected video in order; skip on failure ──────────
+  // Note: Module 1 has no duration info — some videos may be skipped here if
+  // they exceed maxDurationSeconds (1200s). That is expected behaviour.
+  for (let i = 0; i < searchResult.selectedVideos.length; i++) {
+    const video = searchResult.selectedVideos[i];
+    header(`VIDEO ${i + 1}/${searchResult.selectedVideos.length} — @${video.author}`);
+    info(`URL: ${video.url}`);
+
+    const downloadResult = await testModule2(video.url);
+    if (!downloadResult) {
+      fail(`Skipped video ${i + 1} — download failed (may exceed duration limit)`);
+      continue;
+    }
+
+    const context = await testModule3(downloadResult.filePath);
+    downloader.cleanup(downloadResult.filePath);
+    pass('Local video file cleaned up');
+
+    if (!context) {
+      fail(`Skipped video ${i + 1} — VLM understanding failed`);
+      continue;
+    }
+
+    processed.push({ video, downloadResult, context });
+  }
+
+  // ── Summary ─────────────────────────────────────────────────────────────────
+  header(`PIPELINE COMPLETE — ${processed.length}/${searchResult.selectedVideos.length} videos processed`);
+  pass(`Keyword: "${searchResult.searchQuery}"`);
+  processed.forEach(({ video, context }, i) => {
+    pass(`  [${i + 1}] @${video.author}`);
+    pass(`      Topic      : ${context.mainTopic}`);
+    pass(`      Mood       : ${context.mood}`);
+    pass(`      Key moments: ${context.keyMoments.length}`);
+    if (context.transcript) {
+      pass(`      Transcript : "${context.transcript.substring(0, 100)}..."`);
+    }
+  });
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -287,7 +304,7 @@ async function main() {
       await testModule3(arg);
       break;
     case 'all':
-      await testAll();
+      await testAll(arg);
       break;
     default:
       console.log('Usage:');

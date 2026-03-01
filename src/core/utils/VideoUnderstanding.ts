@@ -3,7 +3,7 @@
  *
  * This module implements Module 3 of the CrowdListen video pipeline.
  * It uploads a local video file to the Gemini Files API, waits for processing,
- * then sends the video to Gemini 1.5 Pro with a structured "understand the video"
+ * then sends the video to Gemini 2.5 Flash with a structured "understand the video"
  * prompt that returns rich JSON — including a timestamped timeline and key moments.
  *
  * The resulting VideoContext is consumed downstream by:
@@ -43,7 +43,7 @@ export interface KeyMoment {
 }
 
 /**
- * Structured understanding of a video, produced by Gemini 1.5 Pro.
+ * Structured understanding of a video, produced by Gemini 2.5 Flash.
  * This is the central data structure passed through the enrichment pipeline.
  */
 export interface VideoContext {
@@ -153,6 +153,14 @@ const POLLING_INTERVAL_MS = 3000;
  */
 const MAX_POLL_ATTEMPTS = 40;
 
+/**
+ * Timeout for the Gemini generateContent call (ms).
+ * Gemini 2.5 Flash is a thinking model and can take several minutes on
+ * longer videos. Without a timeout the SDK waits indefinitely.
+ * 5 minutes should be sufficient for videos up to ~5 min long.
+ */
+const GENERATE_TIMEOUT_MS = 300_000; // 5 minutes
+
 // ─── Service class ────────────────────────────────────────────────────────────
 
 export class VideoUnderstandingService {
@@ -197,7 +205,7 @@ export class VideoUnderstandingService {
     // Step 1: Upload the video file to Gemini Files API and wait until ready
     const fileUri = await this.uploadAndWait(videoFilePath, videoId);
 
-    // Step 2: Ask Gemini 1.5 Pro to understand the video
+    // Step 2: Ask Gemini 2.5 Flash Pro to understand the video
     const rawJson = await this.runUnderstandingPrompt(fileUri, searchKeyword);
 
     // Step 3: Parse and validate the JSON response into a typed VideoContext
@@ -283,7 +291,7 @@ export class VideoUnderstandingService {
   // ─── Private: generation ─────────────────────────────────────────────────
 
   /**
-   * Send the uploaded video (referenced by URI) to Gemini 1.5 Pro with
+   * Send the uploaded video (referenced by URI) to Gemini 2.5 Flash with
    * the structured understanding prompt. Returns the raw response string.
    *
    * The prompt instructs Gemini to return only JSON — no markdown, no prose.
@@ -293,16 +301,19 @@ export class VideoUnderstandingService {
     const model = this.genAI.getGenerativeModel({ model: GEMINI_MODEL });
     const prompt = this.buildPrompt(searchKeyword);
 
-    const result = await model.generateContent([
-      {
-        // Reference the uploaded video file by its Gemini Files URI
-        fileData: {
-          fileUri,
-          mimeType: 'video/mp4',
+    const result = await model.generateContent(
+      [
+        {
+          // Reference the uploaded video file by its Gemini Files URI
+          fileData: {
+            fileUri,
+            mimeType: 'video/mp4',
+          },
         },
-      },
-      { text: prompt },
-    ]);
+        { text: prompt },
+      ],
+      { timeout: GENERATE_TIMEOUT_MS },
+    );
 
     const raw = result.response.text();
 
