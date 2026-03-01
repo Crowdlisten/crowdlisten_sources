@@ -1,4 +1,4 @@
-[dotenv@17.3.1] injecting env (12) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[dotenv@17.3.1] injecting env (12) from .env -- tip: ⚙️  enable debug logging with { debug: true }
 
 CrowdListen Video Pipeline Test
 
@@ -18,12 +18,12 @@ CrowdListen Video Pipeline Test
 [TikTokSearch] Using persistent Chrome profile: /Users/ForrestChai/.playwright-tiktok-profile
 [TikTokSearch] Navigating to: https://www.tiktok.com/search/video?q=basketball%20highlights
 [TikTokSearch] Extracted 20 candidates from DOM
-[TikTokSearch] Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_basketball_highlights_1772348076827.png
-[TikTokSearch] Claude selected indices: [1, 2, 6, 7, 10]
+[TikTokSearch] Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_basketball_highlights_1772349222815.png
+[TikTokSearch] Claude selected indices: [1, 2, 6, 7, 13]
 [TikTokSearch] Selected 5/20 candidates for keyword: "basketball highlights"
   ✓  Total candidates found : 20
   ✓  Videos selected by Claude: 5
-  ✓  Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_basketball_highlights_1772348076827.png
+  ✓  Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_basketball_highlights_1772349222815.png
   ✓    [1] @ppeditz0: 1.4M...
   →         https://www.tiktok.com/@ppeditz0/video/7588717101649530126
   ✓    [2] @lameloballlegacy: 643.5K...
@@ -32,8 +32,8 @@ CrowdListen Video Pipeline Test
   →         https://www.tiktok.com/@coldhearts/video/7484780936589249838
   ✓    [4] @overtime: 248.4K...
   →         https://www.tiktok.com/@overtime/video/7610524506494422286
-  ✓    [5] @hoopeclipse: 529.8K...
-  →         https://www.tiktok.com/@hoopeclipse/video/7605381802819177758
+  ✓    [5] @hoopeclipse: 674.7K...
+  →         https://www.tiktok.com/@hoopeclipse/video/7600160345612668191
 
 ────────────────────────────────────────────────────────────
   PARALLEL PROCESSING — launching 5 videos simultaneously
@@ -78,27 +78,27 @@ CrowdListen Video Pipeline Test
   ✓  VideoDownloader module loaded from dist/
   →  Starting download (this may take 10-30 seconds)...
 [VideoDownloader] Starting download — videoId: 7610524506494422286
-  →  [V5] Starting @hoopeclipse — https://www.tiktok.com/@hoopeclipse/video/7605381802819177758
+  →  [V5] Starting @hoopeclipse — https://www.tiktok.com/@hoopeclipse/video/7600160345612668191
 
 ────────────────────────────────────────────────────────────
   MODULE 2 — VideoDownloader
 ────────────────────────────────────────────────────────────
-  →  Test URL: https://www.tiktok.com/@hoopeclipse/video/7605381802819177758
+  →  Test URL: https://www.tiktok.com/@hoopeclipse/video/7600160345612668191
   ✓  yt-dlp found: v2026.02.21
   ✓  VideoDownloader module loaded from dist/
   →  Starting download (this may take 10-30 seconds)...
-[VideoDownloader] Starting download — videoId: 7605381802819177758
+[VideoDownloader] Starting download — videoId: 7600160345612668191
+[VideoDownloader] Duration check passed — 61s
+[VideoDownloader] Duration check passed — 20s
 [VideoDownloader] Duration check passed — 22s
 [VideoDownloader] Duration check passed — 28s
 [VideoDownloader] Duration check passed — 63s
-[VideoDownloader] Duration check passed — 20s
-[VideoDownloader] Duration check passed — 64s
-[VideoDownloader] Download complete — videoId: 7588717101649530126, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7588717101649530126.mp4, took 9273ms
+[VideoDownloader] Download complete — videoId: 7588717101649530126, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7588717101649530126.mp4, took 9196ms
   ✓  Download complete
   ✓  Video ID  : 7588717101649530126
   ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7588717101649530126.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 9273ms
+  ✓  Time taken: 9196ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
@@ -110,12 +110,12 @@ CrowdListen Video Pipeline Test
   →  This typically takes 20-60 seconds depending on video length.
 [VideoUnderstanding] Starting analysis — videoId: 7588717101649530126
 [VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
-[VideoDownloader] Download complete — videoId: 7610524506494422286, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7610524506494422286.mp4, took 9168ms
+[VideoDownloader] Download complete — videoId: 7610524506494422286, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7610524506494422286.mp4, took 9426ms
   ✓  Download complete
   ✓  Video ID  : 7610524506494422286
   ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7610524506494422286.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 9168ms
+  ✓  Time taken: 9426ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
@@ -132,13 +132,13 @@ CrowdListen Video Pipeline Test
 [VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
 [VideoUnderstanding] File is ACTIVE after 2 poll(s)
-[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
-[VideoDownloader] Download complete — videoId: 7484780936589249838, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7484780936589249838.mp4, took 17277ms
+[VideoUnderstanding] File is ACTIVE after 2 poll(s)
+[VideoDownloader] Download complete — videoId: 7484780936589249838, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7484780936589249838.mp4, took 17189ms
   ✓  Download complete
   ✓  Video ID  : 7484780936589249838
   ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7484780936589249838.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 17277ms
+  ✓  Time taken: 17189ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
@@ -150,30 +150,29 @@ CrowdListen Video Pipeline Test
   →  This typically takes 20-60 seconds depending on video length.
 [VideoUnderstanding] Starting analysis — videoId: 7484780936589249838
 [VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
-[VideoDownloader] Download complete — videoId: 7605381802819177758, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7605381802819177758.mp4, took 17588ms
+[VideoDownloader] Download complete — videoId: 7600160345612668191, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7600160345612668191.mp4, took 16999ms
   ✓  Download complete
-  ✓  Video ID  : 7605381802819177758
-  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7605381802819177758.mp4
+  ✓  Video ID  : 7600160345612668191
+  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7600160345612668191.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 17588ms
+  ✓  Time taken: 16999ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
 ────────────────────────────────────────────────────────────
   ✓  GEMINI_API_KEY is set
-  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7605381802819177758.mp4
+  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7600160345612668191.mp4
   ✓  VideoUnderstanding module loaded from dist/
   →  Uploading to Gemini Files API and waiting for processing...
   →  This typically takes 20-60 seconds depending on video length.
-[VideoUnderstanding] Starting analysis — videoId: 7605381802819177758
+[VideoUnderstanding] Starting analysis — videoId: 7600160345612668191
 [VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
-[VideoUnderstanding] File is ACTIVE after 3 poll(s)
-[VideoDownloader] Download complete — videoId: 7532314551644212535, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7532314551644212535.mp4, took 22995ms
+[VideoDownloader] Download complete — videoId: 7532314551644212535, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7532314551644212535.mp4, took 21435ms
   ✓  Download complete
   ✓  Video ID  : 7532314551644212535
   ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7532314551644212535.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 22995ms
+  ✓  Time taken: 21435ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
@@ -187,110 +186,110 @@ CrowdListen Video Pipeline Test
 [VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
 [VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
 [VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
-[VideoUnderstanding] Done — videoId: 7588717101649530126, took 21069ms, 5 key moments, 4 timeline segments
+[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
+[VideoUnderstanding] Done — videoId: 7588717101649530126, took 21644ms, 6 key moments, 9 timeline segments
   ✓  VideoContext received from Gemini
-  ✓  Main topic          : The video showcases a compilation of basketball player Anthony Edwards' 'ankle-breaking' dribble moves against various opponents.
-  ✓  Mood                : Energetic and exciting, showcasing skillful and dominant basketball plays.
-  ✓  Emotional arc       : The video opens with enthusiastic sports commentary, quickly transitioning to a high-energy and hype mood driven by rap music and dynamic basketball highlights, maintaining this exciting tone throughout.
-  ✓  Timeline segments   : 4
-  ✓  Key moments         : 5
-  ✓  Controversial moments: 1
-  ✓  People detected     : Anthony Edwards (basketball player, wearing jersey #5 in some clips, #1 in others), Various unnamed opposing basketball players (defenders and teammates), Basketball referees (wearing numbers 68, 33, 56, 48, 49), Spectators in the arena
-  ✓  Audio track         : The video features a hip-hop/trap song titled "Ant Got That Dog In Him" by Yvngchris (ft. Lil Uzi Vert) with an energetic beat and explicit male vocals, overlaid with basketball game commentary and crowd cheering.
+  ✓  Main topic          : The video showcases a compilation of basketball players executing impressive 'ankle-breaker' crossover moves, causing their defenders to fall.
+  ✓  Mood                : Energetic, confident, boastful, thrilling.
+  ✓  Emotional arc       : The video maintains a consistent high-energy and confident emotional tone from start to finish, driven by the aggressive basketball plays and the background rap music, culminating in moments of player dominance over fallen opponents.
+  ✓  Timeline segments   : 9
+  ✓  Key moments         : 6
+  ✓  Controversial moments: 0
+  ✓  People detected     : Basketball player in white jersey (multiple instances, including #5, #7), Basketball player in blue jersey (multiple instances, including #2, #10, #21, #27), Basketball player in black jersey (#7), Basketball player in red jersey (multiple instances, including #25, #46), Basketball player in black/orange jersey (#23), Basketball player in grey/green jersey (#5), Basketball player in white jersey (#12), Referee #68, Referee #33, Referee #56, Referee #48, Spectators in the stands
+  ✓  Audio track         : An energetic, heavily auto-tuned rap song with a confident and aggressive tone plays throughout the video, acting as background music.
   ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 19
-  ✓  Transcript length   : 437 chars
-  ✓  Processing time     : 21069ms
+  ✓  Visual text overlays: 12
+  ✓  Transcript length   : 511 chars
+  ✓  Processing time     : 21644ms
   →  Transcript preview:
-  →    "Fun game here in the Twin Cities. Look at the moves by Edwards. And through your body, too, man. If I shoot a little man, they won't shoot back. Drip ..."
+  →    "Fun game here in the Twin Cities. Look at the moves by Edwards. And through your body, if I shoot a low man, they won't shoot bad. Think I know the pa..."
   →  Sample key moment:
-  →    0:03 — Anthony Edwards performs a deceptive dribble move, causing his defender to momentarily lose balance before Edwards shoots.
+  →    0:04 — A player in a white #5 jersey executes a crossover that causes a defender in a blue #27 jersey to fall, followed by a dunk.
 [VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7588717101649530126.mp4
   ✓  [V1] Local video file cleaned up
 [VideoUnderstanding] File is ACTIVE after 3 poll(s)
-[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
 [VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
+[VideoUnderstanding] File is ACTIVE after 3 poll(s)
 [VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
-[VideoUnderstanding] File is ACTIVE after 4 poll(s)
-[VideoUnderstanding] Done — videoId: 7610524506494422286, took 28235ms, 3 key moments, 4 timeline segments
+[VideoUnderstanding] Done — videoId: 7610524506494422286, took 27027ms, 6 key moments, 4 timeline segments
   ✓  VideoContext received from Gemini
-  ✓  Main topic          : A basketball player repeatedly uses skillful dribble moves to break an opponent's ankles during a game.
-  ✓  Mood                : Humorous, skillful, and triumphant.
-  ✓  Emotional arc       : The video starts with a playful anticipation as the player sets up the move, builds through the successful execution of two dribbling maneuvers, and culminates in a triumphant feeling as the player scores the basket, eliciting cheers from the crowd.
+  ✓  Main topic          : A basketball player skillfully performs two consecutive ankle-breaking crossover moves on the same defender, scoring both times.
+  ✓  Mood                : Exciting, impressive, and somewhat humorous due to the repeated success against the same defender.
+  ✓  Emotional arc       : The video starts with anticipation as the player initiates a move, builds to excitement with the first successful score and the defender's fall, and then escalates to triumphant amusement and further excitement as the player repeats the feat on the same defender.
   ✓  Timeline segments   : 4
-  ✓  Key moments         : 3
+  ✓  Key moments         : 6
   ✓  Controversial moments: 0
-  ✓  People detected     : player in white jersey number 1, player in red jersey number 10, other basketball players, referees, spectators
-  ✓  Audio track         : Sounds of a basketball game including dribbling, shoe squeaks, a referee's whistle, and crowd cheering.
+  ✓  People detected     : Player in white jersey number 1, Player in red jersey number 4, Other basketball players, Referee, Spectators
+  ✓  Audio track         : Sounds of a basketball game, including dribbling, crowd cheering, and a referee's whistle.
   ✓  Calls to action     : (none)
   ✓  Visual text overlays: 5
   ✓  Transcript length   : 0 chars
-  ✓  Processing time     : 28235ms
+  ✓  Processing time     : 27027ms
   →  Sample key moment:
-  →    0:03 — The player in the white jersey executes a crossover, causing the defender to fall to the ground.
+  →    0:02 — The player in the white jersey performs the first crossover dribble move.
 [VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7610524506494422286.mp4
   ✓  [V4] Local video file cleaned up
 [VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
-[VideoUnderstanding] Done — videoId: 7484780936589249838, took 24182ms, 7 key moments, 7 timeline segments
-  ✓  VideoContext received from Gemini
-  ✓  Main topic          : A highlight reel showcasing the dominant performance of a basketball player named Diamant during an AAU game, featuring multiple dunks and aggressive plays.
-  ✓  Mood                : Energetic, exciting, dominant, and celebratory.
-  ✓  Emotional arc       : The video maintains a consistently high level of excitement and energy, showcasing a player's dominant performance and culminating in triumphant celebrations after impressive plays.
-  ✓  Timeline segments   : 7
-  ✓  Key moments         : 7
-  ✓  Controversial moments: 0
-  ✓  People detected     : Diamant (player in light blue and white 'Drifty' jersey, number 13/10), Opposing players (wearing green and white jerseys), Teammates, Spectators/crowd members, Referee
-  ✓  Audio track         : Upbeat, energetic trap or hip-hop music with prominent bass and drums, combined with typical basketball game sounds including dribbling, shoe squeaks, and crowd reactions.
-  ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 4
-  ✓  Transcript length   : 0 chars
-  ✓  Processing time     : 24182ms
-  →  Sample key moment:
-  →    0:01 — Diamant executes the first powerful one-handed dunk of the video.
-[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7484780936589249838.mp4
-  ✓  [V3] Local video file cleaned up
 [VideoUnderstanding] File is ACTIVE after 4 poll(s)
-[VideoUnderstanding] Done — videoId: 7532314551644212535, took 36089ms, 6 key moments, 11 timeline segments
+[VideoUnderstanding] Done — videoId: 7484780936589249838, took 27762ms, 6 key moments, 9 timeline segments
   ✓  VideoContext received from Gemini
-  ✓  Main topic          : A highlight reel showcases a young basketball player, number 1, displaying impressive shooting and dribbling skills during various games.
-  ✓  Mood                : inspirational
-  ✓  Emotional arc       : The video opens with a calm and focused intensity from the young player, transitions into moments of skill and triumphant celebration with teammates and spectators, and maintains an energetic and inspirational tone throughout as he consistently performs well.
-  ✓  Timeline segments   : 11
+  ✓  Main topic          : The video showcases the dominant and impressive basketball skills of a player named Diamant during an AAU game, highlighting his exceptional talent compared to his peers.
+  ✓  Mood                : Energetic, exciting, dominant, impressive.
+  ✓  Emotional arc       : The emotional arc maintains a consistently high level of excitement and energy, with each dunk building on the previous one to reinforce the player's dominance and impressive skill.
+  ✓  Timeline segments   : 9
   ✓  Key moments         : 6
   ✓  Controversial moments: 0
-  ✓  People detected     : The young male basketball player (jersey #1), Various teammates (wearing numbers like 8, 15, 2, 3), Opposing players, Coaches (male adults high-fiving players), Referees (wearing black and white striped shirts), Spectators (adults and children watching from the sidelines)
-  ✓  Audio track         : The audio features the song "Smack That" by Akon ft. Eminem, providing a hip-hop/R&B beat that creates an energetic and confident mood.
+  ✓  People detected     : Diamant (player in light blue/white "DRIFTY COLDHEART" jersey, numbers 13 and 10), Opposing players (in green jerseys, numbers 8, 23, 3, 1, 6), Spectators (crowd around the court), Referees (briefly visible), Person filming (partially visible hands holding a phone at 0:22-0:23)
+  ✓  Audio track         : Sounds of an active basketball game including crowd cheering, basketball dribbling, shoe squeaks on the court, the ball hitting the rim and net, and the thud of dunks.
   ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 7
-  ✓  Transcript length   : 530 chars
-  ✓  Processing time     : 36089ms
-  →  Transcript preview:
-  →    "I feel you creeping I can see it from my shadow. Wanna jump up in my Lamborghini Gallardo. Maybe go to my place and just kick it like Tae Bo. Hopeless..."
+  ✓  Visual text overlays: 1
+  ✓  Transcript length   : 0 chars
+  ✓  Processing time     : 27762ms
   →  Sample key moment:
-  →    0:05 — The young player in a grey and neon green jersey stands with arms crossed, wearing a yellow mouthguard, displaying a focused and confident expression.
+  →    0:01 — Diamant drives coast-to-coast for a powerful two-handed dunk, beginning the sequence of dominant plays.
+[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7484780936589249838.mp4
+  ✓  [V3] Local video file cleaned up
+[VideoUnderstanding] Done — videoId: 7532314551644212535, took 36609ms, 7 key moments, 13 timeline segments
+  ✓  VideoContext received from Gemini
+  ✓  Main topic          : A highlight reel showcasing the impressive basketball skills and shooting ability of a young boy during various games.
+  ✓  Mood                : Inspirational and energetic, showcasing youthful talent and determination in sports.
+  ✓  Emotional arc       : The emotional arc of the video remains consistently positive and energetic, starting with a determined focus, building through moments of skilled execution and successful shots, and culminating in celebratory moments, all conveying an inspirational and confident tone.
+  ✓  Timeline segments   : 13
+  ✓  Key moments         : 7
+  ✓  Controversial moments: 0
+  ✓  People detected     : The young boy (main player, wears number 1 on most jerseys), Other young boys (teammates and opponents), Adults (coaches, referees, spectators)
+  ✓  Audio track         : An energetic, slowed-down hip-hop/trap beat with a repetitive vocal sample that sounds like "Smack that, all on the floor, give me some more, till you get sore", likely a remix of Akon's 'Smack That'.
+  ✓  Calls to action     : (none)
+  ✓  Visual text overlays: 6
+  ✓  Transcript length   : 0 chars
+  ✓  Processing time     : 36609ms
+  →  Sample key moment:
+  →    0:06 — The boy stands with his arms crossed, wearing a bright yellow mouthguard, exuding a determined and confident demeanor.
 [VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7532314551644212535.mp4
   ✓  [V2] Local video file cleaned up
-[VideoUnderstanding] JSON parse failed — using fallback context. Error: SyntaxError: Unexpected non-whitespace character after JSON at position 7028 (line 158 column 1)
-[VideoUnderstanding] Done — videoId: 7605381802819177758, took 82364ms, 0 key moments, 0 timeline segments
+[VideoUnderstanding] Done — videoId: 7600160345612668191, took 53871ms, 7 key moments, 9 timeline segments
   ✓  VideoContext received from Gemini
-  ✓  Main topic          : Video content (analysis parse error)
-  ✓  Mood                : unknown
-  ✓  Emotional arc       : 
-  ✓  Timeline segments   : 0
-  ✓  Key moments         : 0
+  ✓  Main topic          : This video showcases a compilation of impressive and difficult shot-making by NBA player LaMelo Ball during various basketball games.
+  ✓  Mood                : Exciting, impressive, skillful
+  ✓  Emotional arc       : The video opens with immediate excitement from a buzzer-beater, and this high-energy, impressive mood is consistently maintained throughout, leading to a triumphant and awe-inspiring conclusion with each spectacular shot.
+  ✓  Timeline segments   : 9
+  ✓  Key moments         : 7
   ✓  Controversial moments: 0
-  ✓  People detected     : (none)
-  ✓  Audio track         : (none)
-  ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 0
-  ✓  Transcript length   : 0 chars
-  ✓  Processing time     : 82364ms
-[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7605381802819177758.mp4
+  ✓  People detected     : LaMelo Ball (player in light teal/white jersey), Various opposing basketball players, Basketball referees, Crowd members in the arenas, Commentators (voices only)
+  ✓  Audio track         : Upbeat hip-hop/trap music with a prominent electronic beat and vocal samples, serving as a hype track.
+  ✓  Calls to action     : LIKE FANDUEL SPORTS NETWORK ON FACEBOOK
+  ✓  Visual text overlays: 2
+  ✓  Transcript length   : 384 chars
+  ✓  Processing time     : 53871ms
+  →  Transcript preview:
+  →    "Oh, look what I found! Get in there! Oh! Brandon Miller. Lost it. LaMelo! Oh, it's been that kind of day! Oh, get that! He has eaten in the crosshairs..."
+  →  Sample key moment:
+  →    0:03 — LaMelo Ball hits a fadeaway jumper at the buzzer, leading to an excited crowd reaction and commentator's 'Oh!'
+[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7600160345612668191.mp4
   ✓  [V5] Local video file cleaned up
 
 ────────────────────────────────────────────────────────────
@@ -298,24 +297,24 @@ CrowdListen Video Pipeline Test
 ────────────────────────────────────────────────────────────
   ✓  Keyword: "basketball highlights"
   ✓    [1] @ppeditz0
-  ✓        Topic      : The video showcases a compilation of basketball player Anthony Edwards' 'ankle-breaking' dribble moves against various opponents.
-  ✓        Mood       : Energetic and exciting, showcasing skillful and dominant basketball plays.
-  ✓        Key moments: 5
-  ✓        Transcript : "Fun game here in the Twin Cities. Look at the moves by Edwards. And through your body, too, man. If ..."
-  ✓    [2] @lameloballlegacy
-  ✓        Topic      : A highlight reel showcases a young basketball player, number 1, displaying impressive shooting and dribbling skills during various games.
-  ✓        Mood       : inspirational
+  ✓        Topic      : The video showcases a compilation of basketball players executing impressive 'ankle-breaker' crossover moves, causing their defenders to fall.
+  ✓        Mood       : Energetic, confident, boastful, thrilling.
   ✓        Key moments: 6
-  ✓        Transcript : "I feel you creeping I can see it from my shadow. Wanna jump up in my Lamborghini Gallardo. Maybe go ..."
-  ✓    [3] @coldhearts
-  ✓        Topic      : A highlight reel showcasing the dominant performance of a basketball player named Diamant during an AAU game, featuring multiple dunks and aggressive plays.
-  ✓        Mood       : Energetic, exciting, dominant, and celebratory.
+  ✓        Transcript : "Fun game here in the Twin Cities. Look at the moves by Edwards. And through your body, if I shoot a ..."
+  ✓    [2] @lameloballlegacy
+  ✓        Topic      : A highlight reel showcasing the impressive basketball skills and shooting ability of a young boy during various games.
+  ✓        Mood       : Inspirational and energetic, showcasing youthful talent and determination in sports.
   ✓        Key moments: 7
+  ✓    [3] @coldhearts
+  ✓        Topic      : The video showcases the dominant and impressive basketball skills of a player named Diamant during an AAU game, highlighting his exceptional talent compared to his peers.
+  ✓        Mood       : Energetic, exciting, dominant, impressive.
+  ✓        Key moments: 6
   ✓    [4] @overtime
-  ✓        Topic      : A basketball player repeatedly uses skillful dribble moves to break an opponent's ankles during a game.
-  ✓        Mood       : Humorous, skillful, and triumphant.
-  ✓        Key moments: 3
+  ✓        Topic      : A basketball player skillfully performs two consecutive ankle-breaking crossover moves on the same defender, scoring both times.
+  ✓        Mood       : Exciting, impressive, and somewhat humorous due to the repeated success against the same defender.
+  ✓        Key moments: 6
   ✓    [5] @hoopeclipse
-  ✓        Topic      : Video content (analysis parse error)
-  ✓        Mood       : unknown
-  ✓        Key moments: 0
+  ✓        Topic      : This video showcases a compilation of impressive and difficult shot-making by NBA player LaMelo Ball during various basketball games.
+  ✓        Mood       : Exciting, impressive, skillful
+  ✓        Key moments: 7
+  ✓        Transcript : "Oh, look what I found! Get in there! Oh! Brandon Miller. Lost it. LaMelo! Oh, it's been that kind of..."
