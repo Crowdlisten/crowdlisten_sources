@@ -135,13 +135,23 @@ async function testModule3(localFilePath) {
     );
 
     pass('VideoContext received from Gemini');
-    pass(`Main topic       : ${context.mainTopic}`);
-    pass(`Mood             : ${context.mood}`);
-    pass(`Timeline segments: ${context.timeline.length}`);
-    pass(`Key moments      : ${context.keyMoments.length}`);
-    pass(`People detected  : ${context.keyEntities.people.join(', ') || '(none)'}`);
-    pass(`Processing time  : ${context.processingTimeMs}ms`);
+    pass(`Main topic          : ${context.mainTopic}`);
+    pass(`Mood                : ${context.mood}`);
+    pass(`Emotional arc       : ${context.emotionalArc}`);
+    pass(`Timeline segments   : ${context.timeline.length}`);
+    pass(`Key moments         : ${context.keyMoments.length}`);
+    pass(`Controversial moments: ${context.controversialMoments.length}`);
+    pass(`People detected     : ${context.keyEntities.people.join(', ') || '(none)'}`);
+    pass(`Audio track         : ${context.audioTrack || '(none)'}`);
+    pass(`Calls to action     : ${context.callsToAction.join(' | ') || '(none)'}`);
+    pass(`Visual text overlays: ${context.visualText.length}`);
+    pass(`Transcript length   : ${context.transcript.length} chars`);
+    pass(`Processing time     : ${context.processingTimeMs}ms`);
 
+    if (context.transcript) {
+      info('Transcript preview:');
+      info(`  "${context.transcript.substring(0, 150)}${context.transcript.length > 150 ? '...' : ''}"`);
+    }
     if (context.keyMoments.length > 0) {
       info('Sample key moment:');
       info(`  ${context.keyMoments[0].timestamp} — ${context.keyMoments[0].description}`);

@@ -88,6 +88,48 @@ export interface VideoContext {
   /** How this video relates to the keyword that was used to find it. */
   searchKeywordRelevance: string;
 
+  /**
+   * Full verbatim transcript of all spoken dialogue and voiceover narration.
+   * Empty string if the video has no speech. Used to resolve comment references
+   * like "when he said...", "that quote", "the part where she mentioned X".
+   */
+  transcript: string;
+
+  /**
+   * On-screen text overlays, subtitles, and captions that appear in the video,
+   * separate from spoken audio. TikTok creators frequently add text overlays
+   * that commenters quote directly ("that text at the beginning", "the caption").
+   */
+  visualText: string[];
+
+  /**
+   * Background music or notable sound effects.
+   * Includes song name/artist if identifiable, otherwise describes genre/mood.
+   * Comments commonly reference audio: "this song", "the beat", "that sound".
+   */
+  audioTrack: string;
+
+  /**
+   * Explicit calls-to-action made in the video
+   * (e.g. "comment below", "like if you agree", "tell me your answer").
+   * These directly shape comment patterns and explain engagement spikes.
+   */
+  callsToAction: string[];
+
+  /**
+   * How the emotional tone/energy shifts across the video's duration.
+   * E.g. "starts playful → builds tension at 0:20 → ends triumphantly at 0:40".
+   * Helps cluster comments by which part of the video triggered the reaction.
+   */
+  emotionalArc: string;
+
+  /**
+   * Specific moments likely to provoke debate or divided reactions.
+   * Different from keyMoments — focused on opinion-splitting content that
+   * explains why certain comment threads get heated or polarised.
+   */
+  controversialMoments: KeyMoment[];
+
   // Processing metadata — not part of semantic content
   videoId: string;
   processingTimeMs: number;
@@ -95,8 +137,12 @@ export interface VideoContext {
 
 // ─── Internal constants ───────────────────────────────────────────────────────
 
-/** Gemini model to use. 1.5 Pro supports direct video file input. */
-const GEMINI_MODEL = 'gemini-1.5-pro';
+/**
+ * Gemini model for video understanding.
+ * gemini-2.5-flash delivers excellent structured extraction quality at low cost.
+ * Switch to gemini-2.5-pro for maximum quality on complex or long-form videos.
+ */
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 /** Interval between file-state polling requests (ms). */
 const POLLING_INTERVAL_MS = 3000;
@@ -288,7 +334,7 @@ export class VideoUnderstandingService {
       ? `  "searchKeywordRelevance": "How this video relates to the search keyword '${searchKeyword}' (1-2 sentences)",`
       : `  "searchKeywordRelevance": "",`;
 
-    return `You are a video content analysis assistant. Watch this entire video carefully.
+    return `You are a video content analysis assistant. Watch this entire video carefully, including all audio.
 
 Return ONLY the following JSON object — no extra text, no markdown, no explanation:
 
@@ -318,12 +364,25 @@ Return ONLY the following JSON object — no extra text, no markdown, no explana
     "Background knowledge a commenter might assume but the video does not state. E.g. 'Creator is known for X', 'This references trending topic Y', 'Sequel to a previous video about Z'"
   ],
 ${relevanceField}
+  "transcript": "Full verbatim transcription of ALL spoken words and voiceover narration in the video, in order. Empty string if no speech.",
+  "visualText": ["Each distinct on-screen text overlay, subtitle, or caption that appears — quoted verbatim. Exclude the video's own auto-generated subtitles if they duplicate the transcript."],
+  "audioTrack": "Background music or notable sound effects. Include song name and artist if identifiable, otherwise describe genre and mood. Empty string if no notable audio.",
+  "callsToAction": ["Each explicit call-to-action spoken or shown in the video — e.g. 'comment your answer below', 'like if you agree', 'follow for part 2'"],
+  "emotionalArc": "How the emotional tone/energy shifts across the video. E.g. 'Opens playfully → tension builds at 0:20 → triumphant resolution at 0:40'. One sentence covering the full arc.",
+  "controversialMoments": [
+    {
+      "timestamp": "0:35",
+      "description": "A moment likely to divide viewers or spark debate — a strong opinion, surprising claim, or action that could be interpreted multiple ways."
+    }
+  ]
 }
 
 Guidelines:
+- transcript: capture every spoken word verbatim; use "[inaudible]" for unclear audio
 - timeline: cover the FULL video duration in sequential segments of 10-30 seconds each
 - keyMoments: identify 3-8 specific timestamps; these are the primary anchors for resolving comment references
 - keyEntities.people: describe even unnamed people in enough detail to identify them across references
+- controversialMoments: leave as empty array [] if no genuinely controversial moments exist
 - All text must be in English
 - Return only valid JSON — no trailing commas, no comments inside the JSON`;
   }
@@ -363,6 +422,12 @@ Guidelines:
         mood: 'unknown',
         implicitContext: [],
         searchKeywordRelevance: '',
+        transcript: '',
+        visualText: [],
+        audioTrack: '',
+        callsToAction: [],
+        emotionalArc: '',
+        controversialMoments: [],
         videoId,
         processingTimeMs,
       };
@@ -381,6 +446,12 @@ Guidelines:
       mood: parsed.mood || '',
       implicitContext: Array.isArray(parsed.implicitContext) ? parsed.implicitContext : [],
       searchKeywordRelevance: parsed.searchKeywordRelevance || '',
+      transcript: parsed.transcript || '',
+      visualText: Array.isArray(parsed.visualText) ? parsed.visualText : [],
+      audioTrack: parsed.audioTrack || '',
+      callsToAction: Array.isArray(parsed.callsToAction) ? parsed.callsToAction : [],
+      emotionalArc: parsed.emotionalArc || '',
+      controversialMoments: Array.isArray(parsed.controversialMoments) ? parsed.controversialMoments : [],
       videoId,
       processingTimeMs,
     };

@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.26.0",
-    "@google/generative-ai": "^0.17.0",
+    "@google/generative-ai": "^0.24.1",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "axios": "^1.6.0",
     "dotenv": "^17.3.1",
