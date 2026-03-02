@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "crowdlisten": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "cwd": "/Users/summon/Documents/Work/crowdlisten_sources_mcp"
+    }
+  }
+}

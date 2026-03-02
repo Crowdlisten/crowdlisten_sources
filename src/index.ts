@@ -88,6 +88,11 @@ const server = new Server(
   {
     name: 'crowdlisten-mcp-server',
     version: '1.0.0',
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
   }
 );
 
@@ -1247,18 +1252,19 @@ async function handleExpertIdentification(args: any) {
 }
 
 async function handleCrossPlatformSynthesis(args: any) {
-  const { 
-    topic, 
-    platforms = ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'],
+  const {
+    topic,
+    platforms: rawPlatforms = ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'],
     synthesisType = 'theme_convergence',
     identifyGaps = true,
     includeMetrics = true
   } = args;
+  const platforms: string[] = rawPlatforms;
   
   try {
     // Get data from all specified platforms
     const platformData: Record<string, any> = {};
-    const searchPromises = platforms.map(async (platform: any) => {
+    const searchPromises = platforms.map(async (platform: string) => {
       try {
         const posts = await unifiedService.searchContent(platform as PlatformType, topic, 50);
         return { platform, posts, success: true };
@@ -1274,7 +1280,7 @@ async function handleCrossPlatformSynthesis(args: any) {
         posts: result.posts,
         success: result.success,
         totalPosts: result.posts.length,
-        totalEngagement: result.posts.reduce((sum: any, post: any) =>
+        totalEngagement: result.posts.reduce((sum: number, post: any) =>
           sum + (post.engagement.likes || 0) + (post.engagement.comments || 0), 0)
       };
     });
