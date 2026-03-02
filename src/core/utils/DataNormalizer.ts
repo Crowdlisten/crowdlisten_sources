@@ -214,15 +214,20 @@ export class DataNormalizer {
   }
 
   private static normalizeRedditComment(data: any): Comment {
+    // Reddit nests replies as a Listing: replies.data.children[]
+    // replies can also be an empty string when there are no replies
+    const replyChildren = data.replies?.data?.children || [];
+    const replies = replyChildren
+      .filter((child: any) => child.kind === 't1' && child.data)
+      .map((child: any) => this.normalizeRedditComment(child.data));
+
     return {
       id: data.id || '',
       author: this.normalizeRedditUser(data.author_display_name || data.author || ''),
       text: data.body || '',
       timestamp: new Date((data.created_utc || Date.now() / 1000) * 1000),
       likes: data.score || data.ups || 0,
-      replies: data.replies?.children?.map((reply: any) => 
-        this.normalizeRedditComment(reply.data)
-      ) || []
+      replies
     };
   }
 

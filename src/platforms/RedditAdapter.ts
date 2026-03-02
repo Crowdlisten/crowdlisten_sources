@@ -183,15 +183,36 @@ export class RedditAdapter extends BaseAdapter {
     this.ensureInitialized();
     this.validateContentId(contentId);
     this.validateLimit(limit);
-    
+
     try {
       await this.enforceRateLimit();
-      
-      // Reddit comments require the full post URL structure
-      this.log(`Reddit comments for ${contentId} require post context - returning empty array`, 'warn');
-      return [];
-      
+
+      // Reddit /comments/{postId}.json returns [postListing, commentListing]
+      const response = await this.client.get(`/comments/${contentId}.json`, {
+        params: {
+          limit,
+          depth: 5,
+          sort: 'top'
+        }
+      });
+
+      const commentListing = response.data?.[1];
+      const children = commentListing?.data?.children || [];
+
+      const comments: Comment[] = [];
+      for (const child of children) {
+        // Skip "more" stubs (load-more placeholders)
+        if (child.kind !== 't1' || !child.data) continue;
+        comments.push(DataNormalizer.normalizeComment(child.data, 'reddit'));
+      }
+
+      this.log(`Retrieved ${comments.length} comments for Reddit post ${contentId}`);
+      return comments.slice(0, limit);
+
     } catch (error) {
+      if ((error as any).response?.status === 404) {
+        throw new NotFoundError('reddit', `Post ${contentId}`, error as Error);
+      }
       this.handleError(error, 'getContentComments');
     }
   }
@@ -205,7 +226,7 @@ export class RedditAdapter extends BaseAdapter {
       supportsTrending: true,
       supportsUserContent: true,
       supportsSearch: true,
-      supportsComments: false, // Limited due to Reddit API structure
+      supportsComments: true,
       supportsAnalysis: true
     };
   }

@@ -104,6 +104,78 @@ class PlatformManager {
     }
   }
 
+  // Helper: extract Reddit post ID from URL or raw ID
+  extractRedditPostId(contentUrl) {
+    if (!contentUrl) return null;
+    // Match /comments/{postId} in a Reddit URL
+    const match = contentUrl.match(/\/comments\/([a-z0-9]+)/i);
+    if (match) return match[1];
+    // If it's already a bare ID (no slashes), return as-is
+    if (/^[a-z0-9]+$/i.test(contentUrl)) return contentUrl;
+    return null;
+  }
+
+  // Helper: recursively normalize Reddit comment tree
+  normalizeRedditComment(data) {
+    const replyChildren = data.replies?.data?.children || [];
+    const replies = replyChildren
+      .filter(child => child.kind === 't1' && child.data)
+      .map(child => this.normalizeRedditComment(child.data));
+
+    return {
+      id: data.id || '',
+      author: data.author || data.author_fullname || '[deleted]',
+      text: data.body || '',
+      score: data.score || data.ups || 0,
+      timestamp: new Date((data.created_utc || Date.now() / 1000) * 1000).toISOString(),
+      replies
+    };
+  }
+
+  // Reddit comments - fetch real comments for a post
+  async getRedditComments(contentUrl, limit = 50) {
+    const postId = this.extractRedditPostId(contentUrl);
+    if (!postId) {
+      throw new Error(`Could not extract Reddit post ID from: ${contentUrl}`);
+    }
+
+    try {
+      const response = await axios.get(`https://www.reddit.com/comments/${postId}.json`, {
+        params: {
+          limit: Math.min(limit, 100),
+          depth: 5,
+          sort: 'top'
+        },
+        headers: { 'User-Agent': 'CrowdListen/1.0' },
+        timeout: 15000
+      });
+
+      // Reddit returns [postListing, commentListing]
+      const postData = response.data?.[0]?.data?.children?.[0]?.data || {};
+      const commentListing = response.data?.[1];
+      const children = commentListing?.data?.children || [];
+
+      const comments = children
+        .filter(child => child.kind === 't1' && child.data)
+        .map(child => this.normalizeRedditComment(child.data));
+
+      return {
+        post: {
+          id: postData.id || postId,
+          title: postData.title || '',
+          author: postData.author || '',
+          subreddit: postData.subreddit || '',
+          score: postData.score || 0,
+          url: postData.permalink ? `https://reddit.com${postData.permalink}` : contentUrl
+        },
+        comments: comments.slice(0, limit)
+      };
+    } catch (error) {
+      console.error('Reddit comments error:', error.message);
+      throw new Error(`Failed to fetch Reddit comments: ${error.message}`);
+    }
+  }
+
   // Twitter implementation
   async searchTwitter(query, limit = 10) {
     if (!this.twitterClient) {
@@ -909,29 +981,130 @@ module.exports = async (req, res) => {
               });
             }
 
-          case 'analyze_content':
-            return res.status(200).json({
-              jsonrpc: '2.0',
-              id,
-              result: {
-                content: [{
-                  type: 'text',
-                  text: `# Content Analysis\n\nContent analysis with opinion clustering requires additional implementation.\n\n**Arguments received**: ${JSON.stringify(toolArgs, null, 2)}\n\n**Status**: Framework ready, requires OpenAI API integration for sentiment analysis and clustering.`
-                }]
-              }
-            });
-
           case 'get_content_comments':
-            return res.status(200).json({
-              jsonrpc: '2.0',
-              id,
-              result: {
-                content: [{
-                  type: 'text',
-                  text: `# Content Comments\n\nComment retrieval requires platform-specific implementation.\n\n**Arguments received**: ${JSON.stringify(toolArgs, null, 2)}\n\n**Status**: Framework ready, can be implemented for each platform.`
-                }]
+            try {
+              const { content_url, platform, limit = 50 } = toolArgs;
+
+              if (platform === 'reddit') {
+                const result = await platformManager.getRedditComments(content_url, limit);
+                return res.status(200).json({
+                  jsonrpc: '2.0',
+                  id,
+                  result: {
+                    content: [{
+                      type: 'text',
+                      text: JSON.stringify({
+                        platform: 'reddit',
+                        post: result.post,
+                        commentCount: result.comments.length,
+                        comments: result.comments
+                      }, null, 2)
+                    }]
+                  }
+                });
               }
-            });
+
+              return res.status(200).json({
+                jsonrpc: '2.0',
+                id,
+                result: {
+                  content: [{
+                    type: 'text',
+                    text: `# Unsupported Platform\n\nComment retrieval for "${platform}" is not yet implemented. Currently supported: reddit.`
+                  }]
+                }
+              });
+            } catch (error) {
+              return res.status(200).json({
+                jsonrpc: '2.0',
+                id,
+                result: {
+                  content: [{
+                    type: 'text',
+                    text: `# Error Fetching Comments\n\nFailed to get comments: ${error.message}\n\nPlease check the URL and try again.`
+                  }]
+                }
+              });
+            }
+
+          case 'analyze_content':
+            try {
+              const { content_url: analyzeUrl, platform: analyzePlatform } = toolArgs;
+
+              if (analyzePlatform === 'reddit') {
+                const commentResult = await platformManager.getRedditComments(analyzeUrl, 100);
+                const comments = commentResult.comments;
+
+                // Basic analysis: top comments, author frequency, score distribution
+                const topComments = [...comments]
+                  .sort((a, b) => b.score - a.score)
+                  .slice(0, 10);
+
+                const authorCounts = {};
+                const totalScore = comments.reduce((sum, c) => {
+                  authorCounts[c.author] = (authorCounts[c.author] || 0) + 1;
+                  return sum + c.score;
+                }, 0);
+
+                const avgScore = comments.length > 0 ? (totalScore / comments.length).toFixed(1) : 0;
+
+                // Count total replies across all comments
+                const countReplies = (cmts) => cmts.reduce((sum, c) => sum + (c.replies?.length || 0) + countReplies(c.replies || []), 0);
+                const totalReplies = countReplies(comments);
+
+                const topAuthors = Object.entries(authorCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 5)
+                  .map(([author, count]) => ({ author, commentCount: count }));
+
+                return res.status(200).json({
+                  jsonrpc: '2.0',
+                  id,
+                  result: {
+                    content: [{
+                      type: 'text',
+                      text: JSON.stringify({
+                        platform: 'reddit',
+                        post: commentResult.post,
+                        analysis: {
+                          totalComments: comments.length,
+                          totalReplies,
+                          averageScore: parseFloat(avgScore),
+                          topComments: topComments.map(c => ({
+                            author: c.author,
+                            text: c.text,
+                            score: c.score
+                          })),
+                          mostActiveAuthors: topAuthors
+                        }
+                      }, null, 2)
+                    }]
+                  }
+                });
+              }
+
+              return res.status(200).json({
+                jsonrpc: '2.0',
+                id,
+                result: {
+                  content: [{
+                    type: 'text',
+                    text: `# Unsupported Platform\n\nContent analysis for "${analyzePlatform}" is not yet implemented. Currently supported: reddit.`
+                  }]
+                }
+              });
+            } catch (error) {
+              return res.status(200).json({
+                jsonrpc: '2.0',
+                id,
+                result: {
+                  content: [{
+                    type: 'text',
+                    text: `# Error Analyzing Content\n\nFailed to analyze content: ${error.message}\n\nPlease check the URL and try again.`
+                  }]
+                }
+              });
+            }
 
           case 'cluster_opinions':
             try {

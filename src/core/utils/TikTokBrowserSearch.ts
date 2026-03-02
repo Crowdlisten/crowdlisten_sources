@@ -22,7 +22,7 @@
  *   [TikTokBrowserSearch] → VideoDownloader → VideoUnderstanding → CommentEnricher
  */
 
-import { chromium, BrowserContext, Page } from 'playwright';
+import type { BrowserContext, Page } from 'playwright';
 import Anthropic from '@anthropic-ai/sdk';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -193,6 +193,10 @@ export class TikTokBrowserSearchService {
    * The AutomationControlled flag is disabled to reduce bot-detection likelihood.
    */
   private async launchBrowser(): Promise<BrowserContext> {
+    // Lazy-import playwright so the MCP server can start without it installed.
+    // Playwright is only needed when TikTok browser search is actually invoked.
+    const { chromium } = await import('playwright');
+
     const commonArgs = [
       '--no-sandbox',
       '--disable-blink-features=AutomationControlled',
@@ -202,22 +206,14 @@ export class TikTokBrowserSearchService {
     if (this.chromiumProfilePath) {
       console.log(`[TikTokSearch] Using persistent Chrome profile: ${this.chromiumProfilePath}`);
 
-      // Chrome's profile path can be either:
-      //   a) The full user data dir: ~/Library/Application Support/Google/Chrome/
-      //   b) A specific profile subdir:  .../Chrome/Profile 7   (or .../Chrome/Default)
-      // Playwright's launchPersistentContext wants the user data dir as the first arg,
-      // and the profile name must be passed via --profile-directory=<name>.
       const profileMatch = this.chromiumProfilePath.match(/[/\\](Default|Profile \d+)$/);
       const userDataDir = profileMatch
         ? path.dirname(this.chromiumProfilePath)
         : this.chromiumProfilePath;
       const profileArgs = profileMatch ? [`--profile-directory=${profileMatch[1]}`] : [];
 
-      // launchPersistentContext manages both launch + context in one call.
-      // Uses Playwright's bundled Chromium with a persistent profile directory —
-      // log into TikTok once and the session is saved for all future runs.
       return chromium.launchPersistentContext(userDataDir, {
-        headless: false, // Must be headed when reusing a real Chrome profile
+        headless: false,
         viewport: { width: 1280, height: 900 },
         args: [...commonArgs, ...profileArgs],
       });
@@ -230,7 +226,6 @@ export class TikTokBrowserSearchService {
     });
     return browser.newContext({
       viewport: { width: 1280, height: 900 },
-      // Realistic user-agent reduces TikTok bot-detection triggers
       userAgent:
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
         'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
