@@ -8,11 +8,14 @@
     "build:watch": "tsc --watch",
     "start": "echo 'MCP Server ready at /api/mcp'",
     "dev": "vercel dev",
-    "deploy": "vercel --prod"
+    "deploy": "vercel --prod",
+    "test": "node test_mcp.js",
+    "audit": "npm audit",
+    "verify:tiktok-url-flow": "node scripts/verify-tiktok-url-flow.cjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "axios": "^1.6.0",
+    "axios": "^1.13.1",
     "dotenv": "^17.3.1",
     "instagram-private-api": "^1.46.1",
     "node-fetch": "^3.3.2",

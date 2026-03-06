@@ -17,6 +17,7 @@ import * as dotenv from 'dotenv';
 
 import { UnifiedSocialMediaService, UnifiedServiceConfig } from './services/UnifiedSocialMediaService.js';
 import { PlatformType } from './core/interfaces/SocialMediaPlatform.js';
+import { TikTokUrlUtils } from './core/utils/TikTokUrlUtils.js';
 
 // Load environment variables
 dotenv.config();
@@ -627,14 +628,24 @@ async function handleSearchContent(args: any) {
 
 async function handleGetContentComments(args: any) {
   const { platform, contentId, limit = 20 } = args;
+
+  let normalizedContentId = contentId;
+  if (platform === 'tiktok' && typeof contentId === 'string' && TikTokUrlUtils.isTikTokUrl(contentId)) {
+    const resolvedUrl = await TikTokUrlUtils.resolveUrl(contentId);
+    const extractedId = TikTokUrlUtils.extractVideoId(resolvedUrl);
+    if (!extractedId) {
+      throw new Error(`Unable to extract TikTok video ID from URL: ${contentId}`);
+    }
+    normalizedContentId = extractedId;
+  }
   
-  const comments = await unifiedService.getContentComments(platform as PlatformType, contentId, limit);
+  const comments = await unifiedService.getContentComments(platform as PlatformType, normalizedContentId, limit);
   return {
     content: [{
       type: 'text',
       text: JSON.stringify({
         platform,
-        contentId,
+        contentId: normalizedContentId,
         count: comments.length,
         comments
       }, null, 2)

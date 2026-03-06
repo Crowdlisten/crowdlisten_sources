@@ -19,6 +19,7 @@ import axios from 'axios';
 import { BaseAdapter } from '../core/base/BaseAdapter.js';
 import { DataNormalizer } from '../core/utils/DataNormalizer.js';
 import { TikTokBrowserSearchService } from '../core/utils/TikTokBrowserSearch.js';
+import { TikTokUrlUtils } from '../core/utils/TikTokUrlUtils.js';
 import {
   Post,
   Comment,
@@ -109,11 +110,18 @@ export class TikTokAdapter extends BaseAdapter {
     try {
       await this.enforceRateLimit();
 
+      const trimmedQuery = query.trim();
+      if (TikTokUrlUtils.isTikTokUrl(trimmedQuery)) {
+        const urlPosts = await this.getVideoByUrl(trimmedQuery);
+        this.log(`Resolved TikTok URL query to ${urlPosts.length} video(s)`, 'info');
+        return urlPosts.slice(0, limit);
+      }
+
       const searcher = new TikTokBrowserSearchService();
       // Cap at 5 — browser sessions are slow; more videos come from multiple searches
       const videosToSelect = Math.min(limit, 5);
 
-      const result = await searcher.searchAndSelect(query.trim(), videosToSelect);
+      const result = await searcher.searchAndSelect(trimmedQuery, videosToSelect);
 
       // Convert TikTokVideoCandidate objects to standard Post format
       const posts: Post[] = result.selectedVideos.map(candidate =>
@@ -256,9 +264,7 @@ export class TikTokAdapter extends BaseAdapter {
     author: string;
     url: string;
   }): Post {
-    // Extract the numeric video ID from the URL: /@username/video/{id}
-    const videoIdMatch = candidate.url.match(/\/video\/(\d+)/);
-    const videoId = videoIdMatch ? videoIdMatch[1] : candidate.url;
+    const videoId = TikTokUrlUtils.extractVideoId(candidate.url) || candidate.url;
 
     return {
       id: videoId,
@@ -282,6 +288,63 @@ export class TikTokAdapter extends BaseAdapter {
       hashtags: [],
     };
   }
+
+  private async getVideoByUrl(url: string): Promise<Post[]> {
+    const resolvedUrl = await TikTokUrlUtils.resolveUrl(url);
+    const videoId = TikTokUrlUtils.extractVideoId(resolvedUrl);
+
+    if (!videoId) {
+      throw new Error(`Unable to extract TikTok video id from URL: ${url}`);
+    }
+
+    const metadata = await this.getVideoMetadataViaOEmbed(resolvedUrl);
+
+    return [
+      {
+        id: videoId,
+        platform: 'tiktok',
+        author: {
+          id: metadata.authorName || 'unknown',
+          username: metadata.authorName || 'unknown',
+          displayName: metadata.authorName || 'unknown',
+        },
+        content: metadata.title || `TikTok video ${videoId}`,
+        mediaUrl: metadata.thumbnailUrl || '',
+        engagement: {
+          likes: 0,
+          comments: 0,
+          shares: 0,
+          views: 0,
+        },
+        timestamp: new Date(),
+        url: resolvedUrl,
+        hashtags: [],
+      },
+    ];
+  }
+
+  private async getVideoMetadataViaOEmbed(url: string): Promise<{
+    title?: string;
+    authorName?: string;
+    thumbnailUrl?: string;
+  }> {
+    try {
+      const response = await axios.get('https://www.tiktok.com/oembed', {
+        params: { url },
+        timeout: 10000,
+      });
+
+      return {
+        title: response.data?.title,
+        authorName: response.data?.author_name,
+        thumbnailUrl: response.data?.thumbnail_url,
+      };
+    } catch (error) {
+      this.log(`TikTok oEmbed lookup failed for ${url}: ${error}`, 'warn');
+      return {};
+    }
+  }
+
 
   // ─── Protected: error detection (overrides BaseAdapter) ──────────────────
 

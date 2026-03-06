@@ -43,7 +43,7 @@ End-to-end TikTok video understanding:
 | Twitter/X | Working | Yes | Developer account required (free tier: 1,500 tweets/month) |
 | Instagram | Working | Yes | Username/password; risk of security flags |
 
-## Tools (12 endpoints)
+## Tools (13 endpoints)
 
 ### Core Content
 | Tool | Description |
@@ -56,9 +56,25 @@ End-to-end TikTok video understanding:
 | `health_check` | System health monitoring |
 
 ### Advanced Analysis
+
+### TikTok URL Analysis Example
+
+```json
+{
+  "name": "analyze_url",
+  "arguments": {
+    "url": "https://vm.tiktok.com/ZM.../",
+    "platform": "tiktok",
+    "maxComments": 50,
+    "enableClustering": false
+  }
+}
+```
+
 | Tool | Description |
 |------|-------------|
 | `analyze_content` | Multi-modal content analysis with vertical slice methodology |
+| `analyze_url` | URL-first analysis (TikTok: resolves short links, extracts video ID, returns structured comments analysis with degraded fallback) |
 | `cluster_opinions` | Semantic opinion clustering using embeddings |
 | `deep_platform_analysis` | Platform-specific vertical analysis |
 | `sentiment_evolution_tracker` | Temporal sentiment analysis with trend prediction |

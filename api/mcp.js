@@ -1,6 +1,69 @@
 // Full-featured CrowdListen MCP server with comprehensive platform support
 const axios = require('axios');
 
+function extractTikTokVideoId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const canonicalMatch = url.match(/\/video\/(\d+)/i);
+  return canonicalMatch ? canonicalMatch[1] : null;
+}
+
+function parseTikTokUrl(inputUrl) {
+  if (!inputUrl || typeof inputUrl !== 'string') {
+    return { ok: false, error: 'URL is required' };
+  }
+
+  const rawUrl = inputUrl.trim();
+  let parsed;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return { ok: false, error: 'Invalid URL format' };
+  }
+
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+  const pathname = parsed.pathname || '/';
+
+  // Canonical TikTok URL: /@username/video/{videoId}
+  const canonicalMatch = pathname.match(/\/@([^/]+)\/video\/(\d+)/i);
+  if (host.endsWith('tiktok.com') && canonicalMatch) {
+    const username = canonicalMatch[1];
+    const videoId = canonicalMatch[2];
+    return {
+      ok: true,
+      type: 'canonical',
+      username,
+      videoId,
+      canonicalUrl: `https://www.tiktok.com/@${username}/video/${videoId}`,
+      sourceUrl: rawUrl,
+      requiresResolution: false
+    };
+  }
+
+  // tiktok.com/t/{id} short links
+  if (host.endsWith('tiktok.com') && /^\/t\/[A-Za-z0-9]+\/?$/i.test(pathname)) {
+    return {
+      ok: true,
+      type: 'short',
+      sourceUrl: rawUrl,
+      requiresResolution: true,
+      message: 'TikTok short URL detected; canonical video URL requires redirect resolution.'
+    };
+  }
+
+  // vm.tiktok.com / vt.tiktok.com short links
+  if (host === 'vm.tiktok.com' || host === 'vt.tiktok.com') {
+    return {
+      ok: true,
+      type: 'short',
+      sourceUrl: rawUrl,
+      requiresResolution: true,
+      message: 'TikTok short URL detected; canonical video URL requires redirect resolution.'
+    };
+  }
+
+  return { ok: false, error: 'Unsupported TikTok URL format' };
+}
+
 // Platform implementations with robust error handling
 class PlatformManager {
   constructor() {
@@ -384,6 +447,155 @@ class PlatformManager {
     }
   }
 
+  async resolveTikTokUrl(inputUrl) {
+    const parsed = parseTikTokUrl(inputUrl);
+    if (!parsed.ok) {
+      return { ok: false, status: 'invalid_url', sourceUrl: inputUrl, error: parsed.error };
+    }
+
+    if (!parsed.requiresResolution) {
+      return { ok: true, status: 'resolved', ...parsed };
+    }
+
+    try {
+      const response = await axios.get(parsed.sourceUrl, {
+        maxRedirects: 0,
+        validateStatus: status => status >= 200 && status < 400,
+        timeout: 15000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+        }
+      });
+
+      const location = response.headers?.location;
+      if (!location) {
+        return {
+          ok: false,
+          status: 'resolution_partial',
+          sourceUrl: parsed.sourceUrl,
+          error: 'No redirect location header returned for short TikTok URL'
+        };
+      }
+
+      const resolvedUrl = new URL(location, parsed.sourceUrl).toString();
+      const resolved = parseTikTokUrl(resolvedUrl);
+      if (!resolved.ok || !resolved.videoId) {
+        return {
+          ok: false,
+          status: 'resolution_partial',
+          sourceUrl: parsed.sourceUrl,
+          resolvedUrl,
+          error: 'Resolved URL is not a canonical TikTok video URL'
+        };
+      }
+
+      return {
+        ok: true,
+        status: 'resolved',
+        sourceUrl: parsed.sourceUrl,
+        resolvedUrl,
+        ...resolved
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        status: 'resolution_failed',
+        sourceUrl: parsed.sourceUrl,
+        error: `Failed to resolve short TikTok URL: ${error.message}`
+      };
+    }
+  }
+
+  async getTikTokComments(videoId, limit = 50) {
+    const commentsApiUrl = process.env.TIKTOK_COMMENTS_API_URL;
+    const commentsApiToken = process.env.TIKTOK_COMMENTS_API_TOKEN;
+
+    if (!commentsApiUrl) {
+      return {
+        ok: false,
+        status: 'comments_unavailable',
+        comments: [],
+        error: 'TikTok comments API is not configured (TIKTOK_COMMENTS_API_URL missing).'
+      };
+    }
+
+    try {
+      const response = await axios.get(commentsApiUrl, {
+        params: { videoId, limit: Math.min(limit, 200) },
+        timeout: 20000,
+        headers: commentsApiToken ? { Authorization: `Bearer ${commentsApiToken}` } : {}
+      });
+
+      const rawComments = Array.isArray(response.data?.comments) ? response.data.comments : [];
+      const normalizedComments = rawComments.map((comment, index) => ({
+        id: comment.id || `tt_comment_${index}`,
+        author: comment.author || comment.username || 'unknown',
+        text: comment.text || comment.comment || '',
+        likes: Number(comment.likes || comment.like_count || 0),
+        replies: Number(comment.replies || comment.reply_count || 0),
+        timestamp: comment.timestamp || comment.created_at || null
+      }));
+
+      return {
+        ok: true,
+        status: 'comments_fetched',
+        comments: normalizedComments.slice(0, limit)
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        status: 'comments_failed',
+        comments: [],
+        error: `Failed to fetch TikTok comments: ${error.message}`
+      };
+    }
+  }
+
+  buildTikTokAnalysis({ url, resolved, commentsResult, maxComments, enableClustering }) {
+    const comments = commentsResult.comments || [];
+    const totalLikes = comments.reduce((sum, c) => sum + (Number(c.likes) || 0), 0);
+    const topComments = [...comments]
+      .sort((a, b) => (Number(b.likes) || 0) - (Number(a.likes) || 0))
+      .slice(0, 10)
+      .map(c => ({ author: c.author, text: c.text, likes: c.likes, replies: c.replies }));
+
+    const status = resolved.ok
+      ? (commentsResult.ok ? 'ok' : 'degraded')
+      : 'degraded';
+
+    return {
+      status,
+      platform: 'tiktok',
+      input: {
+        url,
+        maxComments,
+        enableClustering: !!enableClustering
+      },
+      urlResolution: {
+        status: resolved.status,
+        sourceUrl: resolved.sourceUrl || url,
+        resolvedUrl: resolved.resolvedUrl || resolved.canonicalUrl || null,
+        canonicalUrl: resolved.canonicalUrl || null,
+        videoId: resolved.videoId || extractTikTokVideoId(resolved.resolvedUrl || ''),
+        error: resolved.error || null
+      },
+      comments: {
+        status: commentsResult.status,
+        count: comments.length,
+        totalLikes,
+        items: comments,
+        topComments,
+        error: commentsResult.error || null
+      },
+      clustering: {
+        enabled: !!enableClustering,
+        status: enableClustering ? 'not_implemented' : 'disabled',
+        clusters: []
+      }
+    };
+  }
+
+
   // YouTube implementation using Data API v3
   async searchYouTube(query, limit = 10) {
     const apiKey = process.env.YOUTUBE_API_KEY;
@@ -604,7 +816,7 @@ module.exports = async (req, res) => {
         version: '1.0.0',
         description: 'Social media content analysis with engagement-weighted opinion clustering',
         status: 'healthy',
-        tools: ['health_check', 'analyze_content', 'get_trending_content', 'search_content', 'get_content_comments', 'cluster_opinions', 'deep_platform_analysis', 'sentiment_evolution_tracker', 'expert_identification', 'cross_platform_synthesis'],
+        tools: ['health_check', 'analyze_content', 'analyze_url', 'get_trending_content', 'search_content', 'get_content_comments', 'cluster_opinions', 'deep_platform_analysis', 'sentiment_evolution_tracker', 'expert_identification', 'cross_platform_synthesis'],
         platforms: platforms,
         configuredPlatforms: platforms.length,
         timestamp: new Date().toISOString(),
@@ -700,6 +912,21 @@ module.exports = async (req, res) => {
                   required: ['content_url', 'platform']
                 }
               },
+              {
+                name: 'analyze_url',
+                description: 'Analyze social URL with platform-specific handling (TikTok: resolve URL, fetch comments, return structured analysis)',
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    url: { type: 'string', description: 'Content URL to analyze' },
+                    platform: { type: 'string', enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube'], default: 'tiktok' },
+                    maxComments: { type: 'number', description: 'Maximum comments to fetch', default: 50 },
+                    enableClustering: { type: 'boolean', description: 'Enable opinion clustering (if available)', default: false }
+                  },
+                  required: ['url']
+                }
+              },
+
               {
                 name: 'get_content_comments',
                 description: 'Get comments for specific social media content',
@@ -980,6 +1207,112 @@ module.exports = async (req, res) => {
                 }
               });
             }
+
+          case 'analyze_url':
+            try {
+              const {
+                url,
+                platform = 'tiktok',
+                maxComments = 50,
+                enableClustering = false
+              } = toolArgs;
+
+              if (!url || typeof url !== 'string') {
+                throw new Error('url is required and must be a string');
+              }
+
+              if (platform !== 'tiktok') {
+                return res.status(200).json({
+                  jsonrpc: '2.0',
+                  id,
+                  result: {
+                    content: [{
+                      type: 'text',
+                      text: JSON.stringify({
+                        status: 'unsupported_platform',
+                        platform,
+                        message: 'analyze_url currently supports TikTok only.',
+                        input: { url, platform, maxComments, enableClustering }
+                      }, null, 2)
+                    }]
+                  }
+                });
+              }
+
+              const resolved = await platformManager.resolveTikTokUrl(url);
+              if (!resolved.ok || !resolved.videoId) {
+                const degraded = {
+                  status: 'degraded',
+                  platform: 'tiktok',
+                  input: { url, platform, maxComments, enableClustering: !!enableClustering },
+                  urlResolution: {
+                    status: resolved.status || 'resolution_failed',
+                    sourceUrl: resolved.sourceUrl || url,
+                    resolvedUrl: resolved.resolvedUrl || null,
+                    canonicalUrl: resolved.canonicalUrl || null,
+                    videoId: resolved.videoId || null,
+                    error: resolved.error || 'Unable to resolve TikTok URL to a video ID'
+                  },
+                  comments: {
+                    status: 'skipped',
+                    count: 0,
+                    items: [],
+                    error: 'Skipped because URL resolution did not produce a video ID'
+                  },
+                  clustering: {
+                    enabled: !!enableClustering,
+                    status: enableClustering ? 'not_implemented' : 'disabled',
+                    clusters: []
+                  }
+                };
+
+                return res.status(200).json({
+                  jsonrpc: '2.0',
+                  id,
+                  result: {
+                    content: [{ type: 'text', text: JSON.stringify(degraded, null, 2) }]
+                  }
+                });
+              }
+
+              const commentsResult = await platformManager.getTikTokComments(resolved.videoId, maxComments);
+              const analysis = platformManager.buildTikTokAnalysis({
+                url,
+                resolved,
+                commentsResult,
+                maxComments,
+                enableClustering
+              });
+
+              return res.status(200).json({
+                jsonrpc: '2.0',
+                id,
+                result: {
+                  content: [{ type: 'text', text: JSON.stringify(analysis, null, 2) }]
+                }
+              });
+            } catch (error) {
+              return res.status(200).json({
+                jsonrpc: '2.0',
+                id,
+                result: {
+                  content: [{
+                    type: 'text',
+                    text: JSON.stringify({
+                      status: 'degraded',
+                      platform: toolArgs?.platform || 'tiktok',
+                      input: {
+                        url: toolArgs?.url || null,
+                        maxComments: toolArgs?.maxComments || 50,
+                        enableClustering: !!toolArgs?.enableClustering
+                      },
+                      error: `analyze_url failed gracefully: ${error.message}`
+                    }, null, 2)
+                  }]
+                }
+              });
+            }
+
 
           case 'get_content_comments':
             try {
