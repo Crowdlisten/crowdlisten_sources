@@ -163,63 +163,92 @@ const KEY_MOMENT_SCHEMA = {
   required: ['timestamp', 'description'],
 } satisfies Schema;
 
-const STRING_ARRAY_SCHEMA = {
-  type: SchemaType.ARRAY,
-  items: { type: SchemaType.STRING },
-} satisfies Schema;
+const COMPACT_VISUAL_TEXT_LIMIT = 25;
+const COMPACT_TIMELINE_SEGMENT_LIMIT = 12;
+const COMPACT_KEY_MOMENT_LIMIT = 10;
+const COMPACT_IMPLICIT_CONTEXT_LIMIT = 8;
+const COMPACT_CALLS_TO_ACTION_LIMIT = 6;
+const COMPACT_CONTROVERSIAL_MOMENT_LIMIT = 5;
+const COMPACT_TRANSCRIPT_CHAR_LIMIT = 4000;
 
-const VIDEO_CONTEXT_RESPONSE_SCHEMA = {
-  type: SchemaType.OBJECT,
-  properties: {
-    mainTopic: { type: SchemaType.STRING },
-    summary: { type: SchemaType.STRING },
-    keyEntities: {
-      type: SchemaType.OBJECT,
-      properties: {
-        people: STRING_ARRAY_SCHEMA,
-        objects: STRING_ARRAY_SCHEMA,
-        locations: STRING_ARRAY_SCHEMA,
+type GenerationMode = 'full' | 'compact';
+
+function createStringArraySchema(maxItems?: number): Schema {
+  return {
+    type: SchemaType.ARRAY,
+    items: { type: SchemaType.STRING },
+    ...(maxItems !== undefined ? { maxItems } : {}),
+  } satisfies Schema;
+}
+
+function createVideoContextResponseSchema(mode: GenerationMode): Schema {
+  const isCompact = mode === 'compact';
+
+  return {
+    type: SchemaType.OBJECT,
+    properties: {
+      mainTopic: { type: SchemaType.STRING },
+      summary: { type: SchemaType.STRING },
+      keyEntities: {
+        type: SchemaType.OBJECT,
+        properties: {
+          people: createStringArraySchema(),
+          objects: createStringArraySchema(),
+          locations: createStringArraySchema(),
+        },
+        required: ['people', 'objects', 'locations'],
       },
-      required: ['people', 'objects', 'locations'],
+      timeline: {
+        type: SchemaType.ARRAY,
+        items: TIMELINE_SEGMENT_SCHEMA,
+        ...(isCompact ? { maxItems: COMPACT_TIMELINE_SEGMENT_LIMIT } : {}),
+      },
+      keyMoments: {
+        type: SchemaType.ARRAY,
+        items: KEY_MOMENT_SCHEMA,
+        ...(isCompact ? { maxItems: COMPACT_KEY_MOMENT_LIMIT } : {}),
+      },
+      mood: { type: SchemaType.STRING },
+      implicitContext: createStringArraySchema(
+        isCompact ? COMPACT_IMPLICIT_CONTEXT_LIMIT : undefined
+      ),
+      searchKeywordRelevance: { type: SchemaType.STRING },
+      transcript: { type: SchemaType.STRING },
+      visualText: createStringArraySchema(
+        isCompact ? COMPACT_VISUAL_TEXT_LIMIT : undefined
+      ),
+      audioTrack: { type: SchemaType.STRING },
+      callsToAction: createStringArraySchema(
+        isCompact ? COMPACT_CALLS_TO_ACTION_LIMIT : undefined
+      ),
+      emotionalArc: { type: SchemaType.STRING },
+      controversialMoments: {
+        type: SchemaType.ARRAY,
+        items: KEY_MOMENT_SCHEMA,
+        ...(isCompact ? { maxItems: COMPACT_CONTROVERSIAL_MOMENT_LIMIT } : {}),
+      },
     },
-    timeline: {
-      type: SchemaType.ARRAY,
-      items: TIMELINE_SEGMENT_SCHEMA,
-    },
-    keyMoments: {
-      type: SchemaType.ARRAY,
-      items: KEY_MOMENT_SCHEMA,
-    },
-    mood: { type: SchemaType.STRING },
-    implicitContext: STRING_ARRAY_SCHEMA,
-    searchKeywordRelevance: { type: SchemaType.STRING },
-    transcript: { type: SchemaType.STRING },
-    visualText: STRING_ARRAY_SCHEMA,
-    audioTrack: { type: SchemaType.STRING },
-    callsToAction: STRING_ARRAY_SCHEMA,
-    emotionalArc: { type: SchemaType.STRING },
-    controversialMoments: {
-      type: SchemaType.ARRAY,
-      items: KEY_MOMENT_SCHEMA,
-    },
-  },
-  required: [
-    'mainTopic',
-    'summary',
-    'keyEntities',
-    'timeline',
-    'keyMoments',
-    'mood',
-    'implicitContext',
-    'searchKeywordRelevance',
-    'transcript',
-    'visualText',
-    'audioTrack',
-    'callsToAction',
-    'emotionalArc',
-    'controversialMoments',
-  ],
-} satisfies Schema;
+    required: [
+      'mainTopic',
+      'summary',
+      'keyEntities',
+      'timeline',
+      'keyMoments',
+      'mood',
+      'implicitContext',
+      'searchKeywordRelevance',
+      'transcript',
+      'visualText',
+      'audioTrack',
+      'callsToAction',
+      'emotionalArc',
+      'controversialMoments',
+    ],
+  } satisfies Schema;
+}
+
+const VIDEO_CONTEXT_RESPONSE_SCHEMA = createVideoContextResponseSchema('full');
+const COMPACT_VIDEO_CONTEXT_RESPONSE_SCHEMA = createVideoContextResponseSchema('compact');
 
 /** Interval between file-state polling requests (ms). */
 const POLLING_INTERVAL_MS = 3000;
@@ -244,6 +273,16 @@ const MALFORMED_RESPONSE_DIR = '/tmp/crowdlisten_gemini_failures';
 interface JsonParseAttempt {
   parsed?: any;
   error?: unknown;
+}
+
+class MaxTokensError extends Error {
+  constructor(
+    public readonly fileUri: string,
+    public readonly mode: GenerationMode
+  ) {
+    super(`Gemini output truncated (MAX_TOKENS) for ${fileUri}`);
+    this.name = 'MaxTokensError';
+  }
 }
 
 // ─── Service class ────────────────────────────────────────────────────────────
@@ -387,10 +426,11 @@ export class VideoUnderstandingService {
   private async runUnderstandingPrompt(
     fileUri: string,
     searchKeyword: string,
-    attempt: number = 1
+    attempt: number = 1,
+    mode: GenerationMode = 'full'
   ): Promise<string> {
-    const model = this.getStructuredModel();
-    const prompt = this.buildPrompt(searchKeyword, attempt);
+    const model = this.getStructuredModel(mode);
+    const prompt = this.buildPrompt(searchKeyword, attempt, mode);
 
     const result = await model.generateContent(
       [
@@ -409,7 +449,7 @@ export class VideoUnderstandingService {
     // Detect truncation early — if MAX_TOKENS was hit the JSON will be incomplete.
     const finishReason = result.response.candidates?.[0]?.finishReason;
     if (finishReason === 'MAX_TOKENS') {
-      throw new Error(`Gemini output truncated (MAX_TOKENS) for ${fileUri}`);
+      throw new MaxTokensError(fileUri, mode);
     }
 
     // With JSON mode enabled, Gemini returns raw JSON (no code fences).
@@ -431,12 +471,16 @@ export class VideoUnderstandingService {
    *
    * @param searchKeyword  Used to add a relevance-mapping field to the output
    */
-  private buildPrompt(searchKeyword: string, attempt: number = 1): string {
+  private buildPrompt(
+    searchKeyword: string,
+    attempt: number = 1,
+    mode: GenerationMode = 'full'
+  ): string {
     // Only include the searchKeywordRelevance field if a keyword was provided
     const relevanceField = searchKeyword
       ? `  "searchKeywordRelevance": "How this video relates to the search keyword '${searchKeyword}' (1-2 sentences)",`
       : `  "searchKeywordRelevance": "",`;
-    const retryNotice = attempt > 1
+    const retryNotice = attempt > 1 && mode === 'full'
       ? `
 
 CRITICAL:
@@ -444,6 +488,18 @@ CRITICAL:
 - Every double quote inside string values must be escaped.
 - If you are unsure about a field, use an empty string "" or empty array [].
 - Do not include any commentary before or after the JSON object.`
+      : '';
+    const compactModeNotice = mode === 'compact'
+      ? `
+
+CRITICAL OUTPUT BUDGET:
+- Keep the JSON compact and concise so it fits comfortably within the model's output limit.
+- transcript: include the most comment-relevant spoken content only; if the full transcript would be long, truncate at about ${COMPACT_TRANSCRIPT_CHAR_LIMIT} characters and append " [truncated]".
+- visualText: include at most ${COMPACT_VISUAL_TEXT_LIMIT} unique, salient overlays/captions; deduplicate near-identical text.
+- timeline: use no more than ${COMPACT_TIMELINE_SEGMENT_LIMIT} segments.
+- keyMoments: use no more than ${COMPACT_KEY_MOMENT_LIMIT} moments.
+- controversialMoments: use no more than ${COMPACT_CONTROVERSIAL_MOMENT_LIMIT} moments.
+- Prefer preserving the most useful details for comment understanding over exhaustive completeness.`
       : '';
 
     return `You are a video content analysis assistant. Watch this entire video carefully, including all audio.
@@ -496,7 +552,7 @@ Guidelines:
 - keyEntities.people: describe even unnamed people in enough detail to identify them across references
 - controversialMoments: leave as empty array [] if no genuinely controversial moments exist
 - All text must be in English
-- Return only valid JSON — no trailing commas, no comments inside the JSON${retryNotice}`;
+- Return only valid JSON — no trailing commas, no comments inside the JSON${retryNotice}${compactModeNotice}`;
   }
 
   // ─── Private: parsing ─────────────────────────────────────────────────────
@@ -505,10 +561,10 @@ Guidelines:
    * Generate, parse, and recover structured output from Gemini.
    *
    * Flow:
-   * 1. Initial video analysis request
+   * 1. Initial full-fidelity video analysis request
    * 2. Local JSON sanitisation + parse
    * 3. Text-only repair pass on malformed JSON
-   * 4. One full retry against the video if the repair still fails
+   * 4. One compact retry against the video if the first attempt overflows or repair fails
    * 5. Minimal fallback context as the final degradation path
    */
   private async generateContextWithRecovery(
@@ -521,7 +577,28 @@ Guidelines:
     let lastError: unknown = null;
 
     for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
-      const rawJson = await this.runUnderstandingPrompt(fileUri, searchKeyword, attempt);
+      const mode = this.getGenerationModeForAttempt(attempt);
+      let rawJson: string;
+      try {
+        rawJson = await this.runUnderstandingPrompt(fileUri, searchKeyword, attempt, mode);
+      } catch (error) {
+        lastError = error;
+        if (error instanceof MaxTokensError) {
+          console.warn(
+            `[VideoUnderstanding] Output exceeded token budget in ${mode} mode ` +
+            `on attempt ${attempt}/${MAX_GENERATION_ATTEMPTS}.`
+          );
+          if (attempt < MAX_GENERATION_ATTEMPTS) {
+            continue;
+          }
+          return this.buildFallbackContext(
+            `[Gemini output truncated (MAX_TOKENS) after ${mode} mode retry]`,
+            videoId,
+            startTime
+          );
+        }
+        throw error;
+      }
       lastRawJson = rawJson;
 
       const parseAttempt = this.tryParseJson(rawJson);
@@ -589,12 +666,18 @@ Guidelines:
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private getStructuredModel() {
+  private getGenerationModeForAttempt(attempt: number): GenerationMode {
+    return attempt === 1 ? 'full' : 'compact';
+  }
+
+  private getStructuredModel(mode: GenerationMode) {
     return this.genAI.getGenerativeModel({
       model: GEMINI_MODEL,
       generationConfig: {
         responseMimeType: 'application/json',
-        responseSchema: VIDEO_CONTEXT_RESPONSE_SCHEMA,
+        responseSchema: mode === 'compact'
+          ? COMPACT_VIDEO_CONTEXT_RESPONSE_SCHEMA
+          : VIDEO_CONTEXT_RESPONSE_SCHEMA,
         temperature: 0,
         maxOutputTokens: 65536,
       },
@@ -657,7 +740,7 @@ Guidelines:
     console.warn('[VideoUnderstanding] Attempting text-only JSON repair...');
 
     try {
-      const model = this.getStructuredModel();
+      const model = this.getStructuredModel('full');
       const result = await model.generateContent(
         [
           {
