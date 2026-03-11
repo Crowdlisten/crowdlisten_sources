@@ -67,13 +67,13 @@ const DEFAULT_VIDEOS_TO_SELECT = 5;
  * Keeping this reasonable prevents the Claude prompt from becoming too long
  * while still giving Claude enough choice for good selection.
  */
-const MAX_CANDIDATES = 20;
+const MAX_CANDIDATES = 40;
 
 /**
  * Extra wait after page load for TikTok's React app to finish rendering.
  * TikTok is heavily JS-driven; networkidle alone is not always sufficient.
  */
-const POST_LOAD_WAIT_MS = 4000;
+const POST_LOAD_WAIT_MS = 1500;
 
 /**
  * Claude model used for visual selection.
@@ -132,6 +132,29 @@ export class TikTokBrowserSearchService {
     try {
       context = await this.launchBrowser();
       const page = await context.newPage();
+
+      // IO stub — belt-and-suspenders for any remaining IO-driven thumbnail logic.
+      await page.addInitScript(() => {
+        const win = globalThis as any;
+        win.IntersectionObserver = class {
+          private _cb: Function;
+          constructor(cb: Function) { this._cb = cb; }
+          observe(target: any) {
+            setTimeout(() => this._cb([{
+              isIntersecting: true,
+              intersectionRatio: 1,
+              target,
+              boundingClientRect: {},
+              intersectionRect: {},
+              rootBounds: null,
+              time: 0,
+            }]), 50);
+          }
+          unobserve() {}
+          disconnect() {}
+          takeRecords() { return []; }
+        };
+      });
 
       // Load the TikTok search page and extract video candidates from the DOM
       const candidates = await this.loadSearchResults(page, keyword);
@@ -214,7 +237,7 @@ export class TikTokBrowserSearchService {
 
       return chromium.launchPersistentContext(userDataDir, {
         headless: false,
-        viewport: { width: 1280, height: 900 },
+        viewport: { width: 1280, height: 3600 },
         args: [...commonArgs, ...profileArgs],
       });
     }
@@ -225,7 +248,7 @@ export class TikTokBrowserSearchService {
       args: commonArgs,
     });
     return browser.newContext({
-      viewport: { width: 1280, height: 900 },
+      viewport: { width: 1280, height: 3600 },
       userAgent:
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
         'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -342,19 +365,31 @@ export class TikTokBrowserSearchService {
   // ─── Private: screenshot ──────────────────────────────────────────────────
 
   /**
-   * Capture a viewport screenshot of the current page state.
-   * The screenshot is saved to the OS temp directory and its path is returned.
-   * The file is kept after the search for audit / debugging purposes.
+   * Zoom out the page to 40%, then capture a viewport screenshot.
+   *
+   * TikTok uses React virtualization — only video cards within the viewport
+   * are rendered; cards below the fold have blank thumbnails. Scrolling down
+   * then back up does not help because TikTok clears off-screen img.src on
+   * the return pass.
+   *
+   * At 50% zoom the viewport effectively becomes 1800px tall (900 / 0.5),
+   * which fits all 5 rows of 4 results (≈ 5 × 350px = 1750px). TikTok sees
+   * everything as "in viewport" and renders every thumbnail at once.
+   *
+   * Zoom was applied at DOMContentLoaded (via addInitScript) so all ~20 cards
+   * fit in the viewport from the start and TikTok loaded their thumbnails during
+   * initial page render. This method just waits for any remaining fetches and shoots.
    */
   private async captureScreenshot(page: Page, keyword: string): Promise<string> {
-    // Build a filesystem-safe filename from the keyword
+    // Images load during the POST_LOAD_WAIT_MS window; a short extra settle is enough.
+    await page.waitForTimeout(500);
+
     const safeKeyword = keyword.replace(/[^a-z0-9]/gi, '_').toLowerCase().substring(0, 40);
     const screenshotPath = path.join(
       os.tmpdir(),
       `tiktok_search_${safeKeyword}_${Date.now()}.png`
     );
 
-    // fullPage: false — capture only the visible viewport (what a user sees)
     await page.screenshot({ path: screenshotPath, fullPage: false });
     console.log(`[TikTokSearch] Screenshot saved to: ${screenshotPath}`);
 

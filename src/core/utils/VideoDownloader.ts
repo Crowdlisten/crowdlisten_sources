@@ -322,8 +322,12 @@ export class VideoDownloaderService {
       let stderrBuffer = '';
 
       const proc = spawn('yt-dlp', args, {
-        // Inherit the current process environment so yt-dlp can find Chrome cookies
-        env: process.env,
+        // Inherit the current process environment so yt-dlp can find Chrome cookies.
+        // Prepend Homebrew's bin so yt-dlp is found on macOS even when PATH is minimal.
+        env: {
+          ...process.env,
+          PATH: `/opt/homebrew/bin:/usr/local/bin:${process.env.PATH ?? ''}`,
+        },
       });
 
       // Kill the process and reject if it runs too long

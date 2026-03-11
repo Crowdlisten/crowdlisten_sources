@@ -50,14 +50,19 @@ This document describes the three new modules added to CrowdListen MCP:
 ### What it does
 
 1. Launches a Playwright Chromium browser (headed with a saved profile, or headless as fallback)
+   — viewport is set to **1280×3600** so all ~40 candidates fit without scrolling
 2. Navigates to `https://www.tiktok.com/search/video?q=<keyword>`
-3. Waits for TikTok's React app to finish rendering (`networkidle` + 4s extra wait)
+3. Waits for TikTok's React app to finish rendering (`networkidle` + 1.5s extra wait)
 4. If TikTok shows a login wall, waits up to 3 minutes for the user to log in, then retries
-5. Extracts video candidates from `a[href*="/video/"]` DOM elements — title, author, URL
-6. Takes a viewport screenshot of the results page
+5. Extracts up to **40** video candidates from `a[href*="/video/"]` DOM elements — title, author, URL
+6. Takes a viewport screenshot of the results page (all 40 cards visible, thumbnails fully loaded)
 7. Sends the screenshot + candidate list to Claude (`claude-sonnet-4-6`) with vision
 8. Claude returns the indices of the most relevant videos
 9. Returns a `BrowserSearchResult` with the selected `TikTokVideoCandidate[]`
+
+> **How the screenshot works:** The 3600px-tall viewport ensures all 40 video cards are in the
+> browser's visible area from the moment the page loads, so TikTok's lazy-loader fetches every
+> thumbnail during initial render. No zoom manipulation or manual scrolling is needed.
 
 ### Usage
 
@@ -141,6 +146,10 @@ npx playwright install chromium
 brew install yt-dlp     # macOS
 # or: pip install yt-dlp
 ```
+
+> **macOS PATH note:** When Node is launched directly (e.g. `/opt/homebrew/bin/node`) the shell
+> may not include Homebrew's bin directory. `VideoDownloader` automatically prepends
+> `/opt/homebrew/bin:/usr/local/bin` to the subprocess `PATH` so `yt-dlp` is always found.
 
 ### Usage
 
@@ -261,6 +270,14 @@ For longer videos (60–120s) with the full structured prompt, the API call can 
 **3–8 minutes**. A hard timeout of **5 minutes** (`GENERATE_TIMEOUT_MS = 300_000`) is set
 in the code. If Gemini does not respond within 5 minutes, the call throws and the pipeline
 skips that video rather than hanging indefinitely.
+
+### JSON output reliability
+
+Module 3 uses three layers to prevent JSON parse failures:
+
+1. **Native JSON mode** — `responseMimeType: 'application/json'` constrains Gemini's output grammar to valid JSON.
+2. **`maxOutputTokens: 65536`** — prevents truncation (`Unexpected end of JSON input`) even for long videos with detailed transcripts. Truncation is also detected via `finishReason === 'MAX_TOKENS'` and reported cleanly.
+3. **Control-character sanitisation** — a character-by-character pass escapes any raw `\n`/`\r`/`\t` inside JSON string values before `JSON.parse`, preventing `Expected ',' or ']' after array element` errors.
 
 ---
 

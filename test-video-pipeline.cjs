@@ -47,7 +47,7 @@ async function testModule2(videoUrl) {
   // 1. Check yt-dlp is installed
   const { execSync } = require('child_process');
   try {
-    const version = execSync('yt-dlp --version', { encoding: 'utf8' }).trim();
+    const version = execSync('yt-dlp --version', { encoding: 'utf8', env: { ...process.env, PATH: `/opt/homebrew/bin:/usr/local/bin:${process.env.PATH ?? ''}` } }).trim();
     pass(`yt-dlp found: v${version}`);
   } catch {
     fail('yt-dlp not found. Install it: brew install yt-dlp');

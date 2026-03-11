@@ -298,7 +298,16 @@ export class VideoUnderstandingService {
    * We strip any accidental code fences before returning.
    */
   private async runUnderstandingPrompt(fileUri: string, searchKeyword: string): Promise<string> {
-    const model = this.genAI.getGenerativeModel({ model: GEMINI_MODEL });
+    // responseMimeType: 'application/json' enables Gemini's native JSON mode —
+    // the model's output grammar is constrained to valid JSON, preventing
+    // malformed responses like "Expected ',' or ']' after array element".
+    const model = this.genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      generationConfig: {
+        responseMimeType: 'application/json',
+        maxOutputTokens: 65536,
+      },
+    });
     const prompt = this.buildPrompt(searchKeyword);
 
     const result = await model.generateContent(
@@ -315,10 +324,15 @@ export class VideoUnderstandingService {
       { timeout: GENERATE_TIMEOUT_MS },
     );
 
-    const raw = result.response.text();
+    // Detect truncation early — if MAX_TOKENS was hit the JSON will be incomplete.
+    const finishReason = result.response.candidates?.[0]?.finishReason;
+    if (finishReason === 'MAX_TOKENS') {
+      throw new Error(`Gemini output truncated (MAX_TOKENS) for ${fileUri}`);
+    }
 
-    // Strip markdown code fences if Gemini wrapped the JSON in ```json ... ```
-    return raw
+    // With JSON mode enabled, Gemini returns raw JSON (no code fences).
+    // Strip fences anyway as a belt-and-suspenders fallback.
+    return result.response.text()
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')
       .replace(/\s*```$/i, '')
@@ -417,7 +431,28 @@ Guidelines:
 
     let parsed: any;
     try {
-      parsed = JSON.parse(rawJson);
+      // Gemini sometimes wraps JSON in markdown fences or appends extra text/explanation.
+      // Track brace depth to find the exact closing } of the outermost object,
+      // correctly handling } characters that appear inside string values.
+      const firstBrace = rawJson.indexOf('{');
+      let jsonSlice = rawJson;
+      if (firstBrace !== -1) {
+        let depth = 0;
+        let inString = false;
+        let escape = false;
+        let end = -1;
+        for (let i = firstBrace; i < rawJson.length; i++) {
+          const ch = rawJson[i];
+          if (escape)              { escape = false; continue; }
+          if (ch === '\\' && inString) { escape = true; continue; }
+          if (ch === '"')          { inString = !inString; continue; }
+          if (inString)            { continue; }
+          if (ch === '{')          { depth++; }
+          else if (ch === '}')     { depth--; if (depth === 0) { end = i; break; } }
+        }
+        if (end !== -1) jsonSlice = rawJson.slice(firstBrace, end + 1);
+      }
+      parsed = JSON.parse(this.sanitizeJsonControlChars(jsonSlice));
     } catch (parseError) {
       console.warn(
         `[VideoUnderstanding] JSON parse failed — using fallback context. ` +
@@ -488,5 +523,25 @@ Guidelines:
 
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private sanitizeJsonControlChars(input: string): string {
+    let result = '';
+    let inString = false;
+    let escape = false;
+    for (let i = 0; i < input.length; i++) {
+      const ch = input[i];
+      if (escape)                     { result += ch; escape = false; continue; }
+      if (ch === '\\' && inString)    { escape = true; result += ch; continue; }
+      if (ch === '"')                 { inString = !inString; result += ch; continue; }
+      if (inString) {
+        if (ch === '\n')              { result += '\\n'; continue; }
+        if (ch === '\r')              { result += '\\r'; continue; }
+        if (ch === '\t')              { result += '\\t'; continue; }
+        if (ch.charCodeAt(0) < 0x20) { continue; }
+      }
+      result += ch;
+    }
+    return result;
   }
 }
