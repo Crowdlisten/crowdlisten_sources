@@ -25,6 +25,13 @@ function pass(msg)  { console.log(`  ✓  ${msg}`); }
 function fail(msg)  { console.error(`  ✗  ${msg}`); }
 function info(msg)  { console.log(`  →  ${msg}`); }
 function header(msg){ console.log(`\n${'─'.repeat(60)}\n  ${msg}\n${'─'.repeat(60)}`); }
+function formatDuration(ms) {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60_000) return `${ms}ms (${(ms / 1000).toFixed(1)}s)`;
+  const minutes = Math.floor(ms / 60_000);
+  const seconds = ((ms % 60_000) / 1000).toFixed(1);
+  return `${ms}ms (${minutes}m ${seconds}s)`;
+}
 
 function checkEnv(key) {
   if (!process.env[key]) {
@@ -144,12 +151,12 @@ async function testModule3(localFilePath) {
     pass(`People detected     : ${context.keyEntities.people.join(', ') || '(none)'}`);
     pass(`Audio track         : ${context.audioTrack || '(none)'}`);
     pass(`Calls to action     : ${context.callsToAction.join(' | ') || '(none)'}`);
-    pass(`Visual text overlays: ${context.visualText.length}`);
-    pass(`Transcript length   : ${context.transcript.length} chars`);
+    pass(`Visual text anchors : ${context.visualText.length}`);
+    pass(`Transcript excerpt length: ${context.transcript.length} chars`);
     pass(`Processing time     : ${context.processingTimeMs}ms`);
 
     if (context.transcript) {
-      info('Transcript preview:');
+      info('Transcript excerpt preview:');
       info(`  "${context.transcript.substring(0, 150)}${context.transcript.length > 150 ? '...' : ''}"`);
     }
     if (context.keyMoments.length > 0) {
@@ -233,6 +240,7 @@ async function testModule1(keyword) {
 // ─── Full pipeline ────────────────────────────────────────────────────────────
 
 async function testAll(keyword) {
+  const pipelineStartTime = Date.now();
   header('FULL PIPELINE — Modules 1 + 2 + 3 (parallel)');
 
   // ── Step 1: Browser search → up to 5 videos (sequential — single browser) ──
@@ -242,6 +250,8 @@ async function testAll(keyword) {
     return;
   }
 
+  const searchPhaseMs = Date.now() - pipelineStartTime;
+
   const { VideoDownloaderService } = require('./dist/core/utils/VideoDownloader');
   const downloader = new VideoDownloaderService();
 
@@ -250,6 +260,7 @@ async function testAll(keyword) {
   // they exceed maxDurationSeconds (1200s). That is expected behaviour.
   // Logs from concurrent videos will be interleaved — this is expected.
   header(`PARALLEL PROCESSING — launching ${searchResult.selectedVideos.length} videos simultaneously`);
+  const parallelPhaseStartTime = Date.now();
 
   const tasks = searchResult.selectedVideos.map((video, i) =>
     (async () => {
@@ -284,9 +295,15 @@ async function testAll(keyword) {
     .filter(r => r.status === 'rejected')
     .forEach(r => fail(`Unexpected error: ${r.reason?.message ?? r.reason}`));
 
+  const parallelPhaseMs = Date.now() - parallelPhaseStartTime;
+  const totalWallClockMs = Date.now() - pipelineStartTime;
+
   // ── Summary ─────────────────────────────────────────────────────────────────
   header(`PIPELINE COMPLETE — ${processed.length}/${searchResult.selectedVideos.length} videos processed`);
   pass(`Keyword: "${searchResult.searchQuery}"`);
+  pass(`Search phase       : ${formatDuration(searchPhaseMs)}`);
+  pass(`Parallel phase     : ${formatDuration(parallelPhaseMs)}`);
+  pass(`Total wall-clock   : ${formatDuration(totalWallClockMs)}`);
   processed.forEach(({ video, context }, i) => {
     pass(`  [${i + 1}] @${video.author}`);
     pass(`      Topic      : ${context.mainTopic}`);

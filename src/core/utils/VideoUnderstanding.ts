@@ -89,16 +89,16 @@ export interface VideoContext {
   searchKeywordRelevance: string;
 
   /**
-   * Full verbatim transcript of all spoken dialogue and voiceover narration.
-   * Empty string if the video has no speech. Used to resolve comment references
-   * like "when he said...", "that quote", "the part where she mentioned X".
+   * Chronological, high-signal excerpt of the most comment-relevant spoken
+   * dialogue and voiceover narration. Preserves wording for key lines without
+   * trying to be an exhaustive transcript of every filler phrase.
    */
   transcript: string;
 
   /**
-   * On-screen text overlays, subtitles, and captions that appear in the video,
-   * separate from spoken audio. TikTok creators frequently add text overlays
-   * that commenters quote directly ("that text at the beginning", "the caption").
+   * Salient on-screen text anchors that add meaning beyond the audio:
+   * titles, step labels, ingredient cards, warnings, claims, and CTAs.
+   * Deduplicated and filtered to avoid OCR-style dumps of repeated subtitles/UI.
    */
   visualText: string[];
 
@@ -163,12 +163,14 @@ const KEY_MOMENT_SCHEMA = {
   required: ['timestamp', 'description'],
 } satisfies Schema;
 
-const COMPACT_VISUAL_TEXT_LIMIT = 25;
+const FULL_VISUAL_TEXT_LIMIT = 30;
+const COMPACT_VISUAL_TEXT_LIMIT = 15;
 const COMPACT_TIMELINE_SEGMENT_LIMIT = 12;
 const COMPACT_KEY_MOMENT_LIMIT = 10;
 const COMPACT_IMPLICIT_CONTEXT_LIMIT = 8;
 const COMPACT_CALLS_TO_ACTION_LIMIT = 6;
 const COMPACT_CONTROVERSIAL_MOMENT_LIMIT = 5;
+const FULL_TRANSCRIPT_CHAR_TARGET = 6500;
 const COMPACT_TRANSCRIPT_CHAR_LIMIT = 4000;
 
 type GenerationMode = 'full' | 'compact';
@@ -215,7 +217,7 @@ function createVideoContextResponseSchema(mode: GenerationMode): Schema {
       searchKeywordRelevance: { type: SchemaType.STRING },
       transcript: { type: SchemaType.STRING },
       visualText: createStringArraySchema(
-        isCompact ? COMPACT_VISUAL_TEXT_LIMIT : undefined
+        isCompact ? COMPACT_VISUAL_TEXT_LIMIT : FULL_VISUAL_TEXT_LIMIT
       ),
       audioTrack: { type: SchemaType.STRING },
       callsToAction: createStringArraySchema(
@@ -476,6 +478,13 @@ export class VideoUnderstandingService {
     attempt: number = 1,
     mode: GenerationMode = 'full'
   ): string {
+    const transcriptTarget = mode === 'compact'
+      ? COMPACT_TRANSCRIPT_CHAR_LIMIT
+      : FULL_TRANSCRIPT_CHAR_TARGET;
+    const visualTextLimit = mode === 'compact'
+      ? COMPACT_VISUAL_TEXT_LIMIT
+      : FULL_VISUAL_TEXT_LIMIT;
+
     // Only include the searchKeywordRelevance field if a keyword was provided
     const relevanceField = searchKeyword
       ? `  "searchKeywordRelevance": "How this video relates to the search keyword '${searchKeyword}' (1-2 sentences)",`
@@ -495,7 +504,7 @@ CRITICAL:
 CRITICAL OUTPUT BUDGET:
 - Keep the JSON compact and concise so it fits comfortably within the model's output limit.
 - transcript: include the most comment-relevant spoken content only; if the full transcript would be long, truncate at about ${COMPACT_TRANSCRIPT_CHAR_LIMIT} characters and append " [truncated]".
-- visualText: include at most ${COMPACT_VISUAL_TEXT_LIMIT} unique, salient overlays/captions; deduplicate near-identical text.
+- visualText: include at most ${COMPACT_VISUAL_TEXT_LIMIT} unique, salient text anchors; deduplicate near-identical text.
 - timeline: use no more than ${COMPACT_TIMELINE_SEGMENT_LIMIT} segments.
 - keyMoments: use no more than ${COMPACT_KEY_MOMENT_LIMIT} moments.
 - controversialMoments: use no more than ${COMPACT_CONTROVERSIAL_MOMENT_LIMIT} moments.
@@ -532,8 +541,8 @@ Return ONLY the following JSON object — no extra text, no markdown, no explana
     "Background knowledge a commenter might assume but the video does not state. E.g. 'Creator is known for X', 'This references trending topic Y', 'Sequel to a previous video about Z'"
   ],
 ${relevanceField}
-  "transcript": "Full verbatim transcription of ALL spoken words and voiceover narration in the video, in order. Empty string if no speech.",
-  "visualText": ["Each distinct on-screen text overlay, subtitle, or caption that appears — quoted verbatim. Exclude the video's own auto-generated subtitles if they duplicate the transcript."],
+  "transcript": "Chronological high-signal excerpt of the most comment-relevant spoken lines and voiceover narration. Preserve original wording for key quotes, instructions, claims, jokes, and calls-to-action; do not try to include every filler phrase. Empty string if no speech.",
+  "visualText": ["High-signal on-screen text anchors that add meaning beyond the audio — titles, step labels, ingredient labels, warnings, claims, and calls-to-action. Deduplicate repeated text and exclude watermarks, usernames, platform UI, and subtitle fragments that simply mirror the transcript."],
   "audioTrack": "Background music or notable sound effects. Include song name and artist if identifiable, otherwise describe genre and mood. Empty string if no notable audio.",
   "callsToAction": ["Each explicit call-to-action spoken or shown in the video — e.g. 'comment your answer below', 'like if you agree', 'follow for part 2'"],
   "emotionalArc": "How the emotional tone/energy shifts across the video. E.g. 'Opens playfully → tension builds at 0:20 → triumphant resolution at 0:40'. One sentence covering the full arc.",
@@ -546,10 +555,12 @@ ${relevanceField}
 }
 
 Guidelines:
-- transcript: capture every spoken word verbatim; use "[inaudible]" for unclear audio
+- transcript: produce a dense, near-verbatim excerpt in chronological order, prioritising claims, instructions, punchlines, emotionally salient lines, and quotes commenters are likely to reference
+- transcript: keep enough surrounding context for each included quote to make sense; target roughly ${transcriptTarget} characters max and append " [truncated]" if you must cut for length
 - timeline: cover the FULL video duration in sequential segments of 10-30 seconds each
 - keyMoments: identify 3-8 specific timestamps; these are the primary anchors for resolving comment references
 - keyEntities.people: describe even unnamed people in enough detail to identify them across references
+- visualText: include only salient text anchors; merge repeated captions; exclude watermarks, usernames, platform UI, and auto-captions that merely duplicate spoken dialogue; cap at ${visualTextLimit} items
 - controversialMoments: leave as empty array [] if no genuinely controversial moments exist
 - All text must be in English
 - Return only valid JSON — no trailing commas, no comments inside the JSON${retryNotice}${compactModeNotice}`;
@@ -839,8 +850,8 @@ ${rawJson}`,
       searchKeywordRelevance: typeof data.searchKeywordRelevance === 'string'
         ? data.searchKeywordRelevance
         : '',
-      transcript: typeof data.transcript === 'string' ? data.transcript : '',
-      visualText: this.toStringArray(data.visualText),
+      transcript: this.normalizeTranscriptExcerpt(data.transcript),
+      visualText: this.normalizeVisualText(data.visualText),
       audioTrack: typeof data.audioTrack === 'string' ? data.audioTrack : '',
       callsToAction: this.toStringArray(data.callsToAction),
       emotionalArc: typeof data.emotionalArc === 'string' ? data.emotionalArc : '',
@@ -854,6 +865,55 @@ ${rawJson}`,
     return Array.isArray(value)
       ? value.filter((item): item is string => typeof item === 'string')
       : [];
+  }
+
+  private normalizeTranscriptExcerpt(value: unknown): string {
+    if (typeof value !== 'string') {
+      return '';
+    }
+
+    return value
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  private normalizeVisualText(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const seen = new Set<string>();
+    const normalized: string[] = [];
+
+    for (const item of value) {
+      if (typeof item !== 'string') {
+        continue;
+      }
+
+      const trimmed = item.replace(/\s+/g, ' ').trim();
+      if (!trimmed) {
+        continue;
+      }
+
+      if (/^(?:tiktok|capcut|original sound.*|@[\w.]+)$/i.test(trimmed)) {
+        continue;
+      }
+
+      const dedupeKey = trimmed.toLowerCase();
+      if (seen.has(dedupeKey)) {
+        continue;
+      }
+
+      seen.add(dedupeKey);
+      normalized.push(trimmed);
+
+      if (normalized.length >= FULL_VISUAL_TEXT_LIMIT) {
+        break;
+      }
+    }
+
+    return normalized;
   }
 
   private toTimelineSegments(value: unknown): TimelineSegment[] {

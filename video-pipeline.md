@@ -25,7 +25,8 @@ This document describes the three new modules added to CrowdListen MCP:
 [Module 3] VideoUnderstanding           src/core/utils/VideoUnderstanding.ts
     Uploads each .mp4 to Gemini Files API → polls until ready
     → Gemini 2.5 Flash returns structured VideoContext
-    (timeline, key moments, entities, mood, implicit context)
+    (timeline, key moments, entities, mood, implicit context,
+     transcript excerpt, salient visual text anchors)
 
         ↓  VideoContext[] (one per video)
 
@@ -196,6 +197,7 @@ downloader.cleanupAll();                    // delete all files in output dir
 1. Uploads the local `.mp4` file to the **Gemini Files API** (handles large files up to 2 GB)
 2. Polls the file state until Gemini finishes server-side processing (`ACTIVE`)
 3. Calls **Gemini 2.5 Flash** with the video file + structured understanding prompt
+   that emphasises **comment-relevant transcript excerpts** and **salient visual text anchors**
 4. Parses the response into a typed `VideoContext` object
 
 ### The `VideoContext` structure
@@ -214,10 +216,24 @@ downloader.cleanupAll();                    // delete all files in output dir
   mood: string;                // "humorous" | "informative" | "emotional" | ...
   implicitContext: string[];   // Background knowledge commenters might assume
   searchKeywordRelevance: string;
+  transcript: string;          // High-signal chronological excerpt of spoken lines most likely to matter in comments
+  visualText: string[];        // Deduplicated on-screen text anchors: titles, labels, warnings, claims, CTAs
   videoId: string;
   processingTimeMs: number;
 }
 ```
+
+### Transcript and visual-text strategy
+
+- `transcript` is no longer intended to be an exhaustive full-ASR dump. It is a
+  **dense, chronological excerpt** of the spoken lines most likely to matter for
+  comment grounding — instructions, claims, punchlines, emotional turns, and
+  lines commenters are likely to quote directly.
+- `visualText` is no longer an OCR-style list of every caption fragment. It is a
+  **high-signal anchor list**: titles, step labels, ingredient cards, warnings,
+  claims, and calls-to-action that add meaning beyond the audio.
+- Repeated subtitle fragments, watermarks, usernames, and platform UI are excluded
+  so long tutorial videos do not explode into 100+ low-value text snippets.
 
 ### Why `keyMoments` and `timeline` matter
 
@@ -273,11 +289,23 @@ skips that video rather than hanging indefinitely.
 
 ### JSON output reliability
 
-Module 3 uses three layers to prevent JSON parse failures:
+Module 3 uses four layers to prevent malformed or overgrown outputs:
 
 1. **Native JSON mode** — `responseMimeType: 'application/json'` constrains Gemini's output grammar to valid JSON.
-2. **`maxOutputTokens: 65536`** — prevents truncation (`Unexpected end of JSON input`) even for long videos with detailed transcripts. Truncation is also detected via `finishReason === 'MAX_TOKENS'` and reported cleanly.
-3. **Control-character sanitisation** — a character-by-character pass escapes any raw `\n`/`\r`/`\t` inside JSON string values before `JSON.parse`, preventing `Expected ',' or ']' after array element` errors.
+2. **Response schema caps** — visual text is capped to a small set of salient anchors, and the transcript is requested as a comment-oriented excerpt rather than a full exhaustive dump.
+3. **Compact retry on `MAX_TOKENS`** — if a first-pass response still overflows the token budget, the code automatically retries with a smaller schema/prompt that further compresses transcript and visual-text output.
+4. **Control-character sanitisation** — a character-by-character pass escapes any raw `\n`/`\r`/`\t` inside JSON string values before `JSON.parse`, preventing `Expected ',' or ']' after array element` errors.
+
+### Test runner timing
+
+The `test-video-pipeline.cjs all` runner now prints:
+
+- `Search phase`
+- `Parallel phase`
+- `Total wall-clock`
+
+This makes it easier to spot whether slow runs are dominated by TikTok search,
+download, Gemini file processing, or the model generation itself.
 
 ---
 
