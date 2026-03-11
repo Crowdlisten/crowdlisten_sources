@@ -1,4 +1,4 @@
-[dotenv@17.3.1] injecting env (12) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.3.1] injecting env (12) from .env -- tip: ⚙️  override existing env vars with { override: true }
 
 CrowdListen Video Pipeline Test
 
@@ -18,22 +18,22 @@ CrowdListen Video Pipeline Test
 [TikTokSearch] Using persistent Chrome profile: /Users/ForrestChai/.playwright-tiktok-profile
 [TikTokSearch] Navigating to: https://www.tiktok.com/search/video?q=cooking%20tips
 [TikTokSearch] Extracted 40 candidates from DOM
-[TikTokSearch] Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_cooking_tips_1773214508207.png
-[TikTokSearch] Claude selected indices: [2, 7, 19, 34, 37]
+[TikTokSearch] Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_cooking_tips_1773219308612.png
+[TikTokSearch] Claude selected indices: [6, 26, 34, 5, 27]
 [TikTokSearch] Selected 5/40 candidates for keyword: "cooking tips"
   ✓  Total candidates found : 40
   ✓  Videos selected by Claude: 5
-  ✓  Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_cooking_tips_1773214508207.png
+  ✓  Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_cooking_tips_1773219308612.png
   ✓    [1] @jose.elcook: 3.8M...
   →         https://www.tiktok.com/@jose.elcook/video/7258087390730816811
-  ✓    [2] @dailyoriginalvids: 263.8K...
-  →         https://www.tiktok.com/@dailyoriginalvids/video/7400109657978703147
-  ✓    [3] @katsi_tik: 578.7K...
+  ✓    [2] @katsi_tik: 578.7K...
   →         https://www.tiktok.com/@katsi_tik/video/7558117527398665503
-  ✓    [4] @thejenglv: 425K...
-  →         https://www.tiktok.com/@thejenglv/video/7355323594018147630
-  ✓    [5] @kellyscleankitchen: 735.7K...
+  ✓    [3] @kellyscleankitchen: 735.7K...
   →         https://www.tiktok.com/@kellyscleankitchen/video/7268423594613411114
+  ✓    [4] @dailyoriginalvids: 26.8K...
+  →         https://www.tiktok.com/@dailyoriginalvids/video/7591175402832317709
+  ✓    [5] @dinnerbyben: 159.5K...
+  →         https://www.tiktok.com/@dinnerbyben/video/7592092735713168662
 
 ────────────────────────────────────────────────────────────
   PARALLEL PROCESSING — launching 5 videos simultaneously
@@ -48,17 +48,7 @@ CrowdListen Video Pipeline Test
   ✓  VideoDownloader module loaded from dist/
   →  Starting download (this may take 10-30 seconds)...
 [VideoDownloader] Starting download — videoId: 7258087390730816811
-  →  [V2] Starting @dailyoriginalvids — https://www.tiktok.com/@dailyoriginalvids/video/7400109657978703147
-
-────────────────────────────────────────────────────────────
-  MODULE 2 — VideoDownloader
-────────────────────────────────────────────────────────────
-  →  Test URL: https://www.tiktok.com/@dailyoriginalvids/video/7400109657978703147
-  ✓  yt-dlp found: v2026.02.21
-  ✓  VideoDownloader module loaded from dist/
-  →  Starting download (this may take 10-30 seconds)...
-[VideoDownloader] Starting download — videoId: 7400109657978703147
-  →  [V3] Starting @katsi_tik — https://www.tiktok.com/@katsi_tik/video/7558117527398665503
+  →  [V2] Starting @katsi_tik — https://www.tiktok.com/@katsi_tik/video/7558117527398665503
 
 ────────────────────────────────────────────────────────────
   MODULE 2 — VideoDownloader
@@ -68,17 +58,7 @@ CrowdListen Video Pipeline Test
   ✓  VideoDownloader module loaded from dist/
   →  Starting download (this may take 10-30 seconds)...
 [VideoDownloader] Starting download — videoId: 7558117527398665503
-  →  [V4] Starting @thejenglv — https://www.tiktok.com/@thejenglv/video/7355323594018147630
-
-────────────────────────────────────────────────────────────
-  MODULE 2 — VideoDownloader
-────────────────────────────────────────────────────────────
-  →  Test URL: https://www.tiktok.com/@thejenglv/video/7355323594018147630
-  ✓  yt-dlp found: v2026.02.21
-  ✓  VideoDownloader module loaded from dist/
-  →  Starting download (this may take 10-30 seconds)...
-[VideoDownloader] Starting download — videoId: 7355323594018147630
-  →  [V5] Starting @kellyscleankitchen — https://www.tiktok.com/@kellyscleankitchen/video/7268423594613411114
+  →  [V3] Starting @kellyscleankitchen — https://www.tiktok.com/@kellyscleankitchen/video/7268423594613411114
 
 ────────────────────────────────────────────────────────────
   MODULE 2 — VideoDownloader
@@ -88,17 +68,71 @@ CrowdListen Video Pipeline Test
   ✓  VideoDownloader module loaded from dist/
   →  Starting download (this may take 10-30 seconds)...
 [VideoDownloader] Starting download — videoId: 7268423594613411114
-[VideoDownloader] Duration check passed — 140s
-[VideoDownloader] Duration check passed — 276s
-[VideoDownloader] Duration check passed — 486s
-[VideoDownloader] Duration check passed — 63s
+  →  [V4] Starting @dailyoriginalvids — https://www.tiktok.com/@dailyoriginalvids/video/7591175402832317709
+
+────────────────────────────────────────────────────────────
+  MODULE 2 — VideoDownloader
+────────────────────────────────────────────────────────────
+  →  Test URL: https://www.tiktok.com/@dailyoriginalvids/video/7591175402832317709
+  ✓  yt-dlp found: v2026.02.21
+  ✓  VideoDownloader module loaded from dist/
+  →  Starting download (this may take 10-30 seconds)...
+[VideoDownloader] Starting download — videoId: 7591175402832317709
+  →  [V5] Starting @dinnerbyben — https://www.tiktok.com/@dinnerbyben/video/7592092735713168662
+
+────────────────────────────────────────────────────────────
+  MODULE 2 — VideoDownloader
+────────────────────────────────────────────────────────────
+  →  Test URL: https://www.tiktok.com/@dinnerbyben/video/7592092735713168662
+  ✓  yt-dlp found: v2026.02.21
+  ✓  VideoDownloader module loaded from dist/
+  →  Starting download (this may take 10-30 seconds)...
+[VideoDownloader] Starting download — videoId: 7592092735713168662
 [VideoDownloader] Duration check passed — 88s
-[VideoDownloader] Download complete — videoId: 7258087390730816811, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7258087390730816811.mp4, took 6133ms
+[VideoDownloader] Duration check passed — 63s
+[VideoDownloader] Duration check passed — 168s
+[VideoDownloader] Duration check passed — 140s
+[VideoDownloader] Duration check passed — 52s
+[VideoDownloader] Download complete — videoId: 7592092735713168662, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7592092735713168662.mp4, took 4520ms
+  ✓  Download complete
+  ✓  Video ID  : 7592092735713168662
+  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7592092735713168662.mp4
+  ✓  Format    : mp4
+  ✓  Time taken: 4520ms
+
+────────────────────────────────────────────────────────────
+  MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
+────────────────────────────────────────────────────────────
+  ✓  GEMINI_API_KEY is set
+  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7592092735713168662.mp4
+  ✓  VideoUnderstanding module loaded from dist/
+  →  Uploading to Gemini Files API and waiting for processing...
+  →  This typically takes 20-60 seconds depending on video length.
+[VideoUnderstanding] Starting analysis — videoId: 7592092735713168662
+[VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
+[VideoDownloader] Download complete — videoId: 7558117527398665503, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4, took 5178ms
+  ✓  Download complete
+  ✓  Video ID  : 7558117527398665503
+  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4
+  ✓  Format    : mp4
+  ✓  Time taken: 5178ms
+
+────────────────────────────────────────────────────────────
+  MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
+────────────────────────────────────────────────────────────
+  ✓  GEMINI_API_KEY is set
+  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4
+  ✓  VideoUnderstanding module loaded from dist/
+  →  Uploading to Gemini Files API and waiting for processing...
+  →  This typically takes 20-60 seconds depending on video length.
+[VideoUnderstanding] Starting analysis — videoId: 7558117527398665503
+[VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
+[VideoDownloader] Download complete — videoId: 7258087390730816811, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7258087390730816811.mp4, took 6476ms
   ✓  Download complete
   ✓  Video ID  : 7258087390730816811
   ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7258087390730816811.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 6133ms
+  ✓  Time taken: 6476ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
@@ -111,30 +145,17 @@ CrowdListen Video Pipeline Test
 [VideoUnderstanding] Starting analysis — videoId: 7258087390730816811
 [VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
 [VideoUnderstanding] Upload complete. Waiting for processing...
+[VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
-[VideoDownloader] Download complete — videoId: 7400109657978703147, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7400109657978703147.mp4, took 8169ms
-  ✓  Download complete
-  ✓  Video ID  : 7400109657978703147
-  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7400109657978703147.mp4
-  ✓  Format    : mp4
-  ✓  Time taken: 8169ms
-
-────────────────────────────────────────────────────────────
-  MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
-────────────────────────────────────────────────────────────
-  ✓  GEMINI_API_KEY is set
-  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7400109657978703147.mp4
-  ✓  VideoUnderstanding module loaded from dist/
-  →  Uploading to Gemini Files API and waiting for processing...
-  →  This typically takes 20-60 seconds depending on video length.
-[VideoUnderstanding] Starting analysis — videoId: 7400109657978703147
-[VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
-[VideoDownloader] Download complete — videoId: 7268423594613411114, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7268423594613411114.mp4, took 9293ms
+[VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
+[VideoUnderstanding] Upload complete. Waiting for processing...
+[VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
+[VideoDownloader] Download complete — videoId: 7268423594613411114, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7268423594613411114.mp4, took 7769ms
   ✓  Download complete
   ✓  Video ID  : 7268423594613411114
   ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7268423594613411114.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 9293ms
+  ✓  Time taken: 7769ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
@@ -148,197 +169,170 @@ CrowdListen Video Pipeline Test
 [VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
 [VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
-[VideoDownloader] Download complete — videoId: 7558117527398665503, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4, took 11141ms
+[VideoDownloader] Download complete — videoId: 7591175402832317709, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7591175402832317709.mp4, took 9022ms
   ✓  Download complete
-  ✓  Video ID  : 7558117527398665503
-  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4
+  ✓  Video ID  : 7591175402832317709
+  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7591175402832317709.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 11141ms
+  ✓  Time taken: 9022ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
 ────────────────────────────────────────────────────────────
   ✓  GEMINI_API_KEY is set
-  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4
+  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7591175402832317709.mp4
   ✓  VideoUnderstanding module loaded from dist/
   →  Uploading to Gemini Files API and waiting for processing...
   →  This typically takes 20-60 seconds depending on video length.
-[VideoUnderstanding] Starting analysis — videoId: 7558117527398665503
+[VideoUnderstanding] Starting analysis — videoId: 7591175402832317709
 [VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
-[VideoUnderstanding] Upload complete. Waiting for processing...
+[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
 [VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
 [VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
-[VideoDownloader] Download complete — videoId: 7355323594018147630, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7355323594018147630.mp4, took 15554ms
-  ✓  Download complete
-  ✓  Video ID  : 7355323594018147630
-  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7355323594018147630.mp4
-  ✓  Format    : mp4
-  ✓  Time taken: 15554ms
-
-────────────────────────────────────────────────────────────
-  MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
-────────────────────────────────────────────────────────────
-  ✓  GEMINI_API_KEY is set
-  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7355323594018147630.mp4
-  ✓  VideoUnderstanding module loaded from dist/
-  →  Uploading to Gemini Files API and waiting for processing...
-  →  This typically takes 20-60 seconds depending on video length.
-[VideoUnderstanding] Starting analysis — videoId: 7355323594018147630
-[VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
-[VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
-[VideoUnderstanding] File is ACTIVE after 4 poll(s)
+[VideoUnderstanding] File is ACTIVE after 3 poll(s)
 [VideoUnderstanding] File is ACTIVE after 3 poll(s)
 [VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
-[VideoUnderstanding] Upload complete. Waiting for processing...
-[VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 4/40, waiting 3000ms)
-[VideoUnderstanding] File is ACTIVE after 4 poll(s)
 [VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 5/40, waiting 3000ms)
 [VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 6/40, waiting 3000ms)
 [VideoUnderstanding] Still processing... (attempt 4/40, waiting 3000ms)
-[VideoUnderstanding] File is ACTIVE after 7 poll(s)
+[VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
+[VideoUnderstanding] File is ACTIVE after 4 poll(s)
+[VideoUnderstanding] File is ACTIVE after 5 poll(s)
+[VideoUnderstanding] Still processing... (attempt 4/40, waiting 3000ms)
 [VideoUnderstanding] Still processing... (attempt 5/40, waiting 3000ms)
 [VideoUnderstanding] Still processing... (attempt 6/40, waiting 3000ms)
 [VideoUnderstanding] Still processing... (attempt 7/40, waiting 3000ms)
-[VideoUnderstanding] Done — videoId: 7268423594613411114, took 29702ms, 7 key moments, 10 timeline segments
+[VideoUnderstanding] Done — videoId: 7558117527398665503, took 25553ms, 7 key moments, 13 timeline segments
   ✓  VideoContext received from Gemini
-  ✓  Main topic          : This video provides a crash course on essential knife skills for cooking, demonstrating how to properly hold a knife and dice various vegetables.
-  ✓  Mood                : Informative and instructional, with a confident and encouraging tone.
-  ✓  Emotional arc       : The video maintains a consistently informative and confident tone, starting with a clear introduction and progressing through detailed, practical demonstrations with a positive and encouraging demeanor.
-  ✓  Timeline segments   : 10
-  ✓  Key moments         : 7
-  ✓  Controversial moments: 1
-  ✓  People detected     : woman in black shirt and maroon apron
-  ✓  Audio track         : Upbeat, lighthearted instrumental music plays throughout the video.
-  ✓  Calls to action     : Follow for more cooking.
-  ✓  Visual text overlays: 2
-  ✓  Transcript length   : 1812 chars
-  ✓  Processing time     : 29702ms
-  →  Transcript preview:
-  →    "Part 16 of 30 of the basics of cooking. Today we're going over a crash course and knife skills. Here are five knife skills you should know. One, how t..."
-  →  Sample key moment:
-  →    0:05 — The woman demonstrates the proper way to hold a knife, gripping the blade with the pointer finger and thumb.
-[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7268423594613411114.mp4
-  ✓  [V5] Local video file cleaned up
-[VideoUnderstanding] Still processing... (attempt 8/40, waiting 3000ms)
-[VideoUnderstanding] Done — videoId: 7558117527398665503, took 31861ms, 8 key moments, 13 timeline segments
-  ✓  VideoContext received from Gemini
-  ✓  Main topic          : A recipe for making creamy Buldak Carbonara ramen using milk, cheese, egg, mayonnaise, soy sauce, and sesame dressing.
-  ✓  Mood                : Informative and enthusiastic, with an upbeat and energetic background track.
-  ✓  Emotional arc       : The video maintains an energetic and positive tone throughout, driven by the upbeat background music and the satisfying progression of the cooking process, culminating in a visually appealing final dish.
+  ✓  Main topic          : The video demonstrates a unique recipe for preparing Buldak Carbonara ramen using milk, eggs, mayonnaise, soy sauce, and various cheeses, purportedly taught by a friend from Japan.
+  ✓  Mood                : Informative and instructional, with an underlying tone of culinary experimentation and satisfaction.
+  ✓  Emotional arc       : The video starts with a curious and instructional tone as ingredients are introduced, transitions to an engaging and satisfying process as the dish is assembled, and concludes with a triumphant and appetizing presentation of the final meal.
   ✓  Timeline segments   : 13
-  ✓  Key moments         : 8
-  ✓  Controversial moments: 1
-  ✓  People detected     : The person cooking (unnamed woman)
-  ✓  Audio track         : Upbeat, energetic instrumental music with a strong beat and vocal samples featuring countdowns and phrases like 'Round one!' and 'Just a man with his will to survive'.
+  ✓  Key moments         : 7
+  ✓  Controversial moments: 5
+  ✓  People detected     : the person cooking
+  ✓  Audio track         : Upbeat, electronic background music with vocal countdowns and phrases like 'Round one', 'Round two', 'Round three'.
   ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 7
-  ✓  Transcript length   : 366 chars
-  ✓  Processing time     : 31861ms
-  →  Transcript preview:
-  →    "You ready? Five, four, three, two, one, go! Round one! Three, two, one, stop! Round two! Five, four, three, two, one, go! Rise and up, back to the str..."
+  ✓  Visual text anchors : 8
+  ✓  Transcript excerpt length: 183 chars
+  ✓  Processing time     : 25553ms
+  →  Transcript excerpt preview:
+  →    "You ready? Five, four, three, two, one, go! Round one. Three, two, one, stop! Round two. Five, four, three, two, one, go! Round it up. Round three. Th..."
   →  Sample key moment:
-  →    0:05 — The crushed Buldak Carbonara ramen noodles are added to the milk in the pan.
+  →    0:05 — Ramen noodles are added to a pan filled with milk, indicating a non-traditional cooking method.
 [VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4
-  ✓  [V3] Local video file cleaned up
-[VideoUnderstanding] Still processing... (attempt 9/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 10/40, waiting 3000ms)
-[VideoUnderstanding] Done — videoId: 7258087390730816811, took 41648ms, 12 key moments, 17 timeline segments
+  ✓  [V2] Local video file cleaned up
+[VideoUnderstanding] File is ACTIVE after 8 poll(s)
+[VideoUnderstanding] Done — videoId: 7268423594613411114, took 32970ms, 6 key moments, 13 timeline segments
   ✓  VideoContext received from Gemini
-  ✓  Main topic          : The video provides a collection of practical cooking tips and kitchen hacks for various ingredients and situations.
-  ✓  Mood                : Informative, helpful, lighthearted, and slightly humorous.
-  ✓  Emotional arc       : The video maintains a consistently positive and helpful tone, starting with an enthusiastic introduction to cooking tips, moving through various practical demonstrations, and ending on a lighthearted, humorous note with ice cream.
-  ✓  Timeline segments   : 17
-  ✓  Key moments         : 12
-  ✓  Controversial moments: 0
-  ✓  People detected     : the male host
-  ✓  Audio track         : The video features upbeat, light, and slightly quirky background music throughout, which enhances the positive and informative mood. There are also distinct sound effects for actions like pouring water, chopping, microwaving, blending, and eating.
-  ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 3
-  ✓  Transcript length   : 2860 chars
-  ✓  Processing time     : 41648ms
-  →  Transcript preview:
-  →    "15 things you should know if you really enjoy cooking. Tomato hack, watch this. Grab two plastic lids. Lid one, tomato babies, lid two. Perfectly cut ..."
+  ✓  Main topic          : The video demonstrates five essential knife skills for cooking, including how to properly hold a knife and techniques for cutting onions, bell peppers, and tomatoes.
+  ✓  Mood                : Informative and instructional, with a confident and friendly tone.
+  ✓  Emotional arc       : The video maintains a consistently positive and encouraging tone, starting with a clear introduction and progressing through detailed, helpful demonstrations, ending with a friendly call to action.
+  ✓  Timeline segments   : 13
+  ✓  Key moments         : 6
+  ✓  Controversial moments: 1
+  ✓  People detected     : woman in a black t-shirt and a maroon apron
+  ✓  Audio track         : Upbeat, lighthearted instrumental background music.
+  ✓  Calls to action     : Follow for more cooking
+  ✓  Visual text anchors : 2
+  ✓  Transcript excerpt length: 1811 chars
+  ✓  Processing time     : 32970ms
+  →  Transcript excerpt preview:
+  →    "Part 16 of 30 of The Basics of Cooking. Today we're going over a crash course in knife skills. Here are five knife skills you should know. One, how to..."
   →  Sample key moment:
-  →    0:04 — The 'tomato hack' is introduced, promising an easy way to cut many small tomatoes.
+  →    0:05 — The host introduces the five knife skills she will teach.
+[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7268423594613411114.mp4
+  ✓  [V3] Local video file cleaned up
+[VideoUnderstanding] Done — videoId: 7592092735713168662, took 40588ms, 8 key moments, 9 timeline segments
+  ✓  VideoContext received from Gemini
+  ✓  Main topic          : Becoming a skilled home cook in 2026 by learning chef techniques from an experienced professional.
+  ✓  Mood                : Enthusiastic, informative, inspiring, and encouraging.
+  ✓  Emotional arc       : The video starts with an engaging question and showcases appealing food, building an enthusiastic and inspiring tone as the chef introduces himself and his mission. It maintains this encouraging and informative mood throughout, culminating in a clear call to action for viewers to join him in their cooking journey.
+  ✓  Timeline segments   : 9
+  ✓  Key moments         : 8
+  ✓  Controversial moments: 0
+  ✓  People detected     : Ben (the male host/chef)
+  ✓  Audio track         : Upbeat, energetic, slightly funky instrumental background music.
+  ✓  Calls to action     : then stick with me | then follow along | follow along and we'll get started
+  ✓  Visual text anchors : 21
+  ✓  Transcript excerpt length: 940 chars
+  ✓  Processing time     : 40588ms
+  →  Transcript excerpt preview:
+  →    "Do you want to become a really good home cook in 2026? If the answer is yes, then stick with me. I'm Ben and I spent years working as a chef in restau..."
+  →  Sample key moment:
+  →    0:03 — A fork cuts into a rich, layered lasagna, visually representing the goal of becoming a good home cook.
+[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7592092735713168662.mp4
+  ✓  [V5] Local video file cleaned up
+[VideoUnderstanding] Done — videoId: 7258087390730816811, took 41291ms, 8 key moments, 17 timeline segments
+  ✓  VideoContext received from Gemini
+  ✓  Main topic          : The video provides 15 practical cooking tips and kitchen hacks for everyday use.
+  ✓  Mood                : Informative and humorous
+  ✓  Emotional arc       : The video maintains an consistently informative and engaging tone, with moments of light humor, particularly at the beginning and end, creating a helpful and entertaining experience.
+  ✓  Timeline segments   : 17
+  ✓  Key moments         : 8
+  ✓  Controversial moments: 0
+  ✓  People detected     : male host
+  ✓  Audio track         : Upbeat, lighthearted background music with occasional sound effects like pouring water, chopping, and microwave beeps.
+  ✓  Calls to action     : (none)
+  ✓  Visual text anchors : 3
+  ✓  Transcript excerpt length: 2852 chars
+  ✓  Processing time     : 41291ms
+  →  Transcript excerpt preview:
+  →    "15 things you should know if you really enjoy cooking. Tomato hack, watch this. Grab two plastic lids, lid one, tomato babies, lid two. Perfectly cut ..."
+  →  Sample key moment:
+  →    0:11 — The host reveals perfectly sliced cherry tomatoes after using the plastic lid hack.
 [VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7258087390730816811.mp4
   ✓  [V1] Local video file cleaned up
-[VideoUnderstanding] File is ACTIVE after 11 poll(s)
-[VideoUnderstanding] Done — videoId: 7400109657978703147, took 82121ms, 22 key moments, 53 timeline segments
+[VideoUnderstanding] Done — videoId: 7591175402832317709, took 77205ms, 14 key moments, 31 timeline segments
   ✓  VideoContext received from Gemini
-  ✓  Main topic          : A compilation of various kitchen and food-related life hacks and cooking tips.
-  ✓  Mood                : Informative and surprising, with a helpful and slightly amazed tone.
-  ✓  Emotional arc       : The video starts with a curious and amazed tone, transitioning into a series of surprising and helpful discoveries, maintaining an overall positive and informative mood throughout.
-  ✓  Timeline segments   : 53
-  ✓  Key moments         : 22
-  ✓  Controversial moments: 2
-  ✓  People detected     : Person with a ring on their left hand, Woman in blue shirt, Woman in yellow shirt, Woman in red shirt, Woman in white shirt
-  ✓  Audio track         : Upbeat, lighthearted, and slightly whimsical background music throughout the video.
+  ✓  Main topic          : The video showcases a compilation of various kitchen hacks and cooking tips for food preparation and storage.
+  ✓  Mood                : Informative and satisfying, with a playful and upbeat tone.
+  ✓  Emotional arc       : The video maintains a consistently positive and upbeat emotional arc, presenting each hack with a sense of discovery and satisfaction, leading to a feeling of accomplishment and usefulness.
+  ✓  Timeline segments   : 31
+  ✓  Key moments         : 14
+  ✓  Controversial moments: 0
+  ✓  People detected     : woman in blue shirt, woman in red shirt, man in blue shirt, woman in pink shirt
+  ✓  Audio track         : Upbeat, instrumental rock-and-roll music plays throughout the video.
   ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 24
-  ✓  Transcript length   : 1096 chars
-  ✓  Processing time     : 82121ms
-  →  Transcript preview:
-  →    "How did I not know this. My grandma taught me this. I wish I knew this sooner. All these years. How did I not know about this. Well now this is new. I..."
+  ✓  Visual text anchors : 12
+  ✓  Transcript excerpt length: 0 chars
+  ✓  Processing time     : 77205ms
   →  Sample key moment:
-  →    0:08 — The potato skin effortlessly slides off after being scored and ice-bathed.
-[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7400109657978703147.mp4
-  ✓  [V2] Local video file cleaned up
-[VideoUnderstanding] Done — videoId: 7355323594018147630, took 126103ms, 9 key moments, 16 timeline segments
-  ✓  VideoContext received from Gemini
-  ✓  Main topic          : A cooking tutorial on how to perfectly cook filet mignon steaks using a pan-sear and oven-finish method.
-  ✓  Mood                : Informative, encouraging, enthusiastic, and slightly humorous.
-  ✓  Emotional arc       : The video starts with an informative and friendly tone, building anticipation for cooking the steaks. It maintains an encouraging and confident mood throughout the cooking process, culminating in satisfaction and excitement when the perfectly cooked steak is revealed and tasted.
-  ✓  Timeline segments   : 16
-  ✓  Key moments         : 9
-  ✓  Controversial moments: 3
-  ✓  People detected     : the female cook/host
-  ✓  Audio track         : Sizzling sounds when steaks are placed in the pan, and general kitchen sounds.
-  ✓  Calls to action     : I promise you you can do it | I believe in you
-  ✓  Visual text overlays: 184
-  ✓  Transcript length   : 6877 chars
-  ✓  Processing time     : 126103ms
-  →  Transcript preview:
-  →    "Hello, welcome to Kitchen Basics 101, where I teach you the bare bone basics as if you've never cooked a day in your life from the perspective of a mo..."
-  →  Sample key moment:
-  →    0:31 — The host explains the crucial first step of letting steaks sit at room temperature for at least an hour.
-[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7355323594018147630.mp4
+  →    0:04 — Ground beef is flattened and scored into portions using a water bottle.
+[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7591175402832317709.mp4
   ✓  [V4] Local video file cleaned up
 
 ────────────────────────────────────────────────────────────
   PIPELINE COMPLETE — 5/5 videos processed
 ────────────────────────────────────────────────────────────
   ✓  Keyword: "cooking tips"
+  ✓  Search phase       : 15662ms (15.7s)
+  ✓  Parallel phase     : 87206ms (1m 27.2s)
+  ✓  Total wall-clock   : 102869ms (1m 42.9s)
   ✓    [1] @jose.elcook
-  ✓        Topic      : The video provides a collection of practical cooking tips and kitchen hacks for various ingredients and situations.
-  ✓        Mood       : Informative, helpful, lighthearted, and slightly humorous.
-  ✓        Key moments: 12
-  ✓        Transcript : "15 things you should know if you really enjoy cooking. Tomato hack, watch this. Grab two plastic lid..."
-  ✓    [2] @dailyoriginalvids
-  ✓        Topic      : A compilation of various kitchen and food-related life hacks and cooking tips.
-  ✓        Mood       : Informative and surprising, with a helpful and slightly amazed tone.
-  ✓        Key moments: 22
-  ✓        Transcript : "How did I not know this. My grandma taught me this. I wish I knew this sooner. All these years. How ..."
-  ✓    [3] @katsi_tik
-  ✓        Topic      : A recipe for making creamy Buldak Carbonara ramen using milk, cheese, egg, mayonnaise, soy sauce, and sesame dressing.
-  ✓        Mood       : Informative and enthusiastic, with an upbeat and energetic background track.
+  ✓        Topic      : The video provides 15 practical cooking tips and kitchen hacks for everyday use.
+  ✓        Mood       : Informative and humorous
   ✓        Key moments: 8
-  ✓        Transcript : "You ready? Five, four, three, two, one, go! Round one! Three, two, one, stop! Round two! Five, four,..."
-  ✓    [4] @thejenglv
-  ✓        Topic      : A cooking tutorial on how to perfectly cook filet mignon steaks using a pan-sear and oven-finish method.
-  ✓        Mood       : Informative, encouraging, enthusiastic, and slightly humorous.
-  ✓        Key moments: 9
-  ✓        Transcript : "Hello, welcome to Kitchen Basics 101, where I teach you the bare bone basics as if you've never cook..."
-  ✓    [5] @kellyscleankitchen
-  ✓        Topic      : This video provides a crash course on essential knife skills for cooking, demonstrating how to properly hold a knife and dice various vegetables.
-  ✓        Mood       : Informative and instructional, with a confident and encouraging tone.
+  ✓        Transcript : "15 things you should know if you really enjoy cooking. Tomato hack, watch this. Grab two plastic lid..."
+  ✓    [2] @katsi_tik
+  ✓        Topic      : The video demonstrates a unique recipe for preparing Buldak Carbonara ramen using milk, eggs, mayonnaise, soy sauce, and various cheeses, purportedly taught by a friend from Japan.
+  ✓        Mood       : Informative and instructional, with an underlying tone of culinary experimentation and satisfaction.
   ✓        Key moments: 7
-  ✓        Transcript : "Part 16 of 30 of the basics of cooking. Today we're going over a crash course and knife skills. Here..."
+  ✓        Transcript : "You ready? Five, four, three, two, one, go! Round one. Three, two, one, stop! Round two. Five, four,..."
+  ✓    [3] @kellyscleankitchen
+  ✓        Topic      : The video demonstrates five essential knife skills for cooking, including how to properly hold a knife and techniques for cutting onions, bell peppers, and tomatoes.
+  ✓        Mood       : Informative and instructional, with a confident and friendly tone.
+  ✓        Key moments: 6
+  ✓        Transcript : "Part 16 of 30 of The Basics of Cooking. Today we're going over a crash course in knife skills. Here ..."
+  ✓    [4] @dailyoriginalvids
+  ✓        Topic      : The video showcases a compilation of various kitchen hacks and cooking tips for food preparation and storage.
+  ✓        Mood       : Informative and satisfying, with a playful and upbeat tone.
+  ✓        Key moments: 14
+  ✓    [5] @dinnerbyben
+  ✓        Topic      : Becoming a skilled home cook in 2026 by learning chef techniques from an experienced professional.
+  ✓        Mood       : Enthusiastic, informative, inspiring, and encouraging.
+  ✓        Key moments: 8
+  ✓        Transcript : "Do you want to become a really good home cook in 2026? If the answer is yes, then stick with me. I'm..."
