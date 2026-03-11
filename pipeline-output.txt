@@ -1,4 +1,4 @@
-[dotenv@17.3.1] injecting env (12) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+[dotenv@17.3.1] injecting env (12) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
 
 CrowdListen Video Pipeline Test
 
@@ -13,308 +13,332 @@ CrowdListen Video Pipeline Test
   ✓  ANTHROPIC_API_KEY is set
   ✓  Chrome profile path: /Users/ForrestChai/.playwright-tiktok-profile
   ✓  TikTokBrowserSearch module loaded from dist/
-  →  Searching TikTok for: "basketball highlights"
+  →  Searching TikTok for: "cooking tips"
   →  Browser will open — this takes 10-20 seconds...
 [TikTokSearch] Using persistent Chrome profile: /Users/ForrestChai/.playwright-tiktok-profile
-[TikTokSearch] Navigating to: https://www.tiktok.com/search/video?q=basketball%20highlights
-[TikTokSearch] Extracted 20 candidates from DOM
-[TikTokSearch] Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_basketball_highlights_1772349222815.png
-[TikTokSearch] Claude selected indices: [1, 2, 6, 7, 13]
-[TikTokSearch] Selected 5/20 candidates for keyword: "basketball highlights"
-  ✓  Total candidates found : 20
+[TikTokSearch] Navigating to: https://www.tiktok.com/search/video?q=cooking%20tips
+[TikTokSearch] Extracted 40 candidates from DOM
+[TikTokSearch] Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_cooking_tips_1773214508207.png
+[TikTokSearch] Claude selected indices: [2, 7, 19, 34, 37]
+[TikTokSearch] Selected 5/40 candidates for keyword: "cooking tips"
+  ✓  Total candidates found : 40
   ✓  Videos selected by Claude: 5
-  ✓  Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_basketball_highlights_1772349222815.png
-  ✓    [1] @ppeditz0: 1.4M...
-  →         https://www.tiktok.com/@ppeditz0/video/7588717101649530126
-  ✓    [2] @lameloballlegacy: 643.5K...
-  →         https://www.tiktok.com/@lameloballlegacy/video/7532314551644212535
-  ✓    [3] @coldhearts: 689.4K...
-  →         https://www.tiktok.com/@coldhearts/video/7484780936589249838
-  ✓    [4] @overtime: 248.4K...
-  →         https://www.tiktok.com/@overtime/video/7610524506494422286
-  ✓    [5] @hoopeclipse: 674.7K...
-  →         https://www.tiktok.com/@hoopeclipse/video/7600160345612668191
+  ✓  Screenshot saved to: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/tiktok_search_cooking_tips_1773214508207.png
+  ✓    [1] @jose.elcook: 3.8M...
+  →         https://www.tiktok.com/@jose.elcook/video/7258087390730816811
+  ✓    [2] @dailyoriginalvids: 263.8K...
+  →         https://www.tiktok.com/@dailyoriginalvids/video/7400109657978703147
+  ✓    [3] @katsi_tik: 578.7K...
+  →         https://www.tiktok.com/@katsi_tik/video/7558117527398665503
+  ✓    [4] @thejenglv: 425K...
+  →         https://www.tiktok.com/@thejenglv/video/7355323594018147630
+  ✓    [5] @kellyscleankitchen: 735.7K...
+  →         https://www.tiktok.com/@kellyscleankitchen/video/7268423594613411114
 
 ────────────────────────────────────────────────────────────
   PARALLEL PROCESSING — launching 5 videos simultaneously
 ────────────────────────────────────────────────────────────
-  →  [V1] Starting @ppeditz0 — https://www.tiktok.com/@ppeditz0/video/7588717101649530126
+  →  [V1] Starting @jose.elcook — https://www.tiktok.com/@jose.elcook/video/7258087390730816811
 
 ────────────────────────────────────────────────────────────
   MODULE 2 — VideoDownloader
 ────────────────────────────────────────────────────────────
-  →  Test URL: https://www.tiktok.com/@ppeditz0/video/7588717101649530126
+  →  Test URL: https://www.tiktok.com/@jose.elcook/video/7258087390730816811
   ✓  yt-dlp found: v2026.02.21
   ✓  VideoDownloader module loaded from dist/
   →  Starting download (this may take 10-30 seconds)...
-[VideoDownloader] Starting download — videoId: 7588717101649530126
-  →  [V2] Starting @lameloballlegacy — https://www.tiktok.com/@lameloballlegacy/video/7532314551644212535
+[VideoDownloader] Starting download — videoId: 7258087390730816811
+  →  [V2] Starting @dailyoriginalvids — https://www.tiktok.com/@dailyoriginalvids/video/7400109657978703147
 
 ────────────────────────────────────────────────────────────
   MODULE 2 — VideoDownloader
 ────────────────────────────────────────────────────────────
-  →  Test URL: https://www.tiktok.com/@lameloballlegacy/video/7532314551644212535
+  →  Test URL: https://www.tiktok.com/@dailyoriginalvids/video/7400109657978703147
   ✓  yt-dlp found: v2026.02.21
   ✓  VideoDownloader module loaded from dist/
   →  Starting download (this may take 10-30 seconds)...
-[VideoDownloader] Starting download — videoId: 7532314551644212535
-  →  [V3] Starting @coldhearts — https://www.tiktok.com/@coldhearts/video/7484780936589249838
+[VideoDownloader] Starting download — videoId: 7400109657978703147
+  →  [V3] Starting @katsi_tik — https://www.tiktok.com/@katsi_tik/video/7558117527398665503
 
 ────────────────────────────────────────────────────────────
   MODULE 2 — VideoDownloader
 ────────────────────────────────────────────────────────────
-  →  Test URL: https://www.tiktok.com/@coldhearts/video/7484780936589249838
+  →  Test URL: https://www.tiktok.com/@katsi_tik/video/7558117527398665503
   ✓  yt-dlp found: v2026.02.21
   ✓  VideoDownloader module loaded from dist/
   →  Starting download (this may take 10-30 seconds)...
-[VideoDownloader] Starting download — videoId: 7484780936589249838
-  →  [V4] Starting @overtime — https://www.tiktok.com/@overtime/video/7610524506494422286
+[VideoDownloader] Starting download — videoId: 7558117527398665503
+  →  [V4] Starting @thejenglv — https://www.tiktok.com/@thejenglv/video/7355323594018147630
 
 ────────────────────────────────────────────────────────────
   MODULE 2 — VideoDownloader
 ────────────────────────────────────────────────────────────
-  →  Test URL: https://www.tiktok.com/@overtime/video/7610524506494422286
+  →  Test URL: https://www.tiktok.com/@thejenglv/video/7355323594018147630
   ✓  yt-dlp found: v2026.02.21
   ✓  VideoDownloader module loaded from dist/
   →  Starting download (this may take 10-30 seconds)...
-[VideoDownloader] Starting download — videoId: 7610524506494422286
-  →  [V5] Starting @hoopeclipse — https://www.tiktok.com/@hoopeclipse/video/7600160345612668191
+[VideoDownloader] Starting download — videoId: 7355323594018147630
+  →  [V5] Starting @kellyscleankitchen — https://www.tiktok.com/@kellyscleankitchen/video/7268423594613411114
 
 ────────────────────────────────────────────────────────────
   MODULE 2 — VideoDownloader
 ────────────────────────────────────────────────────────────
-  →  Test URL: https://www.tiktok.com/@hoopeclipse/video/7600160345612668191
+  →  Test URL: https://www.tiktok.com/@kellyscleankitchen/video/7268423594613411114
   ✓  yt-dlp found: v2026.02.21
   ✓  VideoDownloader module loaded from dist/
   →  Starting download (this may take 10-30 seconds)...
-[VideoDownloader] Starting download — videoId: 7600160345612668191
-[VideoDownloader] Duration check passed — 61s
-[VideoDownloader] Duration check passed — 20s
-[VideoDownloader] Duration check passed — 22s
-[VideoDownloader] Duration check passed — 28s
+[VideoDownloader] Starting download — videoId: 7268423594613411114
+[VideoDownloader] Duration check passed — 140s
+[VideoDownloader] Duration check passed — 276s
+[VideoDownloader] Duration check passed — 486s
 [VideoDownloader] Duration check passed — 63s
-[VideoDownloader] Download complete — videoId: 7588717101649530126, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7588717101649530126.mp4, took 9196ms
+[VideoDownloader] Duration check passed — 88s
+[VideoDownloader] Download complete — videoId: 7258087390730816811, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7258087390730816811.mp4, took 6133ms
   ✓  Download complete
-  ✓  Video ID  : 7588717101649530126
-  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7588717101649530126.mp4
+  ✓  Video ID  : 7258087390730816811
+  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7258087390730816811.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 9196ms
+  ✓  Time taken: 6133ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
 ────────────────────────────────────────────────────────────
   ✓  GEMINI_API_KEY is set
-  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7588717101649530126.mp4
+  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7258087390730816811.mp4
   ✓  VideoUnderstanding module loaded from dist/
   →  Uploading to Gemini Files API and waiting for processing...
   →  This typically takes 20-60 seconds depending on video length.
-[VideoUnderstanding] Starting analysis — videoId: 7588717101649530126
-[VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
-[VideoDownloader] Download complete — videoId: 7610524506494422286, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7610524506494422286.mp4, took 9426ms
-  ✓  Download complete
-  ✓  Video ID  : 7610524506494422286
-  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7610524506494422286.mp4
-  ✓  Format    : mp4
-  ✓  Time taken: 9426ms
-
-────────────────────────────────────────────────────────────
-  MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
-────────────────────────────────────────────────────────────
-  ✓  GEMINI_API_KEY is set
-  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7610524506494422286.mp4
-  ✓  VideoUnderstanding module loaded from dist/
-  →  Uploading to Gemini Files API and waiting for processing...
-  →  This typically takes 20-60 seconds depending on video length.
-[VideoUnderstanding] Starting analysis — videoId: 7610524506494422286
+[VideoUnderstanding] Starting analysis — videoId: 7258087390730816811
 [VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
 [VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
-[VideoUnderstanding] Upload complete. Waiting for processing...
-[VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
-[VideoUnderstanding] File is ACTIVE after 2 poll(s)
-[VideoUnderstanding] File is ACTIVE after 2 poll(s)
-[VideoDownloader] Download complete — videoId: 7484780936589249838, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7484780936589249838.mp4, took 17189ms
+[VideoDownloader] Download complete — videoId: 7400109657978703147, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7400109657978703147.mp4, took 8169ms
   ✓  Download complete
-  ✓  Video ID  : 7484780936589249838
-  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7484780936589249838.mp4
+  ✓  Video ID  : 7400109657978703147
+  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7400109657978703147.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 17189ms
+  ✓  Time taken: 8169ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
 ────────────────────────────────────────────────────────────
   ✓  GEMINI_API_KEY is set
-  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7484780936589249838.mp4
+  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7400109657978703147.mp4
   ✓  VideoUnderstanding module loaded from dist/
   →  Uploading to Gemini Files API and waiting for processing...
   →  This typically takes 20-60 seconds depending on video length.
-[VideoUnderstanding] Starting analysis — videoId: 7484780936589249838
+[VideoUnderstanding] Starting analysis — videoId: 7400109657978703147
 [VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
-[VideoDownloader] Download complete — videoId: 7600160345612668191, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7600160345612668191.mp4, took 16999ms
+[VideoDownloader] Download complete — videoId: 7268423594613411114, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7268423594613411114.mp4, took 9293ms
   ✓  Download complete
-  ✓  Video ID  : 7600160345612668191
-  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7600160345612668191.mp4
+  ✓  Video ID  : 7268423594613411114
+  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7268423594613411114.mp4
   ✓  Format    : mp4
-  ✓  Time taken: 16999ms
+  ✓  Time taken: 9293ms
 
 ────────────────────────────────────────────────────────────
   MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
 ────────────────────────────────────────────────────────────
   ✓  GEMINI_API_KEY is set
-  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7600160345612668191.mp4
+  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7268423594613411114.mp4
   ✓  VideoUnderstanding module loaded from dist/
   →  Uploading to Gemini Files API and waiting for processing...
   →  This typically takes 20-60 seconds depending on video length.
-[VideoUnderstanding] Starting analysis — videoId: 7600160345612668191
+[VideoUnderstanding] Starting analysis — videoId: 7268423594613411114
 [VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
-[VideoDownloader] Download complete — videoId: 7532314551644212535, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7532314551644212535.mp4, took 21435ms
-  ✓  Download complete
-  ✓  Video ID  : 7532314551644212535
-  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7532314551644212535.mp4
-  ✓  Format    : mp4
-  ✓  Time taken: 21435ms
-
-────────────────────────────────────────────────────────────
-  MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
-────────────────────────────────────────────────────────────
-  ✓  GEMINI_API_KEY is set
-  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7532314551644212535.mp4
-  ✓  VideoUnderstanding module loaded from dist/
-  →  Uploading to Gemini Files API and waiting for processing...
-  →  This typically takes 20-60 seconds depending on video length.
-[VideoUnderstanding] Starting analysis — videoId: 7532314551644212535
-[VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
-[VideoUnderstanding] Upload complete. Waiting for processing...
-[VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
 [VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
 [VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
-[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
-[VideoUnderstanding] Done — videoId: 7588717101649530126, took 21644ms, 6 key moments, 9 timeline segments
-  ✓  VideoContext received from Gemini
-  ✓  Main topic          : The video showcases a compilation of basketball players executing impressive 'ankle-breaker' crossover moves, causing their defenders to fall.
-  ✓  Mood                : Energetic, confident, boastful, thrilling.
-  ✓  Emotional arc       : The video maintains a consistent high-energy and confident emotional tone from start to finish, driven by the aggressive basketball plays and the background rap music, culminating in moments of player dominance over fallen opponents.
-  ✓  Timeline segments   : 9
-  ✓  Key moments         : 6
-  ✓  Controversial moments: 0
-  ✓  People detected     : Basketball player in white jersey (multiple instances, including #5, #7), Basketball player in blue jersey (multiple instances, including #2, #10, #21, #27), Basketball player in black jersey (#7), Basketball player in red jersey (multiple instances, including #25, #46), Basketball player in black/orange jersey (#23), Basketball player in grey/green jersey (#5), Basketball player in white jersey (#12), Referee #68, Referee #33, Referee #56, Referee #48, Spectators in the stands
-  ✓  Audio track         : An energetic, heavily auto-tuned rap song with a confident and aggressive tone plays throughout the video, acting as background music.
-  ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 12
-  ✓  Transcript length   : 511 chars
-  ✓  Processing time     : 21644ms
-  →  Transcript preview:
-  →    "Fun game here in the Twin Cities. Look at the moves by Edwards. And through your body, if I shoot a low man, they won't shoot bad. Think I know the pa..."
-  →  Sample key moment:
-  →    0:04 — A player in a white #5 jersey executes a crossover that causes a defender in a blue #27 jersey to fall, followed by a dunk.
-[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7588717101649530126.mp4
-  ✓  [V1] Local video file cleaned up
-[VideoUnderstanding] File is ACTIVE after 3 poll(s)
+[VideoDownloader] Download complete — videoId: 7558117527398665503, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4, took 11141ms
+  ✓  Download complete
+  ✓  Video ID  : 7558117527398665503
+  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4
+  ✓  Format    : mp4
+  ✓  Time taken: 11141ms
+
+────────────────────────────────────────────────────────────
+  MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
+────────────────────────────────────────────────────────────
+  ✓  GEMINI_API_KEY is set
+  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4
+  ✓  VideoUnderstanding module loaded from dist/
+  →  Uploading to Gemini Files API and waiting for processing...
+  →  This typically takes 20-60 seconds depending on video length.
+[VideoUnderstanding] Starting analysis — videoId: 7558117527398665503
+[VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
+[VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Upload complete. Waiting for processing...
 [VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
-[VideoUnderstanding] File is ACTIVE after 3 poll(s)
+[VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
 [VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
-[VideoUnderstanding] Done — videoId: 7610524506494422286, took 27027ms, 6 key moments, 4 timeline segments
-  ✓  VideoContext received from Gemini
-  ✓  Main topic          : A basketball player skillfully performs two consecutive ankle-breaking crossover moves on the same defender, scoring both times.
-  ✓  Mood                : Exciting, impressive, and somewhat humorous due to the repeated success against the same defender.
-  ✓  Emotional arc       : The video starts with anticipation as the player initiates a move, builds to excitement with the first successful score and the defender's fall, and then escalates to triumphant amusement and further excitement as the player repeats the feat on the same defender.
-  ✓  Timeline segments   : 4
-  ✓  Key moments         : 6
-  ✓  Controversial moments: 0
-  ✓  People detected     : Player in white jersey number 1, Player in red jersey number 4, Other basketball players, Referee, Spectators
-  ✓  Audio track         : Sounds of a basketball game, including dribbling, crowd cheering, and a referee's whistle.
-  ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 5
-  ✓  Transcript length   : 0 chars
-  ✓  Processing time     : 27027ms
-  →  Sample key moment:
-  →    0:02 — The player in the white jersey performs the first crossover dribble move.
-[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7610524506494422286.mp4
-  ✓  [V4] Local video file cleaned up
+[VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
+[VideoDownloader] Download complete — videoId: 7355323594018147630, file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7355323594018147630.mp4, took 15554ms
+  ✓  Download complete
+  ✓  Video ID  : 7355323594018147630
+  ✓  File path : /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7355323594018147630.mp4
+  ✓  Format    : mp4
+  ✓  Time taken: 15554ms
+
+────────────────────────────────────────────────────────────
+  MODULE 3 — VideoUnderstanding (Gemini 2.5 Flash)
+────────────────────────────────────────────────────────────
+  ✓  GEMINI_API_KEY is set
+  ✓  Video file exists: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7355323594018147630.mp4
+  ✓  VideoUnderstanding module loaded from dist/
+  →  Uploading to Gemini Files API and waiting for processing...
+  →  This typically takes 20-60 seconds depending on video length.
+[VideoUnderstanding] Starting analysis — videoId: 7355323594018147630
+[VideoUnderstanding] Uploading to Gemini Files API (video/mp4)...
 [VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
 [VideoUnderstanding] File is ACTIVE after 4 poll(s)
-[VideoUnderstanding] Done — videoId: 7484780936589249838, took 27762ms, 6 key moments, 9 timeline segments
+[VideoUnderstanding] File is ACTIVE after 3 poll(s)
+[VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
+[VideoUnderstanding] Upload complete. Waiting for processing...
+[VideoUnderstanding] Still processing... (attempt 1/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 4/40, waiting 3000ms)
+[VideoUnderstanding] File is ACTIVE after 4 poll(s)
+[VideoUnderstanding] Still processing... (attempt 2/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 5/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 3/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 6/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 4/40, waiting 3000ms)
+[VideoUnderstanding] File is ACTIVE after 7 poll(s)
+[VideoUnderstanding] Still processing... (attempt 5/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 6/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 7/40, waiting 3000ms)
+[VideoUnderstanding] Done — videoId: 7268423594613411114, took 29702ms, 7 key moments, 10 timeline segments
   ✓  VideoContext received from Gemini
-  ✓  Main topic          : The video showcases the dominant and impressive basketball skills of a player named Diamant during an AAU game, highlighting his exceptional talent compared to his peers.
-  ✓  Mood                : Energetic, exciting, dominant, impressive.
-  ✓  Emotional arc       : The emotional arc maintains a consistently high level of excitement and energy, with each dunk building on the previous one to reinforce the player's dominance and impressive skill.
-  ✓  Timeline segments   : 9
-  ✓  Key moments         : 6
-  ✓  Controversial moments: 0
-  ✓  People detected     : Diamant (player in light blue/white "DRIFTY COLDHEART" jersey, numbers 13 and 10), Opposing players (in green jerseys, numbers 8, 23, 3, 1, 6), Spectators (crowd around the court), Referees (briefly visible), Person filming (partially visible hands holding a phone at 0:22-0:23)
-  ✓  Audio track         : Sounds of an active basketball game including crowd cheering, basketball dribbling, shoe squeaks on the court, the ball hitting the rim and net, and the thud of dunks.
-  ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 1
-  ✓  Transcript length   : 0 chars
-  ✓  Processing time     : 27762ms
-  →  Sample key moment:
-  →    0:01 — Diamant drives coast-to-coast for a powerful two-handed dunk, beginning the sequence of dominant plays.
-[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7484780936589249838.mp4
-  ✓  [V3] Local video file cleaned up
-[VideoUnderstanding] Done — videoId: 7532314551644212535, took 36609ms, 7 key moments, 13 timeline segments
-  ✓  VideoContext received from Gemini
-  ✓  Main topic          : A highlight reel showcasing the impressive basketball skills and shooting ability of a young boy during various games.
-  ✓  Mood                : Inspirational and energetic, showcasing youthful talent and determination in sports.
-  ✓  Emotional arc       : The emotional arc of the video remains consistently positive and energetic, starting with a determined focus, building through moments of skilled execution and successful shots, and culminating in celebratory moments, all conveying an inspirational and confident tone.
-  ✓  Timeline segments   : 13
+  ✓  Main topic          : This video provides a crash course on essential knife skills for cooking, demonstrating how to properly hold a knife and dice various vegetables.
+  ✓  Mood                : Informative and instructional, with a confident and encouraging tone.
+  ✓  Emotional arc       : The video maintains a consistently informative and confident tone, starting with a clear introduction and progressing through detailed, practical demonstrations with a positive and encouraging demeanor.
+  ✓  Timeline segments   : 10
   ✓  Key moments         : 7
-  ✓  Controversial moments: 0
-  ✓  People detected     : The young boy (main player, wears number 1 on most jerseys), Other young boys (teammates and opponents), Adults (coaches, referees, spectators)
-  ✓  Audio track         : An energetic, slowed-down hip-hop/trap beat with a repetitive vocal sample that sounds like "Smack that, all on the floor, give me some more, till you get sore", likely a remix of Akon's 'Smack That'.
-  ✓  Calls to action     : (none)
-  ✓  Visual text overlays: 6
-  ✓  Transcript length   : 0 chars
-  ✓  Processing time     : 36609ms
-  →  Sample key moment:
-  →    0:06 — The boy stands with his arms crossed, wearing a bright yellow mouthguard, exuding a determined and confident demeanor.
-[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7532314551644212535.mp4
-  ✓  [V2] Local video file cleaned up
-[VideoUnderstanding] Done — videoId: 7600160345612668191, took 53871ms, 7 key moments, 9 timeline segments
-  ✓  VideoContext received from Gemini
-  ✓  Main topic          : This video showcases a compilation of impressive and difficult shot-making by NBA player LaMelo Ball during various basketball games.
-  ✓  Mood                : Exciting, impressive, skillful
-  ✓  Emotional arc       : The video opens with immediate excitement from a buzzer-beater, and this high-energy, impressive mood is consistently maintained throughout, leading to a triumphant and awe-inspiring conclusion with each spectacular shot.
-  ✓  Timeline segments   : 9
-  ✓  Key moments         : 7
-  ✓  Controversial moments: 0
-  ✓  People detected     : LaMelo Ball (player in light teal/white jersey), Various opposing basketball players, Basketball referees, Crowd members in the arenas, Commentators (voices only)
-  ✓  Audio track         : Upbeat hip-hop/trap music with a prominent electronic beat and vocal samples, serving as a hype track.
-  ✓  Calls to action     : LIKE FANDUEL SPORTS NETWORK ON FACEBOOK
+  ✓  Controversial moments: 1
+  ✓  People detected     : woman in black shirt and maroon apron
+  ✓  Audio track         : Upbeat, lighthearted instrumental music plays throughout the video.
+  ✓  Calls to action     : Follow for more cooking.
   ✓  Visual text overlays: 2
-  ✓  Transcript length   : 384 chars
-  ✓  Processing time     : 53871ms
+  ✓  Transcript length   : 1812 chars
+  ✓  Processing time     : 29702ms
   →  Transcript preview:
-  →    "Oh, look what I found! Get in there! Oh! Brandon Miller. Lost it. LaMelo! Oh, it's been that kind of day! Oh, get that! He has eaten in the crosshairs..."
+  →    "Part 16 of 30 of the basics of cooking. Today we're going over a crash course and knife skills. Here are five knife skills you should know. One, how t..."
   →  Sample key moment:
-  →    0:03 — LaMelo Ball hits a fadeaway jumper at the buzzer, leading to an excited crowd reaction and commentator's 'Oh!'
-[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7600160345612668191.mp4
+  →    0:05 — The woman demonstrates the proper way to hold a knife, gripping the blade with the pointer finger and thumb.
+[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7268423594613411114.mp4
   ✓  [V5] Local video file cleaned up
+[VideoUnderstanding] Still processing... (attempt 8/40, waiting 3000ms)
+[VideoUnderstanding] Done — videoId: 7558117527398665503, took 31861ms, 8 key moments, 13 timeline segments
+  ✓  VideoContext received from Gemini
+  ✓  Main topic          : A recipe for making creamy Buldak Carbonara ramen using milk, cheese, egg, mayonnaise, soy sauce, and sesame dressing.
+  ✓  Mood                : Informative and enthusiastic, with an upbeat and energetic background track.
+  ✓  Emotional arc       : The video maintains an energetic and positive tone throughout, driven by the upbeat background music and the satisfying progression of the cooking process, culminating in a visually appealing final dish.
+  ✓  Timeline segments   : 13
+  ✓  Key moments         : 8
+  ✓  Controversial moments: 1
+  ✓  People detected     : The person cooking (unnamed woman)
+  ✓  Audio track         : Upbeat, energetic instrumental music with a strong beat and vocal samples featuring countdowns and phrases like 'Round one!' and 'Just a man with his will to survive'.
+  ✓  Calls to action     : (none)
+  ✓  Visual text overlays: 7
+  ✓  Transcript length   : 366 chars
+  ✓  Processing time     : 31861ms
+  →  Transcript preview:
+  →    "You ready? Five, four, three, two, one, go! Round one! Three, two, one, stop! Round two! Five, four, three, two, one, go! Rise and up, back to the str..."
+  →  Sample key moment:
+  →    0:05 — The crushed Buldak Carbonara ramen noodles are added to the milk in the pan.
+[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7558117527398665503.mp4
+  ✓  [V3] Local video file cleaned up
+[VideoUnderstanding] Still processing... (attempt 9/40, waiting 3000ms)
+[VideoUnderstanding] Still processing... (attempt 10/40, waiting 3000ms)
+[VideoUnderstanding] Done — videoId: 7258087390730816811, took 41648ms, 12 key moments, 17 timeline segments
+  ✓  VideoContext received from Gemini
+  ✓  Main topic          : The video provides a collection of practical cooking tips and kitchen hacks for various ingredients and situations.
+  ✓  Mood                : Informative, helpful, lighthearted, and slightly humorous.
+  ✓  Emotional arc       : The video maintains a consistently positive and helpful tone, starting with an enthusiastic introduction to cooking tips, moving through various practical demonstrations, and ending on a lighthearted, humorous note with ice cream.
+  ✓  Timeline segments   : 17
+  ✓  Key moments         : 12
+  ✓  Controversial moments: 0
+  ✓  People detected     : the male host
+  ✓  Audio track         : The video features upbeat, light, and slightly quirky background music throughout, which enhances the positive and informative mood. There are also distinct sound effects for actions like pouring water, chopping, microwaving, blending, and eating.
+  ✓  Calls to action     : (none)
+  ✓  Visual text overlays: 3
+  ✓  Transcript length   : 2860 chars
+  ✓  Processing time     : 41648ms
+  →  Transcript preview:
+  →    "15 things you should know if you really enjoy cooking. Tomato hack, watch this. Grab two plastic lids. Lid one, tomato babies, lid two. Perfectly cut ..."
+  →  Sample key moment:
+  →    0:04 — The 'tomato hack' is introduced, promising an easy way to cut many small tomatoes.
+[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7258087390730816811.mp4
+  ✓  [V1] Local video file cleaned up
+[VideoUnderstanding] File is ACTIVE after 11 poll(s)
+[VideoUnderstanding] Done — videoId: 7400109657978703147, took 82121ms, 22 key moments, 53 timeline segments
+  ✓  VideoContext received from Gemini
+  ✓  Main topic          : A compilation of various kitchen and food-related life hacks and cooking tips.
+  ✓  Mood                : Informative and surprising, with a helpful and slightly amazed tone.
+  ✓  Emotional arc       : The video starts with a curious and amazed tone, transitioning into a series of surprising and helpful discoveries, maintaining an overall positive and informative mood throughout.
+  ✓  Timeline segments   : 53
+  ✓  Key moments         : 22
+  ✓  Controversial moments: 2
+  ✓  People detected     : Person with a ring on their left hand, Woman in blue shirt, Woman in yellow shirt, Woman in red shirt, Woman in white shirt
+  ✓  Audio track         : Upbeat, lighthearted, and slightly whimsical background music throughout the video.
+  ✓  Calls to action     : (none)
+  ✓  Visual text overlays: 24
+  ✓  Transcript length   : 1096 chars
+  ✓  Processing time     : 82121ms
+  →  Transcript preview:
+  →    "How did I not know this. My grandma taught me this. I wish I knew this sooner. All these years. How did I not know about this. Well now this is new. I..."
+  →  Sample key moment:
+  →    0:08 — The potato skin effortlessly slides off after being scored and ice-bathed.
+[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7400109657978703147.mp4
+  ✓  [V2] Local video file cleaned up
+[VideoUnderstanding] Done — videoId: 7355323594018147630, took 126103ms, 9 key moments, 16 timeline segments
+  ✓  VideoContext received from Gemini
+  ✓  Main topic          : A cooking tutorial on how to perfectly cook filet mignon steaks using a pan-sear and oven-finish method.
+  ✓  Mood                : Informative, encouraging, enthusiastic, and slightly humorous.
+  ✓  Emotional arc       : The video starts with an informative and friendly tone, building anticipation for cooking the steaks. It maintains an encouraging and confident mood throughout the cooking process, culminating in satisfaction and excitement when the perfectly cooked steak is revealed and tasted.
+  ✓  Timeline segments   : 16
+  ✓  Key moments         : 9
+  ✓  Controversial moments: 3
+  ✓  People detected     : the female cook/host
+  ✓  Audio track         : Sizzling sounds when steaks are placed in the pan, and general kitchen sounds.
+  ✓  Calls to action     : I promise you you can do it | I believe in you
+  ✓  Visual text overlays: 184
+  ✓  Transcript length   : 6877 chars
+  ✓  Processing time     : 126103ms
+  →  Transcript preview:
+  →    "Hello, welcome to Kitchen Basics 101, where I teach you the bare bone basics as if you've never cooked a day in your life from the perspective of a mo..."
+  →  Sample key moment:
+  →    0:31 — The host explains the crucial first step of letting steaks sit at room temperature for at least an hour.
+[VideoDownloader] Deleted local file: /var/folders/rw/6t492y7d5d5gmsgj5cl0dygw0000gn/T/crowdlisten_videos/7355323594018147630.mp4
+  ✓  [V4] Local video file cleaned up
 
 ────────────────────────────────────────────────────────────
   PIPELINE COMPLETE — 5/5 videos processed
 ────────────────────────────────────────────────────────────
-  ✓  Keyword: "basketball highlights"
-  ✓    [1] @ppeditz0
-  ✓        Topic      : The video showcases a compilation of basketball players executing impressive 'ankle-breaker' crossover moves, causing their defenders to fall.
-  ✓        Mood       : Energetic, confident, boastful, thrilling.
-  ✓        Key moments: 6
-  ✓        Transcript : "Fun game here in the Twin Cities. Look at the moves by Edwards. And through your body, if I shoot a ..."
-  ✓    [2] @lameloballlegacy
-  ✓        Topic      : A highlight reel showcasing the impressive basketball skills and shooting ability of a young boy during various games.
-  ✓        Mood       : Inspirational and energetic, showcasing youthful talent and determination in sports.
+  ✓  Keyword: "cooking tips"
+  ✓    [1] @jose.elcook
+  ✓        Topic      : The video provides a collection of practical cooking tips and kitchen hacks for various ingredients and situations.
+  ✓        Mood       : Informative, helpful, lighthearted, and slightly humorous.
+  ✓        Key moments: 12
+  ✓        Transcript : "15 things you should know if you really enjoy cooking. Tomato hack, watch this. Grab two plastic lid..."
+  ✓    [2] @dailyoriginalvids
+  ✓        Topic      : A compilation of various kitchen and food-related life hacks and cooking tips.
+  ✓        Mood       : Informative and surprising, with a helpful and slightly amazed tone.
+  ✓        Key moments: 22
+  ✓        Transcript : "How did I not know this. My grandma taught me this. I wish I knew this sooner. All these years. How ..."
+  ✓    [3] @katsi_tik
+  ✓        Topic      : A recipe for making creamy Buldak Carbonara ramen using milk, cheese, egg, mayonnaise, soy sauce, and sesame dressing.
+  ✓        Mood       : Informative and enthusiastic, with an upbeat and energetic background track.
+  ✓        Key moments: 8
+  ✓        Transcript : "You ready? Five, four, three, two, one, go! Round one! Three, two, one, stop! Round two! Five, four,..."
+  ✓    [4] @thejenglv
+  ✓        Topic      : A cooking tutorial on how to perfectly cook filet mignon steaks using a pan-sear and oven-finish method.
+  ✓        Mood       : Informative, encouraging, enthusiastic, and slightly humorous.
+  ✓        Key moments: 9
+  ✓        Transcript : "Hello, welcome to Kitchen Basics 101, where I teach you the bare bone basics as if you've never cook..."
+  ✓    [5] @kellyscleankitchen
+  ✓        Topic      : This video provides a crash course on essential knife skills for cooking, demonstrating how to properly hold a knife and dice various vegetables.
+  ✓        Mood       : Informative and instructional, with a confident and encouraging tone.
   ✓        Key moments: 7
-  ✓    [3] @coldhearts
-  ✓        Topic      : The video showcases the dominant and impressive basketball skills of a player named Diamant during an AAU game, highlighting his exceptional talent compared to his peers.
-  ✓        Mood       : Energetic, exciting, dominant, impressive.
-  ✓        Key moments: 6
-  ✓    [4] @overtime
-  ✓        Topic      : A basketball player skillfully performs two consecutive ankle-breaking crossover moves on the same defender, scoring both times.
-  ✓        Mood       : Exciting, impressive, and somewhat humorous due to the repeated success against the same defender.
-  ✓        Key moments: 6
-  ✓    [5] @hoopeclipse
-  ✓        Topic      : This video showcases a compilation of impressive and difficult shot-making by NBA player LaMelo Ball during various basketball games.
-  ✓        Mood       : Exciting, impressive, skillful
-  ✓        Key moments: 7
-  ✓        Transcript : "Oh, look what I found! Get in there! Oh! Brandon Miller. Lost it. LaMelo! Oh, it's been that kind of..."
+  ✓        Transcript : "Part 16 of 30 of the basics of cooking. Today we're going over a crash course and knife skills. Here..."
