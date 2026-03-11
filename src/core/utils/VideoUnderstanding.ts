@@ -14,7 +14,7 @@
  *   VideoDownloader → [VideoUnderstanding] → CommentEnricher → CommentClustering
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -144,6 +144,83 @@ export interface VideoContext {
  */
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
+const TIMELINE_SEGMENT_SCHEMA = {
+  type: SchemaType.OBJECT,
+  properties: {
+    start: { type: SchemaType.STRING },
+    end: { type: SchemaType.STRING },
+    description: { type: SchemaType.STRING },
+  },
+  required: ['start', 'end', 'description'],
+} satisfies Schema;
+
+const KEY_MOMENT_SCHEMA = {
+  type: SchemaType.OBJECT,
+  properties: {
+    timestamp: { type: SchemaType.STRING },
+    description: { type: SchemaType.STRING },
+  },
+  required: ['timestamp', 'description'],
+} satisfies Schema;
+
+const STRING_ARRAY_SCHEMA = {
+  type: SchemaType.ARRAY,
+  items: { type: SchemaType.STRING },
+} satisfies Schema;
+
+const VIDEO_CONTEXT_RESPONSE_SCHEMA = {
+  type: SchemaType.OBJECT,
+  properties: {
+    mainTopic: { type: SchemaType.STRING },
+    summary: { type: SchemaType.STRING },
+    keyEntities: {
+      type: SchemaType.OBJECT,
+      properties: {
+        people: STRING_ARRAY_SCHEMA,
+        objects: STRING_ARRAY_SCHEMA,
+        locations: STRING_ARRAY_SCHEMA,
+      },
+      required: ['people', 'objects', 'locations'],
+    },
+    timeline: {
+      type: SchemaType.ARRAY,
+      items: TIMELINE_SEGMENT_SCHEMA,
+    },
+    keyMoments: {
+      type: SchemaType.ARRAY,
+      items: KEY_MOMENT_SCHEMA,
+    },
+    mood: { type: SchemaType.STRING },
+    implicitContext: STRING_ARRAY_SCHEMA,
+    searchKeywordRelevance: { type: SchemaType.STRING },
+    transcript: { type: SchemaType.STRING },
+    visualText: STRING_ARRAY_SCHEMA,
+    audioTrack: { type: SchemaType.STRING },
+    callsToAction: STRING_ARRAY_SCHEMA,
+    emotionalArc: { type: SchemaType.STRING },
+    controversialMoments: {
+      type: SchemaType.ARRAY,
+      items: KEY_MOMENT_SCHEMA,
+    },
+  },
+  required: [
+    'mainTopic',
+    'summary',
+    'keyEntities',
+    'timeline',
+    'keyMoments',
+    'mood',
+    'implicitContext',
+    'searchKeywordRelevance',
+    'transcript',
+    'visualText',
+    'audioTrack',
+    'callsToAction',
+    'emotionalArc',
+    'controversialMoments',
+  ],
+} satisfies Schema;
+
 /** Interval between file-state polling requests (ms). */
 const POLLING_INTERVAL_MS = 3000;
 
@@ -160,6 +237,14 @@ const MAX_POLL_ATTEMPTS = 40;
  * 5 minutes should be sufficient for videos up to ~5 min long.
  */
 const GENERATE_TIMEOUT_MS = 300_000; // 5 minutes
+const REPAIR_TIMEOUT_MS = 60_000;
+const MAX_GENERATION_ATTEMPTS = 2;
+const MALFORMED_RESPONSE_DIR = '/tmp/crowdlisten_gemini_failures';
+
+interface JsonParseAttempt {
+  parsed?: any;
+  error?: unknown;
+}
 
 // ─── Service class ────────────────────────────────────────────────────────────
 
@@ -206,10 +291,12 @@ export class VideoUnderstandingService {
     const fileUri = await this.uploadAndWait(videoFilePath, videoId);
 
     // Step 2: Ask Gemini 2.5 Flash Pro to understand the video
-    const rawJson = await this.runUnderstandingPrompt(fileUri, searchKeyword);
-
-    // Step 3: Parse and validate the JSON response into a typed VideoContext
-    const context = this.parseVideoContext(rawJson, videoId, startTime);
+    const context = await this.generateContextWithRecovery(
+      fileUri,
+      videoId,
+      searchKeyword,
+      startTime
+    );
 
     console.log(
       `[VideoUnderstanding] Done — videoId: ${videoId}, ` +
@@ -297,18 +384,13 @@ export class VideoUnderstandingService {
    * The prompt instructs Gemini to return only JSON — no markdown, no prose.
    * We strip any accidental code fences before returning.
    */
-  private async runUnderstandingPrompt(fileUri: string, searchKeyword: string): Promise<string> {
-    // responseMimeType: 'application/json' enables Gemini's native JSON mode —
-    // the model's output grammar is constrained to valid JSON, preventing
-    // malformed responses like "Expected ',' or ']' after array element".
-    const model = this.genAI.getGenerativeModel({
-      model: GEMINI_MODEL,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        maxOutputTokens: 65536,
-      },
-    });
-    const prompt = this.buildPrompt(searchKeyword);
+  private async runUnderstandingPrompt(
+    fileUri: string,
+    searchKeyword: string,
+    attempt: number = 1
+  ): Promise<string> {
+    const model = this.getStructuredModel();
+    const prompt = this.buildPrompt(searchKeyword, attempt);
 
     const result = await model.generateContent(
       [
@@ -332,11 +414,7 @@ export class VideoUnderstandingService {
 
     // With JSON mode enabled, Gemini returns raw JSON (no code fences).
     // Strip fences anyway as a belt-and-suspenders fallback.
-    return result.response.text()
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim();
+    return this.cleanJsonResponseText(result.response.text());
   }
 
   /**
@@ -353,11 +431,20 @@ export class VideoUnderstandingService {
    *
    * @param searchKeyword  Used to add a relevance-mapping field to the output
    */
-  private buildPrompt(searchKeyword: string): string {
+  private buildPrompt(searchKeyword: string, attempt: number = 1): string {
     // Only include the searchKeywordRelevance field if a keyword was provided
     const relevanceField = searchKeyword
       ? `  "searchKeywordRelevance": "How this video relates to the search keyword '${searchKeyword}' (1-2 sentences)",`
       : `  "searchKeywordRelevance": "",`;
+    const retryNotice = attempt > 1
+      ? `
+
+CRITICAL:
+- The previous attempt failed because the output was not valid JSON.
+- Every double quote inside string values must be escaped.
+- If you are unsure about a field, use an empty string "" or empty array [].
+- Do not include any commentary before or after the JSON object.`
+      : '';
 
     return `You are a video content analysis assistant. Watch this entire video carefully, including all audio.
 
@@ -409,98 +496,75 @@ Guidelines:
 - keyEntities.people: describe even unnamed people in enough detail to identify them across references
 - controversialMoments: leave as empty array [] if no genuinely controversial moments exist
 - All text must be in English
-- Return only valid JSON — no trailing commas, no comments inside the JSON`;
+- Return only valid JSON — no trailing commas, no comments inside the JSON${retryNotice}`;
   }
 
   // ─── Private: parsing ─────────────────────────────────────────────────────
 
   /**
-   * Parse the raw JSON string from Gemini into a typed VideoContext.
+   * Generate, parse, and recover structured output from Gemini.
    *
-   * If parsing fails (e.g. Gemini returned a partial or malformed response),
-   * we return a minimal fallback context rather than throwing — this allows
-   * the pipeline to continue with degraded enrichment quality rather than
-   * failing entirely.
+   * Flow:
+   * 1. Initial video analysis request
+   * 2. Local JSON sanitisation + parse
+   * 3. Text-only repair pass on malformed JSON
+   * 4. One full retry against the video if the repair still fails
+   * 5. Minimal fallback context as the final degradation path
    */
-  private parseVideoContext(
-    rawJson: string,
+  private async generateContextWithRecovery(
+    fileUri: string,
     videoId: string,
+    searchKeyword: string,
     startTime: number
-  ): VideoContext {
-    const processingTimeMs = Date.now() - startTime;
+  ): Promise<VideoContext> {
+    let lastRawJson = '';
+    let lastError: unknown = null;
 
-    let parsed: any;
-    try {
-      // Gemini sometimes wraps JSON in markdown fences or appends extra text/explanation.
-      // Track brace depth to find the exact closing } of the outermost object,
-      // correctly handling } characters that appear inside string values.
-      const firstBrace = rawJson.indexOf('{');
-      let jsonSlice = rawJson;
-      if (firstBrace !== -1) {
-        let depth = 0;
-        let inString = false;
-        let escape = false;
-        let end = -1;
-        for (let i = firstBrace; i < rawJson.length; i++) {
-          const ch = rawJson[i];
-          if (escape)              { escape = false; continue; }
-          if (ch === '\\' && inString) { escape = true; continue; }
-          if (ch === '"')          { inString = !inString; continue; }
-          if (inString)            { continue; }
-          if (ch === '{')          { depth++; }
-          else if (ch === '}')     { depth--; if (depth === 0) { end = i; break; } }
-        }
-        if (end !== -1) jsonSlice = rawJson.slice(firstBrace, end + 1);
+    for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+      const rawJson = await this.runUnderstandingPrompt(fileUri, searchKeyword, attempt);
+      lastRawJson = rawJson;
+
+      const parseAttempt = this.tryParseJson(rawJson);
+      if (parseAttempt.parsed) {
+        return this.normalizeVideoContext(parseAttempt.parsed, videoId, startTime);
       }
-      parsed = JSON.parse(this.sanitizeJsonControlChars(jsonSlice));
-    } catch (parseError) {
+
+      lastError = parseAttempt.error;
+      const savedPath = this.saveMalformedResponse(videoId, rawJson, `attempt_${attempt}`);
       console.warn(
-        `[VideoUnderstanding] JSON parse failed — using fallback context. ` +
-        `Error: ${parseError}`
+        `[VideoUnderstanding] JSON parse failed on attempt ${attempt}/${MAX_GENERATION_ATTEMPTS}. ` +
+        `Error: ${parseAttempt.error}` +
+        (savedPath ? ` Raw response saved to ${savedPath}` : '')
       );
-      // Return a minimal context so downstream steps can still run
-      return {
-        mainTopic: 'Video content (analysis parse error)',
-        summary: rawJson.substring(0, 500), // Store raw text as best-effort summary
-        keyEntities: { people: [], objects: [], locations: [] },
-        timeline: [],
-        keyMoments: [],
-        mood: 'unknown',
-        implicitContext: [],
-        searchKeywordRelevance: '',
-        transcript: '',
-        visualText: [],
-        audioTrack: '',
-        callsToAction: [],
-        emotionalArc: '',
-        controversialMoments: [],
-        videoId,
-        processingTimeMs,
-      };
+
+      const repairedJson = await this.repairMalformedJson(rawJson, parseAttempt.error);
+      if (repairedJson) {
+        lastRawJson = repairedJson;
+        const repairedAttempt = this.tryParseJson(repairedJson);
+        if (repairedAttempt.parsed) {
+          console.log(`[VideoUnderstanding] JSON repair succeeded for videoId: ${videoId}`);
+          return this.normalizeVideoContext(repairedAttempt.parsed, videoId, startTime);
+        }
+
+        lastError = repairedAttempt.error;
+        const repairedPath = this.saveMalformedResponse(
+          videoId,
+          repairedJson,
+          `repair_attempt_${attempt}`
+        );
+        console.warn(
+          `[VideoUnderstanding] JSON repair output was still invalid. ` +
+          `Error: ${repairedAttempt.error}` +
+          (repairedPath ? ` Repaired response saved to ${repairedPath}` : '')
+        );
+      }
     }
 
-    return {
-      mainTopic: parsed.mainTopic || '',
-      summary: parsed.summary || '',
-      keyEntities: {
-        people: Array.isArray(parsed.keyEntities?.people) ? parsed.keyEntities.people : [],
-        objects: Array.isArray(parsed.keyEntities?.objects) ? parsed.keyEntities.objects : [],
-        locations: Array.isArray(parsed.keyEntities?.locations) ? parsed.keyEntities.locations : [],
-      },
-      timeline: Array.isArray(parsed.timeline) ? parsed.timeline : [],
-      keyMoments: Array.isArray(parsed.keyMoments) ? parsed.keyMoments : [],
-      mood: parsed.mood || '',
-      implicitContext: Array.isArray(parsed.implicitContext) ? parsed.implicitContext : [],
-      searchKeywordRelevance: parsed.searchKeywordRelevance || '',
-      transcript: parsed.transcript || '',
-      visualText: Array.isArray(parsed.visualText) ? parsed.visualText : [],
-      audioTrack: parsed.audioTrack || '',
-      callsToAction: Array.isArray(parsed.callsToAction) ? parsed.callsToAction : [],
-      emotionalArc: parsed.emotionalArc || '',
-      controversialMoments: Array.isArray(parsed.controversialMoments) ? parsed.controversialMoments : [],
-      videoId,
-      processingTimeMs,
-    };
+    console.warn(
+      `[VideoUnderstanding] Exhausted JSON recovery — using fallback context. ` +
+      `Last error: ${lastError}`
+    );
+    return this.buildFallbackContext(lastRawJson, videoId, startTime);
   }
 
   // ─── Private: helpers ─────────────────────────────────────────────────────
@@ -525,23 +589,271 @@ Guidelines:
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  private getStructuredModel() {
+    return this.genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: VIDEO_CONTEXT_RESPONSE_SCHEMA,
+        temperature: 0,
+        maxOutputTokens: 65536,
+      },
+    });
+  }
+
+  private cleanJsonResponseText(text: string): string {
+    return text
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim();
+  }
+
+  private tryParseJson(rawJson: string): JsonParseAttempt {
+    try {
+      const jsonSlice = this.extractJsonObject(rawJson);
+      return { parsed: JSON.parse(this.sanitizeJsonControlChars(jsonSlice)) };
+    } catch (error) {
+      return { error };
+    }
+  }
+
+  private extractJsonObject(rawJson: string): string {
+    const firstBrace = rawJson.indexOf('{');
+    let jsonSlice = rawJson;
+    if (firstBrace === -1) {
+      return jsonSlice;
+    }
+
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    let end = -1;
+
+    for (let i = firstBrace; i < rawJson.length; i++) {
+      const ch = rawJson[i];
+      if (escape) { escape = false; continue; }
+      if (ch === '\\' && inString) { escape = true; continue; }
+      if (ch === '"') { inString = !inString; continue; }
+      if (inString) { continue; }
+      if (ch === '{') {
+        depth++;
+      } else if (ch === '}') {
+        depth--;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+
+    if (end !== -1) {
+      jsonSlice = rawJson.slice(firstBrace, end + 1);
+    }
+    return jsonSlice;
+  }
+
+  private async repairMalformedJson(rawJson: string, parseError: unknown): Promise<string | null> {
+    console.warn('[VideoUnderstanding] Attempting text-only JSON repair...');
+
+    try {
+      const model = this.getStructuredModel();
+      const result = await model.generateContent(
+        [
+          {
+            text:
+`Convert the malformed JSON-like payload below into valid JSON that matches the required video analysis schema.
+
+Rules:
+- Preserve the original meaning whenever possible.
+- Do not invent video facts that are not already present.
+- If a field is missing or unusable, use an empty string "" or empty array [].
+- Escape all embedded quotes and control characters correctly.
+- Return only valid JSON.
+
+Parse error:
+${String(parseError)}
+
+Malformed payload:
+${rawJson}`,
+          },
+        ],
+        { timeout: REPAIR_TIMEOUT_MS },
+      );
+
+      const finishReason = result.response.candidates?.[0]?.finishReason;
+      if (finishReason === 'MAX_TOKENS') {
+        console.warn('[VideoUnderstanding] JSON repair truncated at MAX_TOKENS');
+        return null;
+      }
+
+      return this.cleanJsonResponseText(result.response.text());
+    } catch (error) {
+      console.warn(`[VideoUnderstanding] JSON repair request failed: ${error}`);
+      return null;
+    }
+  }
+
+  private saveMalformedResponse(
+    videoId: string,
+    rawJson: string,
+    suffix: string
+  ): string | null {
+    try {
+      fs.mkdirSync(MALFORMED_RESPONSE_DIR, { recursive: true });
+      const filePath = path.join(
+        MALFORMED_RESPONSE_DIR,
+        `${videoId}_${Date.now()}_${suffix}.txt`
+      );
+      fs.writeFileSync(filePath, rawJson, 'utf8');
+      return filePath;
+    } catch (error) {
+      console.warn(`[VideoUnderstanding] Failed to persist malformed response: ${error}`);
+      return null;
+    }
+  }
+
+  private buildFallbackContext(
+    rawJson: string,
+    videoId: string,
+    startTime: number
+  ): VideoContext {
+    return {
+      mainTopic: 'Video content (analysis parse error)',
+      summary: rawJson.substring(0, 500),
+      keyEntities: { people: [], objects: [], locations: [] },
+      timeline: [],
+      keyMoments: [],
+      mood: 'unknown',
+      implicitContext: [],
+      searchKeywordRelevance: '',
+      transcript: '',
+      visualText: [],
+      audioTrack: '',
+      callsToAction: [],
+      emotionalArc: '',
+      controversialMoments: [],
+      videoId,
+      processingTimeMs: Date.now() - startTime,
+    };
+  }
+
+  private normalizeVideoContext(parsed: any, videoId: string, startTime: number): VideoContext {
+    const data = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+
+    return {
+      mainTopic: typeof data.mainTopic === 'string' ? data.mainTopic : '',
+      summary: typeof data.summary === 'string' ? data.summary : '',
+      keyEntities: {
+        people: this.toStringArray(data.keyEntities?.people),
+        objects: this.toStringArray(data.keyEntities?.objects),
+        locations: this.toStringArray(data.keyEntities?.locations),
+      },
+      timeline: this.toTimelineSegments(data.timeline),
+      keyMoments: this.toKeyMoments(data.keyMoments),
+      mood: typeof data.mood === 'string' ? data.mood : '',
+      implicitContext: this.toStringArray(data.implicitContext),
+      searchKeywordRelevance: typeof data.searchKeywordRelevance === 'string'
+        ? data.searchKeywordRelevance
+        : '',
+      transcript: typeof data.transcript === 'string' ? data.transcript : '',
+      visualText: this.toStringArray(data.visualText),
+      audioTrack: typeof data.audioTrack === 'string' ? data.audioTrack : '',
+      callsToAction: this.toStringArray(data.callsToAction),
+      emotionalArc: typeof data.emotionalArc === 'string' ? data.emotionalArc : '',
+      controversialMoments: this.toKeyMoments(data.controversialMoments),
+      videoId,
+      processingTimeMs: Date.now() - startTime,
+    };
+  }
+
+  private toStringArray(value: unknown): string[] {
+    return Array.isArray(value)
+      ? value.filter((item): item is string => typeof item === 'string')
+      : [];
+  }
+
+  private toTimelineSegments(value: unknown): TimelineSegment[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .filter(item => item && typeof item === 'object' && !Array.isArray(item))
+      .map(item => {
+        const segment = item as Record<string, unknown>;
+        return {
+          start: typeof segment.start === 'string' ? segment.start : '',
+          end: typeof segment.end === 'string' ? segment.end : '',
+          description: typeof segment.description === 'string' ? segment.description : '',
+        };
+      })
+      .filter(segment => segment.start || segment.end || segment.description);
+  }
+
+  private toKeyMoments(value: unknown): KeyMoment[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .filter(item => item && typeof item === 'object' && !Array.isArray(item))
+      .map(item => {
+        const moment = item as Record<string, unknown>;
+        return {
+          timestamp: typeof moment.timestamp === 'string' ? moment.timestamp : '',
+          description: typeof moment.description === 'string' ? moment.description : '',
+        };
+      })
+      .filter(moment => moment.timestamp || moment.description);
+  }
+
   private sanitizeJsonControlChars(input: string): string {
     let result = '';
     let inString = false;
     let escape = false;
-    for (let i = 0; i < input.length; i++) {
+    let i = 0;
+    while (i < input.length) {
       const ch = input[i];
-      if (escape)                     { result += ch; escape = false; continue; }
-      if (ch === '\\' && inString)    { escape = true; result += ch; continue; }
-      if (ch === '"')                 { inString = !inString; result += ch; continue; }
+
+      // Inside an escape sequence — always emit next char verbatim
+      if (escape) { result += ch; escape = false; i++; continue; }
+
+      // Start of escape sequence inside a string
+      if (ch === '\\' && inString) { escape = true; result += ch; i++; continue; }
+
+      // String boundary
+      if (ch === '"') { inString = !inString; result += ch; i++; continue; }
+
       if (inString) {
-        if (ch === '\n')              { result += '\\n'; continue; }
-        if (ch === '\r')              { result += '\\r'; continue; }
-        if (ch === '\t')              { result += '\\t'; continue; }
-        if (ch.charCodeAt(0) < 0x20) { continue; }
+        // Raw control chars inside strings are invalid JSON — escape them
+        if (ch === '\n') { result += '\\n'; i++; continue; }
+        if (ch === '\r') { result += '\\r'; i++; continue; }
+        if (ch === '\t') { result += '\\t'; i++; continue; }
+        if (ch.charCodeAt(0) < 0x20) { i++; continue; }
+        result += ch; i++; continue;
       }
-      result += ch;
+
+      // Outside strings: strip JS-style comments that Gemini sometimes emits
+      if (ch === '/' && i + 1 < input.length) {
+        if (input[i + 1] === '/') {
+          // Single-line comment — skip to end of line
+          while (i < input.length && input[i] !== '\n') i++;
+          continue;
+        }
+        if (input[i + 1] === '*') {
+          // Block comment — skip to */
+          i += 2;
+          while (i < input.length - 1 && !(input[i] === '*' && input[i + 1] === '/')) i++;
+          i += 2;
+          continue;
+        }
+      }
+
+      result += ch; i++;
     }
-    return result;
+
+    // Remove trailing commas before ] or } (another common Gemini quirk)
+    return result.replace(/,(\s*[}\]])/g, '$1');
   }
 }
