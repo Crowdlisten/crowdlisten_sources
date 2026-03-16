@@ -129,46 +129,48 @@ export class DataNormalizer {
     };
   }
 
-  // Twitter normalization methods
+  // Twitter normalization methods (agent-twitter-client Tweet shape)
   private static normalizeTwitterPost(data: any): Post {
     return {
-      id: data.id || data.id_str || '',
+      id: data.id || '',
       platform: 'twitter',
-      author: this.normalizeTwitterUser(data.author || data.user || {}),
-      content: data.text || data.full_text || '',
-      mediaUrl: data.attachments?.media_keys?.[0] || '',
+      author: this.normalizeTwitterUser(data),
+      content: data.text || '',
+      mediaUrl: data.photos?.[0]?.url || data.videos?.[0]?.preview || '',
       engagement: {
-        likes: data.public_metrics?.like_count || data.favorite_count || 0,
-        comments: data.public_metrics?.reply_count || data.reply_count || 0,
-        shares: data.public_metrics?.retweet_count || data.retweet_count || 0,
-        views: data.public_metrics?.impression_count || 0
+        likes: data.likes || 0,
+        comments: data.replies || 0,
+        shares: data.retweets || 0,
+        views: data.views || 0
       },
-      timestamp: new Date(data.created_at || Date.now()),
-      url: `https://twitter.com/${data.author?.username || 'user'}/status/${data.id}`,
-      hashtags: this.extractHashtags(data.text || data.full_text || '')
+      timestamp: data.timeParsed ? new Date(data.timeParsed) :
+                 data.timestamp ? new Date(data.timestamp * 1000) : new Date(),
+      url: data.permanentUrl || `https://twitter.com/${data.username || 'user'}/status/${data.id}`,
+      hashtags: data.hashtags || this.extractHashtags(data.text || '')
     };
   }
 
   private static normalizeTwitterUser(data: any): User {
     return {
-      id: data.id || data.id_str || '',
-      username: data.username || data.screen_name || '',
+      id: data.userId || data.id || '',
+      username: data.username || '',
       displayName: data.name || '',
-      followerCount: data.public_metrics?.followers_count || data.followers_count || 0,
-      verified: data.verified || false,
-      profileImageUrl: data.profile_image_url || '',
-      bio: data.description || ''
+      followerCount: 0,
+      verified: false,
+      profileImageUrl: '',
+      bio: ''
     };
   }
 
   private static normalizeTwitterComment(data: any): Comment {
-    // Twitter doesn't have traditional comments, this is for replies
+    // Twitter replies normalized as comments
     return {
       id: data.id || '',
-      author: this.normalizeTwitterUser(data.author || {}),
+      author: this.normalizeTwitterUser(data),
       text: data.text || '',
-      timestamp: new Date(data.created_at || Date.now()),
-      likes: data.public_metrics?.like_count || 0,
+      timestamp: data.timeParsed ? new Date(data.timeParsed) :
+                 data.timestamp ? new Date(data.timestamp * 1000) : new Date(),
+      likes: data.likes || 0,
       replies: []
     };
   }

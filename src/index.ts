@@ -33,16 +33,16 @@ const serviceConfig: UnifiedServiceConfig = {
 };
 
 // Configure platforms based on available credentials
-if (process.env.TWITTER_API_KEY && process.env.TWITTER_API_KEY_SECRET && 
-    process.env.TWITTER_ACCESS_TOKEN && process.env.TWITTER_ACCESS_TOKEN_SECRET) {
+if (process.env.TWITTER_USERNAME && process.env.TWITTER_PASSWORD) {
+  const twitterCreds: Record<string, string> = {
+    username: process.env.TWITTER_USERNAME,
+    password: process.env.TWITTER_PASSWORD,
+  };
+  if (process.env.TWITTER_EMAIL) twitterCreds.email = process.env.TWITTER_EMAIL;
+  if (process.env.TWITTER_2FA_SECRET) twitterCreds.twoFactorSecret = process.env.TWITTER_2FA_SECRET;
   serviceConfig.platforms.twitter = {
     platform: 'twitter',
-    credentials: {
-      apiKey: process.env.TWITTER_API_KEY,
-      apiSecret: process.env.TWITTER_API_KEY_SECRET,
-      accessToken: process.env.TWITTER_ACCESS_TOKEN,
-      accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET
-    }
+    credentials: twitterCreds
   };
 }
 
