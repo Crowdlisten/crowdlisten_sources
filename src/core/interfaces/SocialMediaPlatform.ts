@@ -3,6 +3,16 @@
  * Provides a unified API for content retrieval across different platforms
  */
 
+import type {
+  AskLayerIndex,
+  EnrichedComment,
+  Insight,
+  LocalCluster,
+  MetaCluster,
+  OpinionUnit,
+  VideoAnchor,
+} from './CommentAnalysis.js';
+
 export interface Post {
   id: string;
   platform: PlatformType;
@@ -58,6 +68,15 @@ export interface ContentAnalysis {
   commentCount: number;
   topComments: Comment[];
   clustering?: CommentClustering;
+  enrichedComments?: EnrichedComment[];
+  opinionUnits?: OpinionUnit[];
+  videoAnchors?: VideoAnchor[];
+  localClusters?: LocalCluster[];
+  metaClusters?: MetaCluster[];
+  insights?: Insight[];
+  askLayerIndex?: AskLayerIndex;
+  videoContext?: Record<string, unknown>;
+  analysisMetadata?: Record<string, unknown>;
 }
 
 export interface CommentCluster {
@@ -75,6 +94,13 @@ export interface CommentClustering {
   clusters: CommentCluster[];
   overallAnalysis: string;
   logs: string[];
+  enrichedComments?: EnrichedComment[];
+  opinionUnits?: OpinionUnit[];
+  videoAnchors?: VideoAnchor[];
+  localClusters?: LocalCluster[];
+  metaClusters?: MetaCluster[];
+  insights?: Insight[];
+  askLayerIndex?: AskLayerIndex;
 }
 
 export interface TrendingHashtag {

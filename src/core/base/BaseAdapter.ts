@@ -174,6 +174,15 @@ export abstract class BaseAdapter implements SocialMediaPlatform {
       if (enableClustering && this.clusteringService.isClusteringAvailable() && comments.length > 0) {
         this.log(`Performing clustering analysis on ${comments.length} comments`);
         analysis.clustering = await this.clusteringService.clusterComments(comments);
+        // Surface the richer clustering objects at the top level so callers that
+        // expect ContentAnalysis do not need to manually unpack the clustering payload.
+        analysis.enrichedComments = analysis.clustering.enrichedComments;
+        analysis.opinionUnits = analysis.clustering.opinionUnits;
+        analysis.videoAnchors = analysis.clustering.videoAnchors;
+        analysis.localClusters = analysis.clustering.localClusters;
+        analysis.metaClusters = analysis.clustering.metaClusters;
+        analysis.insights = analysis.clustering.insights;
+        analysis.askLayerIndex = analysis.clustering.askLayerIndex;
       } else if (enableClustering && !this.clusteringService.isClusteringAvailable()) {
         this.log('Clustering requested but OpenAI API key not available', 'warn');
       }

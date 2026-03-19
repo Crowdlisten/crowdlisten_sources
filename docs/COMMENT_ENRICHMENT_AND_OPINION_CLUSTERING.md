@@ -2,7 +2,13 @@
 
 ## Status
 
-Draft design document. This file defines the intended logic for the next stage of the TikTok analysis pipeline after:
+Design document for the intended comment-analysis hierarchy.
+
+The current repo implementation is documented in:
+
+- `docs/COMMENT_ANALYSIS_IMPLEMENTATION.md`
+
+This file still defines the target logic for the next stage of the TikTok analysis pipeline after:
 
 1. comment retrieval
 2. video download and understanding

@@ -17,6 +17,7 @@ import * as dotenv from 'dotenv';
 
 import { UnifiedSocialMediaService, UnifiedServiceConfig } from './services/UnifiedSocialMediaService.js';
 import { PlatformType } from './core/interfaces/SocialMediaPlatform.js';
+import { TikTokCommentAnalysisService } from './core/utils/TikTokCommentAnalysis.js';
 import { TikTokUrlUtils } from './core/utils/TikTokUrlUtils.js';
 
 // Load environment variables
@@ -83,6 +84,7 @@ if (process.env.YOUTUBE_API_KEY) {
 
 // Initialize the unified service
 const unifiedService = new UnifiedSocialMediaService(serviceConfig);
+const tikTokCommentAnalysisService = new TikTokCommentAnalysisService();
 
 // Create MCP server
 const server = new Server(
@@ -685,8 +687,13 @@ async function handleAnalyzeContent(args: any) {
       }
     };
 
-    // Add opinion clustering if enabled
-    if (enableClustering) {
+    // Reuse the adapter-produced clustering when available before falling back.
+    if (enableClustering && baseAnalysis.clustering) {
+      enhancedAnalysis.opinionClusters = baseAnalysis.clustering.localClusters || baseAnalysis.clustering.clusters;
+      enhancedAnalysis.metaClusters = baseAnalysis.clustering.metaClusters || [];
+      enhancedAnalysis.insights = baseAnalysis.clustering.insights || [];
+      enhancedAnalysis.totalComments = baseAnalysis.clustering.totalComments;
+    } else if (enableClustering) {
       try {
         const clusterAnalysis = await handleClusterOpinions({
           platform,
@@ -698,6 +705,8 @@ async function handleAnalyzeContent(args: any) {
         
         const clusterData = JSON.parse(clusterAnalysis.content[0].text);
         enhancedAnalysis.opinionClusters = clusterData.clusters;
+        enhancedAnalysis.metaClusters = clusterData.metaClusters || [];
+        enhancedAnalysis.insights = clusterData.insights || [];
         enhancedAnalysis.totalComments = clusterData.totalComments;
       } catch (clusterError) {
         console.error('Clustering failed:', clusterError);
@@ -834,10 +843,12 @@ async function handleClusterOpinions(args: any) {
   const { platform, contentId, clusterCount = 5, includeExamples = true, weightByEngagement = true } = args;
   
   try {
-    // Get comments from the content
-    const comments = await unifiedService.getContentComments(platform as PlatformType, contentId, 500);
-    
-    if (comments.length === 0) {
+    // Reuse the adapter-level analysis so TikTok can return grounded local/meta
+    // clusters without re-fetching and re-clustering comments in a separate path.
+    const analysis = await unifiedService.analyzeContent(platform as PlatformType, contentId, true);
+    const clustering = analysis.clustering;
+
+    if (!clustering) {
       return {
         content: [{
           type: 'text',
@@ -846,44 +857,10 @@ async function handleClusterOpinions(args: any) {
             contentId,
             clusters: [],
             totalComments: 0,
-            message: "No comments found for clustering"
+            message: 'No clustering data available for this content'
           }, null, 2)
         }]
       };
-    }
-
-    // Simulated clustering logic (would integrate with OpenAI embeddings in production)
-    const clusters = [];
-    const commentsPerCluster = Math.ceil(comments.length / clusterCount);
-    
-    for (let i = 0; i < clusterCount; i++) {
-      const clusterComments = comments.slice(i * commentsPerCluster, (i + 1) * commentsPerCluster);
-      if (clusterComments.length === 0) continue;
-      
-      // Calculate cluster metrics
-      const totalLikes = clusterComments.reduce((sum, comment) => sum + (comment.likes || 0), 0);
-      const avgSentiment = Math.random(); // Would use actual sentiment analysis
-      
-      clusters.push({
-        clusterId: i + 1,
-        theme: `Opinion Theme ${i + 1}`,
-        size: clusterComments.length,
-        percentage: (clusterComments.length / comments.length * 100).toFixed(1),
-        engagement: {
-          totalLikes,
-          avgLikes: (totalLikes / clusterComments.length).toFixed(1)
-        },
-        sentiment: {
-          score: avgSentiment.toFixed(2),
-          label: avgSentiment > 0.6 ? 'positive' : avgSentiment < 0.4 ? 'negative' : 'neutral'
-        },
-        examples: includeExamples ? clusterComments.slice(0, 3).map(c => ({
-          text: c.text,
-          likes: c.likes || 0,
-          author: c.author?.username || 'anonymous'
-        })) : [],
-        keyPhrases: [`phrase_${i + 1}`, `topic_${i + 1}`]
-      });
     }
 
     return {
@@ -893,12 +870,16 @@ async function handleClusterOpinions(args: any) {
           platform,
           contentId,
           analysisType: 'opinion_clustering',
-          totalComments: comments.length,
-          clusterCount: clusters.length,
-          clusters: clusters.sort((a, b) => b.size - a.size), // Sort by size
+          totalComments: clustering.totalComments,
+          clusterCount: clustering.clustersCount,
+          clusters: clustering.localClusters || clustering.clusters,
+          metaClusters: clustering.metaClusters || [],
+          insights: clustering.insights || [],
+          askLayerIndex: clustering.askLayerIndex || null,
           metadata: {
             weightByEngagement,
             includeExamples,
+            requestedClusterCount: clusterCount,
             timestamp: new Date().toISOString()
           }
         }, null, 2)
@@ -932,6 +913,46 @@ async function handleDeepPlatformAnalysis(args: any) {
   } = args;
   
   try {
+    if (platform === 'tiktok') {
+      // TikTok deep analysis now performs per-video enrichment/clustering first,
+      // then adds a cross-video meta-clustering pass over the analyzed set.
+      const posts = await unifiedService.searchContent('tiktok', query, Math.min(maxPosts, 5));
+      const crossVideo = await tikTokCommentAnalysisService.analyzePosts(
+        query,
+        posts,
+        async (postId: string, limit: number) => unifiedService.getContentComments('tiktok', postId, limit),
+        120
+      );
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            platform,
+            query,
+            analysisType,
+            totalPosts: posts.length,
+            videosAnalyzed: crossVideo.videosAnalyzed,
+            perVideo: crossVideo.perVideo,
+            metaClusters: crossVideo.metaClusters,
+            insights: crossVideo.insights,
+            askLayerIndex: crossVideo.askLayerIndex,
+            overallAnalysis: crossVideo.overallAnalysis,
+            metadata: {
+              analysisTimestamp: new Date().toISOString(),
+              analysisDepth: 'comprehensive',
+              verticalSliceApproach: true,
+              extractAudio,
+              extractImages,
+              trackInfluencers,
+              timeWindow,
+              logs: crossVideo.logs
+            }
+          }, null, 2)
+        }]
+      };
+    }
+
     // Get content for deep analysis
     const posts = await unifiedService.searchContent(platform as PlatformType, query, maxPosts);
     

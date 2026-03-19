@@ -18,9 +18,11 @@
 import axios from 'axios';
 import { BaseAdapter } from '../core/base/BaseAdapter.js';
 import { DataNormalizer } from '../core/utils/DataNormalizer.js';
+import { TikTokCommentAnalysisService } from '../core/utils/TikTokCommentAnalysis.js';
 import { TikTokBrowserSearchService } from '../core/utils/TikTokBrowserSearch.js';
 import { TikTokUrlUtils } from '../core/utils/TikTokUrlUtils.js';
 import {
+  ContentAnalysis,
   Post,
   Comment,
   PlatformCapabilities,
@@ -30,10 +32,12 @@ import {
 
 export class TikTokAdapter extends BaseAdapter {
   private msToken?: string;
+  private commentAnalysisService: TikTokCommentAnalysisService;
 
   constructor(config: PlatformConfig) {
     super(config);
     this.msToken = config.credentials?.ms_token;
+    this.commentAnalysisService = new TikTokCommentAnalysisService();
     // Conservative rate limiting — TikTok's APIs are sensitive to high request volume
     this.maxRequestsPerWindow = 30;
   }
@@ -152,6 +156,55 @@ export class TikTokAdapter extends BaseAdapter {
       return comments.map(comment => DataNormalizer.normalizeComment(comment, 'tiktok'));
     } catch (error) {
       this.handleError(error, 'getContentComments');
+    }
+  }
+
+  async analyzeContent(contentId: string, enableClustering: boolean = true): Promise<ContentAnalysis> {
+    this.ensureInitialized();
+    this.validateContentId(contentId);
+
+    try {
+      let normalizedContentId = contentId;
+      let post: Post | undefined;
+
+      // Canonicalize URLs to a stable video ID so comment retrieval and video
+      // understanding both operate on the same TikTok asset.
+      if (TikTokUrlUtils.isTikTokUrl(contentId)) {
+        const resolvedUrl = await TikTokUrlUtils.resolveUrl(contentId);
+        const extractedId = TikTokUrlUtils.extractVideoId(resolvedUrl);
+        if (!extractedId) {
+          throw new Error(`Unable to extract TikTok video ID from URL: ${contentId}`);
+        }
+        normalizedContentId = extractedId;
+        const posts = await this.getVideoByUrl(resolvedUrl);
+        post = posts[0];
+      }
+
+      const comments = await this.getContentComments(normalizedContentId, 200);
+      // TikTok uses the richer comment+video analysis path instead of the
+      // generic BaseAdapter summary flow.
+      const analysis = await this.commentAnalysisService.analyzeVideo({
+        contentId: post?.url || contentId,
+        comments,
+        post,
+        searchKeyword: post?.content,
+        maxComments: 200,
+      });
+
+      if (!enableClustering) {
+        return {
+          ...analysis,
+          clustering: undefined,
+          localClusters: undefined,
+          metaClusters: undefined,
+          insights: undefined,
+          askLayerIndex: undefined,
+        };
+      }
+
+      return analysis;
+    } catch (error) {
+      this.handleError(error, 'analyzeContent');
     }
   }
 
