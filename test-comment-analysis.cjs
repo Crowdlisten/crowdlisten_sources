@@ -194,7 +194,7 @@ async function main() {
   pass('Single-video clustering returns local clusters and insights');
 
   info('Running cross-video meta clustering...');
-  const crossVideo = clusterer.buildCrossVideoClustering({
+  const crossVideo = await clusterer.buildCrossVideoClustering({
     videoIds: ['v1', 'v2'],
     clusterings: [
       { videoId: 'v1', clustering: clustering1, videoContext: videoContexts.v1 },
@@ -205,6 +205,10 @@ async function main() {
   assert((crossVideo.metaClusters || []).length > 0, 'Expected at least one recurring meta cluster');
   assert((crossVideo.insights || []).length > 0, 'Expected cross-video insights');
   assert(crossVideo.askLayerIndex, 'Expected ask-layer metadata');
+  assert(
+    [...(clustering1.logs || []), ...(clustering2.logs || []), ...(crossVideo.logs || [])].some(log => log.toLowerCase().includes('embedded')),
+    'Expected clustering logs to record the embedding strategy'
+  );
   assert(
     (crossVideo.metaClusters || []).some(cluster => cluster.label.toLowerCase().includes('recurring criticism')),
     'Expected recurring criticism cluster across the two videos'

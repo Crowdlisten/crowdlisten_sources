@@ -32,6 +32,10 @@ It complements `docs/COMMENT_ENRICHMENT_AND_OPINION_CLUSTERING.md`, which remain
   - engagement scoring
   - stance / intent / noise heuristics
   - lexical similarity helpers
+- `src/core/utils/CommentEmbeddingService.ts`
+  - provides embedding vectors for clustering
+  - uses OpenAI embeddings when `OPENAI_API_KEY` is available
+  - falls back to deterministic local hash embeddings when remote embeddings are unavailable
 
 ### Core analysis services
 
@@ -199,6 +203,7 @@ This is the core analysis atom. Clustering operates on opinion units, not raw co
 2. fine clustering inside each bucket by:
    - cluster-type compatibility
    - stance compatibility
+   - embedding similarity
    - lexical similarity
 
 Current local cluster types:
@@ -235,6 +240,7 @@ Important rule:
 Meta clustering currently uses:
 
 - stance compatibility
+- embedding similarity across cluster signatures
 - lexical similarity across:
   - primary aspect label
   - cluster label
@@ -431,13 +437,13 @@ If one TikTok post fails during multi-video analysis:
 
 ## Known Heuristic Limits
 
-The current implementation is deterministic and intentionally lightweight. It does not yet use embeddings or an LLM inside the comment analysis stages.
+The current implementation now uses embeddings for local and cross-video clustering, but it still mixes deterministic heuristics with model-driven similarity.
 
 Current limitations:
 
 - grounding is heuristic rather than model-based
-- local clustering uses lexical similarity rather than embedding similarity
-- meta clustering may under-merge semantically similar but lexically different clusters
+- local clustering still uses lexical overlap alongside embeddings for stability
+- meta clustering may still under-merge semantically similar but lexically distant clusters when the hash fallback is active
 - ask-layer output is an index, not a full query engine
 - noise detection is conservative and not yet platform-specific
 

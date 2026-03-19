@@ -11,6 +11,7 @@ import type {
   OpinionUnit,
 } from '../interfaces/CommentAnalysis.js';
 import type { VideoContext } from './VideoUnderstanding.js';
+import { CommentEmbeddingService } from './CommentEmbeddingService.js';
 import { CommentEnricherService } from './CommentEnricher.js';
 import {
   calculateEngagementScore,
@@ -49,9 +50,11 @@ interface MetaClusterAccumulator {
 }
 
 export class CommentClusteringService {
+  private embeddings: CommentEmbeddingService;
   private enricher: CommentEnricherService;
 
   constructor() {
+    this.embeddings = new CommentEmbeddingService();
     this.enricher = new CommentEnricherService();
   }
 
@@ -77,7 +80,7 @@ export class CommentClusteringService {
     );
     const enrichedByCommentId = new Map(enrichment.enrichedComments.map(comment => [comment.commentId, comment]));
 
-    const localClusters = this.buildLocalClusters(videoId, enrichment.opinionUnits, enrichedByCommentId, logs);
+    const localClusters = await this.buildLocalClusters(videoId, enrichment.opinionUnits, enrichedByCommentId, logs);
     const legacyClusters = this.toLegacyClusters(localClusters, commentsById);
     const insights = this.buildInsightsFromLocalClusters(videoId, localClusters);
     const askLayerIndex = this.buildAskLayerIndex(localClusters, []);
@@ -102,10 +105,10 @@ export class CommentClusteringService {
     };
   }
 
-  buildCrossVideoClustering(input: CrossVideoClusteringInput): Pick<CommentClustering, 'metaClusters' | 'insights' | 'logs' | 'askLayerIndex' | 'overallAnalysis'> {
+  async buildCrossVideoClustering(input: CrossVideoClusteringInput): Promise<Pick<CommentClustering, 'metaClusters' | 'insights' | 'logs' | 'askLayerIndex' | 'overallAnalysis'>> {
     const logs: string[] = [];
     const allLocalClusters = input.clusterings.flatMap(item => item.clustering.localClusters || []);
-    const metaClusters = this.buildMetaClusters(allLocalClusters, input.videoIds, logs);
+    const metaClusters = await this.buildMetaClusters(allLocalClusters, input.videoIds, logs);
     const insights = this.buildInsightsFromMetaClusters(metaClusters);
     const askLayerIndex = this.buildAskLayerIndex(allLocalClusters, metaClusters);
     const overallAnalysis = this.buildCrossVideoSummary(metaClusters, insights, input.videoIds.length);
@@ -126,12 +129,12 @@ export class CommentClusteringService {
     return true;
   }
 
-  private buildLocalClusters(
+  private async buildLocalClusters(
     videoId: string,
     opinionUnits: OpinionUnit[],
     enrichedByCommentId: Map<string, EnrichedComment>,
     logs: string[]
-  ): LocalCluster[] {
+  ): Promise<LocalCluster[]> {
     const coarseBuckets = new Map<string, LocalClusterAccumulator>();
 
     // Group by aboutness first so different moments, entities, or claims stay
@@ -159,7 +162,7 @@ export class CommentClusteringService {
     const localClusters: LocalCluster[] = [];
 
     for (const bucket of coarseBuckets.values()) {
-      const clusterGroups = this.buildFineClusters(bucket.units);
+      const clusterGroups = await this.buildFineClusters(bucket.units, logs);
       for (const group of clusterGroups) {
         localClusters.push(
           this.finalizeLocalCluster(
@@ -178,20 +181,29 @@ export class CommentClusteringService {
       .sort((left, right) => right.importanceScore - left.importanceScore);
   }
 
-  private buildFineClusters(units: OpinionUnit[]): OpinionUnit[][] {
+  private async buildFineClusters(units: OpinionUnit[], logs: string[]): Promise<OpinionUnit[][]> {
     const groups: OpinionUnit[][] = [];
 
     const sortedUnits = units
       .slice()
       .sort((left, right) => right.engagementScore - left.engagementScore);
+    const embeddingBatch = await this.embeddings.embedTexts(sortedUnits.map(unit => unit.normalizedText));
+    const vectorsByUnitId = new Map(
+      sortedUnits.map((unit, index) => [unit.opinionUnitId, embeddingBatch.vectors[index] || []])
+    );
+
+    logs.push(...embeddingBatch.logs);
 
     // Inside each aboutness bucket, merge only when stance/type are compatible
     // and the normalized spans are similar enough to represent one opinion theme.
+    // Similarity combines embeddings with lexical overlap so the flow still works
+    // when the embedding provider falls back to deterministic local vectors.
     for (const unit of sortedUnits) {
       const unitClusterType = inferClusterType(unit.stance, unit.intent, unit.noiseFlags);
       let bestGroupIndex = -1;
       let bestScore = 0;
-      const mergeThreshold = unitClusterType === 'reaction_only' ? 0.05 : unitClusterType === 'question' ? 0.18 : 0.28;
+      const mergeThreshold = unitClusterType === 'reaction_only' ? 0.16 : unitClusterType === 'question' ? 0.34 : 0.42;
+      const unitVector = vectorsByUnitId.get(unit.opinionUnitId) || [];
 
       for (let index = 0; index < groups.length; index += 1) {
         const group = groups[index];
@@ -203,7 +215,11 @@ export class CommentClusteringService {
           continue;
         }
 
-        const similarity = this.averageSimilarity(unit.normalizedText, group.map(item => item.normalizedText));
+        const groupVectors = group.map(item => vectorsByUnitId.get(item.opinionUnitId) || []);
+        const groupCentroid = this.embeddings.averageVectors(groupVectors);
+        const lexicalSimilarity = this.averageSimilarity(unit.normalizedText, group.map(item => item.normalizedText));
+        const embeddingSimilarity = this.embeddings.cosineSimilarity(unitVector, groupCentroid);
+        const similarity = this.combineSimilarityScores(lexicalSimilarity, embeddingSimilarity);
         if (similarity > bestScore) {
           bestScore = similarity;
           bestGroupIndex = index;
@@ -344,11 +360,18 @@ export class CommentClusteringService {
       }));
   }
 
-  private buildMetaClusters(localClusters: LocalCluster[], allVideoIds: string[], logs: string[]): MetaCluster[] {
+  private async buildMetaClusters(localClusters: LocalCluster[], allVideoIds: string[], logs: string[]): Promise<MetaCluster[]> {
     const accumulators: MetaClusterAccumulator[] = [];
     const eligibleClusters = localClusters
       .filter(cluster => cluster.clusterType !== 'spam')
       .sort((left, right) => right.importanceScore - left.importanceScore);
+    const signatures = eligibleClusters.map(cluster => `${cluster.primaryAspectLabel} ${cluster.label} ${cluster.summary}`);
+    const embeddingBatch = await this.embeddings.embedTexts(signatures);
+    const vectorsByClusterId = new Map(
+      eligibleClusters.map((cluster, index) => [cluster.localClusterId, embeddingBatch.vectors[index] || []])
+    );
+
+    logs.push(...embeddingBatch.logs);
 
     // Compare local clusters instead of raw comments so the cross-video layer
     // operates on already-grounded themes rather than ambiguous snippets.
@@ -372,14 +395,22 @@ export class CommentClusteringService {
           continue;
         }
 
-        const similarity = jaccardSimilarity(signatureText, candidate.signatureText);
+        const lexicalSimilarity = jaccardSimilarity(signatureText, candidate.signatureText);
+        const candidateCentroid = this.embeddings.averageVectors(
+          candidate.localClusters.map(item => vectorsByClusterId.get(item.localClusterId) || [])
+        );
+        const embeddingSimilarity = this.embeddings.cosineSimilarity(
+          vectorsByClusterId.get(cluster.localClusterId) || [],
+          candidateCentroid
+        );
+        const similarity = this.combineSimilarityScores(lexicalSimilarity, embeddingSimilarity);
         if (similarity > bestScore) {
           bestScore = similarity;
           bestAccumulatorIndex = index;
         }
       }
 
-      if (bestAccumulatorIndex >= 0 && bestScore >= 0.24) {
+      if (bestAccumulatorIndex >= 0 && bestScore >= 0.46) {
         const accumulator = accumulators[bestAccumulatorIndex];
         accumulator.localClusters.push(cluster);
         accumulator.signatureText = `${accumulator.signatureText} ${signatureText}`;
@@ -701,6 +732,10 @@ export class CommentClusteringService {
     if (candidates.length === 0) return 0;
     const total = candidates.reduce((sum, candidate) => sum + jaccardSimilarity(text, candidate), 0);
     return total / candidates.length;
+  }
+
+  private combineSimilarityScores(lexicalSimilarity: number, embeddingSimilarity: number): number {
+    return (0.35 * lexicalSimilarity) + (0.65 * Math.max(embeddingSimilarity, 0));
   }
 
   private areClusterTypesCompatible(left: LocalClusterType, right: LocalClusterType): boolean {

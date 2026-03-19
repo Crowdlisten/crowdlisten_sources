@@ -160,7 +160,7 @@ export class TikTokCommentAnalysisService {
         } => Boolean(item.clustering)
       );
 
-    const crossVideo = this.clustering.buildCrossVideoClustering({
+    const crossVideo = await this.clustering.buildCrossVideoClustering({
       videoIds: perVideo.map(analysis => analysis.postId),
       clusterings,
     });
