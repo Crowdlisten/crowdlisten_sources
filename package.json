@@ -12,7 +12,8 @@
     "test": "node test_mcp.js",
     "audit": "npm audit",
     "verify:tiktok-url-flow": "node scripts/verify-tiktok-url-flow.cjs",
-    "verify:comment-analysis": "node test-comment-analysis.cjs"
+    "verify:comment-analysis": "node test-comment-analysis.cjs",
+    "verify:tiktok-comment-analysis": "node test-comment-intelligence.cjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

@@ -485,6 +485,13 @@ The repository now includes `test-comment-analysis.cjs`, which uses deterministi
 - cross-video meta clustering
 - insight and ask-layer output
 
+For a real TikTok integration run, use `test-comment-intelligence.cjs`:
+
+- searches TikTok videos for a query
+- fetches comments for each selected video
+- runs the full enrichment and clustering stack
+- prints local and cross-video insights
+
 ---
 
 ## Bottom Line
