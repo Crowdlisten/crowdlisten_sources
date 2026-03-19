@@ -468,15 +468,16 @@ Recommended verification after changes:
 npx tsc --pretty false --noEmit
 npx tsc --pretty false
 node --check test-video-pipeline.cjs
+npm run verify:comment-analysis
 ```
 
-For local smoke testing, use a mock script that:
+The repository now includes `test-comment-analysis.cjs`, which uses deterministic fixtures to verify:
 
-- creates two `VideoContext` fixtures
-- enriches comments
-- builds local clusters
-- builds cross-video meta clusters
-- inspects the resulting insights and ask-layer metadata
+- parent-aware reply grounding
+- anchor construction from `VideoContext`
+- single-video local clustering
+- cross-video meta clustering
+- insight and ask-layer output
 
 ---
 

@@ -11,7 +11,8 @@
     "deploy": "vercel --prod",
     "test": "node test_mcp.js",
     "audit": "npm audit",
-    "verify:tiktok-url-flow": "node scripts/verify-tiktok-url-flow.cjs"
+    "verify:tiktok-url-flow": "node scripts/verify-tiktok-url-flow.cjs",
+    "verify:comment-analysis": "node test-comment-analysis.cjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
