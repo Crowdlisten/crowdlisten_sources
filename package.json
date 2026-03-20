@@ -16,7 +16,16 @@
     "test": "jest",
     "test:e2e": "jest --config jest.config.e2e.js",
     "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --forceExit"
+    "test:ci": "jest --ci --coverage --forceExit",
+    "test:legacy": "node test_mcp.js",
+    "audit": "npm audit",
+    "verify:tiktok-url-flow": "node scripts/verify-tiktok-url-flow.cjs",
+    "verify:comment-analysis": "node test-comment-analysis.cjs",
+    "verify:tiktok-comment-analysis": "node test-comment-intelligence.cjs",
+    "report:comment-analysis": "node test-comment-analysis-report.cjs",
+    "report:tiktok-comment-analysis": "node test-comment-intelligence-report.cjs",
+    "report:tiktok-comment-replay": "node test-comment-intelligence-replay.cjs",
+    "eval:comment-analysis": "node scripts/evaluate-comment-analysis.cjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

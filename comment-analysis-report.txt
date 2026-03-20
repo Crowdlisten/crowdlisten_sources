@@ -1,0 +1,707 @@
+
+================================================================================
+RUN SUMMARY
+================================================================================
+
+Generated at: 2026-03-20T20:51:54.417Z
+Source: deterministic fixture
+Videos analyzed: 2
+Total runtime: 60ms
+Cross-video meta clusters: 1
+Cross-video insights: 1
+
+================================================================================
+VIDEO v1
+================================================================================
+
+Summary: 2 opinion units criticize or challenge Creator says steak can sit at room temperature for an hour.
+Themes: Criticism of Creator says steak can sit at room temperature for an hour, Praise for Do not move it once it hits the pan., Praise for Steak cooking tutorial, Criticism of Video-wide discussion
+Sentiment: negative
+Comment count: 6
+
+------------------------------------------------------------
+VIDEO CONTEXT
+------------------------------------------------------------
+
+Main topic: Steak cooking tutorial
+Summary: Creator explains how to cook steak and says to leave it at room temperature for an hour.
+Mood: informative
+Emotional arc: steady
+People: creator
+Objects: steak, pan
+Locations: kitchen
+
+Timeline:
+- 0:00 -> 0:20: Creator introduces the steak prep process
+- 0:20 -> 0:45: Creator explains room temperature rest and pan prep
+
+Key moments:
+- 0:42: Creator says steak can sit at room temperature for an hour
+
+Controversial moments:
+- 0:42: Creator says steak can sit at room temperature for an hour
+
+Transcript excerpt:
+Let your steak sit at room temperature for at least an hour.
+Do not move it once it hits the pan.
+
+Raw visual text (Gemini output): Room temp 1 hour, Do not move steak
+Filtered visual-text anchors are listed below in VIDEO ANCHORS.
+Calls to action: Comment below
+
+------------------------------------------------------------
+VIDEO ANCHORS
+------------------------------------------------------------
+
+- v1_global_video
+  type=global_video source=summary label=Steak cooking tutorial
+- v1_moment_0_42_creator_says_steak_can_sit_at_room_temperature_for_an_hour
+  type=controversy source=controversialMoments label=Creator says steak can sit at room temperature for an hour
+- v1_timeline_0_00_creator_introduces_the_steak_prep_process
+  type=timeline_segment source=timeline label=Creator introduces the steak prep process
+- v1_timeline_0_20_creator_explains_room_temperature_rest_and_pan_prep
+  type=timeline_segment source=timeline label=Creator explains room temperature rest and pan prep
+- v1_person_creator
+  type=entity source=keyEntities label=creator
+- v1_object_steak
+  type=entity source=keyEntities label=steak
+- v1_object_pan
+  type=entity source=keyEntities label=pan
+- v1_location_kitchen
+  type=entity source=keyEntities label=kitchen
+- v1_quote_0_let_your_steak_sit_at_room_temperature_for_at_least_an_hour
+  type=spoken_quote source=transcript label=Let your steak sit at room temperature for at least an hour.
+- v1_quote_1_do_not_move_it_once_it_hits_the_pan
+  type=spoken_quote source=transcript label=Do not move it once it hits the pan.
+- v1_visual_0_room_temp_1_hour
+  type=visual_text source=visualText label=Room temp 1 hour
+- v1_visual_1_do_not_move_steak
+  type=visual_text source=visualText label=Do not move steak
+
+------------------------------------------------------------
+ENRICHED COMMENTS
+------------------------------------------------------------
+
+Comment c1
+  raw: that part is unsafe
+  resolved: that part is unsafe
+  rewriteApplied: false
+  targetType: video
+  groundingConfidence: 0.4
+  commentIntent: criticism
+  enrichmentModel: deterministic-grounding-v1
+  ambiguityFlags: unclear_pronoun, multi_interpretation_possible
+  anchors:
+    - controversy: Creator says steak can sit at room temperature for an hour [role=primary confidence=0.4]
+
+Comment c1r1
+  raw: same
+  resolved: I agree with the parent comment about that part is unsafe.
+  rewriteApplied: true
+  targetType: parent_comment
+  groundingConfidence: 0.22
+  commentIntent: agreement
+  enrichmentModel: deterministic-grounding-v1
+  ambiguityFlags: multi_interpretation_possible
+  anchors:
+    - controversy: Creator says steak can sit at room temperature for an hour [role=primary confidence=0.22]
+
+Comment c2
+  raw: do not move it once it hits the pan is actually useful
+  resolved: do not move it once it hits the pan is actually useful (referring to Do not move it once it hits the pan.)
+  rewriteApplied: true
+  targetType: video
+  groundingConfidence: 0.98
+  commentIntent: correction
+  enrichmentModel: deterministic-grounding-v1
+  ambiguityFlags: (none)
+  anchors:
+    - spoken_quote: Do not move it once it hits the pan. [role=primary confidence=0.98]
+
+Comment c3
+  raw: lol
+  resolved: lol
+  rewriteApplied: false
+  targetType: video
+  groundingConfidence: 0.2
+  commentIntent: joke
+  enrichmentModel: deterministic-grounding-v1
+  ambiguityFlags: video_anchor_not_found, multi_interpretation_possible
+  anchors:
+    - (none)
+
+Comment c4
+  raw: Very informative. I won't remember any of them.
+  resolved: Very informative. I won't remember any of them.
+  rewriteApplied: false
+  targetType: video
+  groundingConfidence: 0.2
+  commentIntent: other
+  enrichmentModel: deterministic-grounding-v1
+  ambiguityFlags: video_anchor_not_found, multi_interpretation_possible
+  anchors:
+    - (none)
+
+Comment c5
+  raw: Great tips keep it up
+  resolved: Great tips keep it up
+  rewriteApplied: false
+  targetType: video
+  groundingConfidence: 0.28
+  commentIntent: praise
+  enrichmentModel: deterministic-grounding-v1
+  ambiguityFlags: unclear_pronoun, multi_interpretation_possible
+  anchors:
+    - global_video: Steak cooking tutorial [role=primary confidence=0.28]
+
+------------------------------------------------------------
+OPINION UNITS
+------------------------------------------------------------
+
+Unit c1_unit_1
+  commentId: c1
+  rawComment: that part is unsafe
+  resolvedComment: that part is unsafe
+  span: that part is unsafe
+  aspectKey: controversy.creator_says_steak_can_sit_at_room_temperature_for_an_hour
+  aspectLabel: Creator says steak can sit at room temperature for an hour
+  stance: negative
+  intent: feedback
+  evidenceSource: video
+  groundingConfidence: 0.4
+  semanticDensity: 0.35
+  noiseFlags: (none)
+  engagementScore: 3.605
+
+Unit c1r1_unit_1
+  commentId: c1r1
+  rawComment: same
+  resolvedComment: I agree with the parent comment about that part is unsafe.
+  span: I agree with the parent comment about that part is unsafe.
+  aspectKey: controversy.creator_says_steak_can_sit_at_room_temperature_for_an_hour
+  aspectLabel: Creator says steak can sit at room temperature for an hour
+  stance: negative
+  intent: agreement
+  evidenceSource: parent_comment
+  groundingConfidence: 0.22
+  semanticDensity: 0.75
+  noiseFlags: (none)
+  engagementScore: 1.386
+
+Unit c2_unit_1
+  commentId: c2
+  rawComment: do not move it once it hits the pan is actually useful
+  resolvedComment: do not move it once it hits the pan is actually useful (referring to Do not move it once it hits the pan.)
+  span: do not move it once it hits the pan is actually useful
+  aspectKey: spoken_quote.do_not_move_it_once_it_hits_the_pan
+  aspectLabel: Do not move it once it hits the pan.
+  stance: positive
+  intent: disagreement
+  evidenceSource: video
+  groundingConfidence: 0.98
+  semanticDensity: 0.95
+  noiseFlags: (none)
+  engagementScore: 2.303
+
+Unit c4_unit_1
+  commentId: c4
+  rawComment: Very informative. I won't remember any of them.
+  resolvedComment: Very informative. I won't remember any of them.
+  span: I won't remember any of them.
+  aspectKey: video.video_wide_discussion
+  aspectLabel: Video-wide discussion
+  stance: negative
+  intent: feedback
+  evidenceSource: video
+  groundingConfidence: 0.2
+  semanticDensity: 0.3
+  noiseFlags: (none)
+  engagementScore: 1.792
+
+Unit c5_unit_1
+  commentId: c5
+  rawComment: Great tips keep it up
+  resolvedComment: Great tips keep it up
+  span: Great tips keep it up
+  aspectKey: global_video.steak_cooking_tutorial
+  aspectLabel: Steak cooking tutorial
+  stance: positive
+  intent: feedback
+  evidenceSource: video
+  groundingConfidence: 0.28
+  semanticDensity: 0.55
+  noiseFlags: (none)
+  engagementScore: 1.609
+
+------------------------------------------------------------
+LOCAL CLUSTERS
+------------------------------------------------------------
+
+v1_controversy_creator_says_steak_can_sit_a_opinion_negative_2
+  label: Criticism of Creator says steak can sit at room temperature for an hour
+  summary: 2 opinion units criticize or challenge Creator says steak can sit at room temperature for an hour.
+  clusterType: opinion
+  dominant stance: negative
+  importanceScore: 0.81
+  size: 2
+  uniqueAuthors: 2
+  totalEngagement: 4.991
+  replyDepthScore: 0.5
+  averageGroundingConfidence: 0.31
+  averageSemanticDensity: 0.55
+  anchors: Creator says steak can sit at room temperature for an hour
+  representativeCommentIds: c1, c1r1
+  member opinion units:
+    - c1_unit_1
+      span: that part is unsafe
+      stance=negative intent=feedback noise=(none)
+      rawComment: that part is unsafe
+      resolvedComment: that part is unsafe
+    - c1r1_unit_1
+      span: I agree with the parent comment about that part is unsafe.
+      stance=negative intent=agreement noise=(none)
+      rawComment: same
+      resolvedComment: I agree with the parent comment about that part is unsafe.
+
+v1_spoken_quote_do_not_move_it_once_it_hits_opinion_positive_1
+  label: Praise for Do not move it once it hits the pan.
+  summary: 1 opinion units praise or endorse Do not move it once it hits the pan..
+  clusterType: opinion
+  dominant stance: positive
+  importanceScore: 0.291
+  size: 1
+  uniqueAuthors: 1
+  totalEngagement: 2.303
+  replyDepthScore: 0
+  averageGroundingConfidence: 0.98
+  averageSemanticDensity: 0.95
+  anchors: Do not move it once it hits the pan.
+  representativeCommentIds: c2
+  member opinion units:
+    - c2_unit_1
+      span: do not move it once it hits the pan is actually useful
+      stance=positive intent=disagreement noise=(none)
+      rawComment: do not move it once it hits the pan is actually useful
+      resolvedComment: do not move it once it hits the pan is actually useful (referring to Do not move it once it hits the pan.)
+
+v1_global_video_steak_cooking_tutorial_opinion_positive_1
+  label: Praise for Steak cooking tutorial
+  summary: 1 opinion units praise or endorse Steak cooking tutorial.
+  clusterType: opinion
+  dominant stance: positive
+  importanceScore: 0.054
+  size: 1
+  uniqueAuthors: 1
+  totalEngagement: 1.609
+  replyDepthScore: 0
+  averageGroundingConfidence: 0.28
+  averageSemanticDensity: 0.55
+  anchors: Steak cooking tutorial
+  representativeCommentIds: c5
+  member opinion units:
+    - c5_unit_1
+      span: Great tips keep it up
+      stance=positive intent=feedback noise=(none)
+      rawComment: Great tips keep it up
+      resolvedComment: Great tips keep it up
+
+v1_video_video_wide_discussion_opinion_negative_1
+  label: Criticism of Video-wide discussion
+  summary: 1 opinion units criticize or challenge Video-wide discussion.
+  clusterType: opinion
+  dominant stance: negative
+  importanceScore: 0.011
+  size: 1
+  uniqueAuthors: 1
+  totalEngagement: 1.792
+  replyDepthScore: 0
+  averageGroundingConfidence: 0.2
+  averageSemanticDensity: 0.3
+  anchors: (none)
+  representativeCommentIds: c4
+  member opinion units:
+    - c4_unit_1
+      span: I won't remember any of them.
+      stance=negative intent=feedback noise=(none)
+      rawComment: Very informative. I won't remember any of them.
+      resolvedComment: Very informative. I won't remember any of them.
+
+------------------------------------------------------------
+VIDEO INSIGHTS
+------------------------------------------------------------
+
+v1_insight_1
+  title: Criticism of Creator says steak can sit at room temperature for an hour
+  description: 2 opinion units criticize or challenge Creator says steak can sit at room temperature for an hour.
+  whyItMatters: Negative feedback often surfaces the clearest friction point for the audience.
+  scope: single_video
+  importanceScore: 0.81
+  confidence: 0.31
+  supportingVideoIds: v1
+  supportingCommentIds: c1, c1r1
+
+v1_insight_2
+  title: Praise for Do not move it once it hits the pan.
+  description: 1 opinion units praise or endorse Do not move it once it hits the pan..
+  whyItMatters: Positive clusters help identify what the audience finds most compelling or useful.
+  scope: single_video
+  importanceScore: 0.291
+  confidence: 0.98
+  supportingVideoIds: v1
+  supportingCommentIds: c2
+
+v1_insight_3
+  title: Praise for Steak cooking tutorial
+  description: 1 opinion units praise or endorse Steak cooking tutorial.
+  whyItMatters: Positive clusters help identify what the audience finds most compelling or useful.
+  scope: single_video
+  importanceScore: 0.054
+  confidence: 0.28
+  supportingVideoIds: v1
+  supportingCommentIds: c5
+
+------------------------------------------------------------
+VIDEO LOGS
+------------------------------------------------------------
+
+Flattened 6 comments (including replies)
+Built 12 video anchors
+No opinion units extracted for comment c3
+Generated 6 enriched comments
+Generated 5 opinion units
+Flattened 6 comments (including replies)
+Built 12 video anchors
+No opinion units extracted for comment c3
+Generated 6 enriched comments
+Generated 5 opinion units
+Created 4 coarse buckets for v1
+Embedded 2 texts with deterministic hash fallback
+Embedded 1 texts with deterministic hash fallback
+Embedded 1 texts with deterministic hash fallback
+Embedded 1 texts with deterministic hash fallback
+Built 4 local clusters for v1
+Built 3 single-video insights for v1
+
+================================================================================
+VIDEO v2
+================================================================================
+
+Summary: 1 opinion units criticize or challenge Creator repeats the one hour room temperature advice.
+Themes: Criticism of Creator repeats the one hour room temperature advice, Questions about pan
+Sentiment: negative
+Comment count: 2
+
+------------------------------------------------------------
+VIDEO CONTEXT
+------------------------------------------------------------
+
+Main topic: Steak cooking tutorial
+Summary: Another creator gives similar steak advice and viewers debate the safety of leaving meat out.
+Mood: informative
+Emotional arc: steady
+People: creator
+Objects: steak, pan
+Locations: kitchen
+
+Timeline:
+- 0:00 -> 0:20: Creator introduces the steak prep process
+- 0:20 -> 0:45: Creator explains room temperature rest and pan prep
+
+Key moments:
+- 0:30: Creator repeats the one hour room temperature advice
+
+Controversial moments:
+- 0:30: Creator repeats the one hour room temperature advice
+
+Transcript excerpt:
+I always let steak sit out for an hour before cooking.
+That is the only way I do it.
+
+Raw visual text (Gemini output): Let steak rest 1 hour, Best steak method
+Filtered visual-text anchors are listed below in VIDEO ANCHORS.
+Calls to action: Comment below
+
+------------------------------------------------------------
+VIDEO ANCHORS
+------------------------------------------------------------
+
+- v2_global_video
+  type=global_video source=summary label=Steak cooking tutorial
+- v2_moment_0_30_creator_repeats_the_one_hour_room_temperature_advice
+  type=controversy source=controversialMoments label=Creator repeats the one hour room temperature advice
+- v2_timeline_0_00_creator_introduces_the_steak_prep_process
+  type=timeline_segment source=timeline label=Creator introduces the steak prep process
+- v2_timeline_0_20_creator_explains_room_temperature_rest_and_pan_prep
+  type=timeline_segment source=timeline label=Creator explains room temperature rest and pan prep
+- v2_person_creator
+  type=entity source=keyEntities label=creator
+- v2_object_steak
+  type=entity source=keyEntities label=steak
+- v2_object_pan
+  type=entity source=keyEntities label=pan
+- v2_location_kitchen
+  type=entity source=keyEntities label=kitchen
+- v2_quote_0_i_always_let_steak_sit_out_for_an_hour_before_cooking
+  type=spoken_quote source=transcript label=I always let steak sit out for an hour before cooking.
+- v2_quote_1_that_is_the_only_way_i_do_it
+  type=spoken_quote source=transcript label=That is the only way I do it.
+- v2_visual_0_let_steak_rest_1_hour
+  type=visual_text source=visualText label=Let steak rest 1 hour
+- v2_visual_1_best_steak_method
+  type=visual_text source=visualText label=Best steak method
+
+------------------------------------------------------------
+ENRICHED COMMENTS
+------------------------------------------------------------
+
+Comment d1
+  raw: leaving steak out that long is risky
+  resolved: leaving steak out that long is risky
+  rewriteApplied: false
+  targetType: video
+  groundingConfidence: 0.4
+  commentIntent: other
+  enrichmentModel: deterministic-grounding-v1
+  ambiguityFlags: unclear_pronoun, multi_interpretation_possible
+  anchors:
+    - controversy: Creator repeats the one hour room temperature advice [role=primary confidence=0.4]
+    - spoken_quote: I always let steak sit out for an hour before cooking. [role=secondary confidence=0.442]
+    - entity: steak [role=secondary confidence=0.393]
+
+Comment d2
+  raw: what temp should the pan be?
+  resolved: what temp should the pan be?
+  rewriteApplied: false
+  targetType: video
+  groundingConfidence: 0.5
+  commentIntent: question
+  enrichmentModel: deterministic-grounding-v1
+  ambiguityFlags: (none)
+  anchors:
+    - entity: pan [role=primary confidence=0.5]
+
+------------------------------------------------------------
+OPINION UNITS
+------------------------------------------------------------
+
+Unit d1_unit_1
+  commentId: d1
+  rawComment: leaving steak out that long is risky
+  resolvedComment: leaving steak out that long is risky
+  span: leaving steak out that long is risky
+  aspectKey: controversy.creator_repeats_the_one_hour_room_temperature_advice
+  aspectLabel: Creator repeats the one hour room temperature advice
+  stance: negative
+  intent: feedback
+  evidenceSource: video
+  groundingConfidence: 0.4
+  semanticDensity: 0.95
+  noiseFlags: (none)
+  engagementScore: 2.773
+
+Unit d2_unit_1
+  commentId: d2
+  rawComment: what temp should the pan be?
+  resolvedComment: what temp should the pan be?
+  span: what temp should the pan be?
+  aspectKey: entity.pan
+  aspectLabel: pan
+  stance: question
+  intent: information_request
+  evidenceSource: video
+  groundingConfidence: 0.5
+  semanticDensity: 0.45
+  noiseFlags: (none)
+  engagementScore: 1.609
+
+------------------------------------------------------------
+LOCAL CLUSTERS
+------------------------------------------------------------
+
+v2_controversy_creator_repeats_the_one_hour_opinion_negative_1
+  label: Criticism of Creator repeats the one hour room temperature advice
+  summary: 1 opinion units criticize or challenge Creator repeats the one hour room temperature advice.
+  clusterType: opinion
+  dominant stance: negative
+  importanceScore: 0.85
+  size: 1
+  uniqueAuthors: 1
+  totalEngagement: 2.773
+  replyDepthScore: 0
+  averageGroundingConfidence: 0.4
+  averageSemanticDensity: 0.95
+  anchors: Creator repeats the one hour room temperature advice, I always let steak sit out for an hour before cooking., steak
+  representativeCommentIds: d1
+  member opinion units:
+    - d1_unit_1
+      span: leaving steak out that long is risky
+      stance=negative intent=feedback noise=(none)
+      rawComment: leaving steak out that long is risky
+      resolvedComment: leaving steak out that long is risky
+
+v2_entity_pan_question_question_1
+  label: Questions about pan
+  summary: 1 opinion units ask for clarification or more detail about pan.
+  clusterType: question
+  dominant stance: question
+  importanceScore: 0.7
+  size: 1
+  uniqueAuthors: 1
+  totalEngagement: 1.609
+  replyDepthScore: 0
+  averageGroundingConfidence: 0.5
+  averageSemanticDensity: 0.45
+  anchors: pan
+  representativeCommentIds: d2
+  member opinion units:
+    - d2_unit_1
+      span: what temp should the pan be?
+      stance=question intent=information_request noise=(none)
+      rawComment: what temp should the pan be?
+      resolvedComment: what temp should the pan be?
+
+------------------------------------------------------------
+VIDEO INSIGHTS
+------------------------------------------------------------
+
+v2_insight_1
+  title: Criticism of Creator repeats the one hour room temperature advice
+  description: 1 opinion units criticize or challenge Creator repeats the one hour room temperature advice.
+  whyItMatters: Negative feedback often surfaces the clearest friction point for the audience.
+  scope: single_video
+  importanceScore: 0.85
+  confidence: 0.4
+  supportingVideoIds: v2
+  supportingCommentIds: d1
+
+v2_insight_2
+  title: Questions about pan
+  description: 1 opinion units ask for clarification or more detail about pan.
+  whyItMatters: These questions indicate where the video leaves viewers uncertain or under-informed.
+  scope: single_video
+  importanceScore: 0.7
+  confidence: 0.5
+  supportingVideoIds: v2
+  supportingCommentIds: d2
+
+------------------------------------------------------------
+VIDEO LOGS
+------------------------------------------------------------
+
+Flattened 2 comments (including replies)
+Built 12 video anchors
+Generated 2 enriched comments
+Generated 2 opinion units
+Flattened 2 comments (including replies)
+Built 12 video anchors
+Generated 2 enriched comments
+Generated 2 opinion units
+Created 2 coarse buckets for v2
+Embedded 1 texts with deterministic hash fallback
+Embedded 1 texts with deterministic hash fallback
+Built 2 local clusters for v2
+Built 2 single-video insights for v2
+
+================================================================================
+CROSS-VIDEO META CLUSTERS
+================================================================================
+
+meta_cluster_1
+  label: Recurring criticism of Creator repeats the one hour room temperature advice
+  canonicalTheme: Recurring criticism of Creator repeats the one hour room temperature advice
+  canonicalAspectKey: controversy.creator_repeats_the_one_hour_room_temperature_advice
+  canonicalStance: negative
+  summary: Recurring criticism of Creator repeats the one hour room temperature advice appears across 2 videos and is supported by 2 related local clusters.
+  importanceScore: 1
+  recurrenceScore: 1
+  controversyScore: 0.037
+  confidence: 0.355
+  coverage videos: 2
+  coverage comments: 3
+  representativeCommentIds: d1, c1, c1r1
+  source local clusters:
+    - v2_controversy_creator_repeats_the_one_hour_opinion_negative_1 | v2 | Criticism of Creator repeats the one hour room temperature advice
+    - v1_controversy_creator_says_steak_can_sit_a_opinion_negative_2 | v1 | Criticism of Creator says steak can sit at room temperature for an hour
+
+================================================================================
+CROSS-VIDEO INSIGHTS
+================================================================================
+
+cross_video_insight_1
+  title: Recurring criticism of Creator repeats the one hour room temperature advice
+  description: Recurring criticism of Creator repeats the one hour room temperature advice appears across 2 videos and is supported by 2 related local clusters.
+  whyItMatters: Repeated criticism across multiple videos is a stronger product or messaging signal than isolated pushback.
+  scope: cross_video
+  importanceScore: 1
+  confidence: 0.355
+  supportingVideoIds: v2, v1
+  supportingCommentIds: d1, c1, c1r1
+
+================================================================================
+ASK LAYER INDEX
+================================================================================
+
+{
+  "defaultScope": "cross_video",
+  "defaultGrouping": [
+    "aboutness",
+    "stance",
+    "importance"
+  ],
+  "availableScopes": [
+    "single_video",
+    "cross_video"
+  ],
+  "availableStances": [
+    "negative",
+    "positive",
+    "question"
+  ],
+  "availableIntents": [
+    "feedback",
+    "information_request"
+  ],
+  "availableClusterTypes": [
+    "opinion",
+    "question"
+  ],
+  "availableAspectKeys": [
+    "controversy.creator_says_steak_can_sit_at_room_temperature_for_an_hour",
+    "spoken_quote.do_not_move_it_once_it_hits_the_pan",
+    "global_video.steak_cooking_tutorial",
+    "video.video_wide_discussion",
+    "controversy.creator_repeats_the_one_hour_room_temperature_advice",
+    "entity.pan"
+  ]
+}
+
+================================================================================
+FIXTURE EXPECTATIONS
+================================================================================
+
+Grounding expectations:
+- c1 -> moment_0_42 | room_temperature_for_an_hour
+- c1r1 -> moment_0_42 | room_temperature_for_an_hour
+- c2 -> quote_1 | do_not_move_it_once_it_hits_the_pan
+- d1 -> moment_0_30 | room_temperature_advice
+- d2 -> object_pan | pan
+- c5 -> global_video
+
+Opinion-unit label expectations:
+- c1_unit_1 -> room_temp_safety_negative
+- c1r1_unit_1 -> room_temp_safety_negative
+- c2_unit_1 -> pan_handling_positive
+- c3_unit_1 -> reaction_noise
+- c4_unit_1 -> retention_negative
+- c5_unit_1 -> generic_video_praise
+- d1_unit_1 -> room_temp_safety_negative
+- d2_unit_1 -> pan_temperature_question
+
+================================================================================
+PIPELINE LOGS
+================================================================================
+
+Embedded 5 texts with deterministic hash fallback
+Created 4 meta-cluster candidates
+Built 1 meta clusters across 2 videos
+Built 1 cross-video insights

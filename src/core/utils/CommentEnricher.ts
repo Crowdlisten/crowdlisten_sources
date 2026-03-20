@@ -10,16 +10,20 @@ import type {
 import type { VideoContext } from './VideoUnderstanding.js';
 import {
   calculateEngagementScore,
+  countMeaningfulTokens,
   detectIntent,
   detectNoiseFlags,
   detectStance,
   extractTimestampHints,
   flattenComments,
   inferClusterType,
+  isLowValueOpinionSegment,
+  isLowValueVisualText,
   jaccardSimilarity,
   normalizeForSimilarity,
   normalizeWhitespace,
   semanticDensity,
+  shouldMergeOpinionSegment,
   slugify,
   summarizeAnchor,
   uniqueTokens,
@@ -29,6 +33,11 @@ const VAGUE_REFERENCE_MARKERS = [
   'that part',
   'this part',
   'that moment',
+  'that one',
+  'this one',
+  'last one',
+  'the last one',
+  'first one',
   'when she',
   'when he',
   'when they',
@@ -63,7 +72,25 @@ const ACTION_MARKERS = [
   'pan',
 ];
 
-const DISCOURSE_SPLIT_PATTERN = /\b(?:but|however|although|though|yet)\b|[.;]/i;
+const DISCOURSE_SPLIT_PATTERN = /\b(?:but|however|although|though|yet)\b|[;\n]+/i;
+const SENTENCE_BOUNDARY_PATTERN = /(?<=[.!?])\s+/;
+const GENERIC_PRAISE_PATTERNS = [
+  /\bgreat tips?\b/i,
+  /\bgood tips?\b/i,
+  /\bgood work\b/i,
+  /\bkeep it up\b/i,
+  /\blove (all|these|your)\b/i,
+  /\blove these vids?\b/i,
+  /\bgood (and )?simple video\b/i,
+  /\bcomments so funny\b/i,
+  /\ball of that looks good\b/i,
+  /\bi just learned so much\b/i,
+  /\bone of the best\b/i,
+  /\bamazing\b/i,
+  /\bbro is\b/i,
+  /\bhe got a little\b/i,
+  /\bchill manager\b/i,
+];
 
 export class CommentEnricherService {
   enrichComments(videoId: string, comments: Comment[], videoContext?: VideoContext): CommentEnrichmentResult {
@@ -196,11 +223,7 @@ export class CommentEnricherService {
       });
     }
 
-    const transcriptLines = videoContext.transcript
-      .split(/\n+/)
-      .map(line => normalizeWhitespace(line))
-      .filter(line => line.length >= 12)
-      .slice(0, 12);
+    const transcriptLines = this.extractTranscriptSnippets(videoContext.transcript);
 
     transcriptLines.forEach((line, index) => {
       pushAnchor({
@@ -213,7 +236,11 @@ export class CommentEnricherService {
       });
     });
 
-    videoContext.visualText.slice(0, 15).forEach((text, index) => {
+    videoContext.visualText
+      .map(text => normalizeWhitespace(text))
+      .filter(text => text.length > 0 && !isLowValueVisualText(text))
+      .slice(0, 15)
+      .forEach((text, index) => {
       pushAnchor({
         anchorId: `${videoId}_visual_${index}_${slugify(text)}`,
         videoId,
@@ -224,7 +251,11 @@ export class CommentEnricherService {
       });
     });
 
-    videoContext.callsToAction.slice(0, 8).forEach((cta, index) => {
+    videoContext.callsToAction
+      .map(cta => normalizeWhitespace(cta))
+      .filter(cta => cta.length > 0 && !isLowValueVisualText(cta))
+      .slice(0, 8)
+      .forEach((cta, index) => {
       pushAnchor({
         anchorId: `${videoId}_cta_${index}_${slugify(cta)}`,
         videoId,
@@ -287,6 +318,7 @@ export class CommentEnricherService {
     const hasVagueReference = VAGUE_REFERENCE_MARKERS.some(marker => normalized.includes(marker));
     const hasNegativeSignal = /(unsafe|risky|wrong|bad|crazy|insane|hate)/.test(normalized);
     const commentTokens = uniqueTokens(normalized);
+    const broadVideoComment = this.isBroadVideoComment(normalized, commentTokens, hasVagueReference);
     const scores: CommentAnchorRef[] = [];
 
     // Combine lexical overlap with a few TikTok-specific heuristics so short
@@ -294,10 +326,17 @@ export class CommentEnricherService {
     for (const anchor of anchors) {
       const anchorText = `${anchor.label} ${anchor.description}`;
       const anchorTokens = uniqueTokens(anchorText);
-      const tokenOverlap = commentTokens.filter(token => anchorTokens.includes(token)).length;
+      const tokenOverlap = this.countFuzzyTokenOverlap(commentTokens, anchorTokens);
       const sharedActionMarker = ACTION_MARKERS.some(
         marker => commentTokens.includes(marker) && anchorTokens.includes(marker)
       );
+      const weakSpecificMatch =
+        broadVideoComment &&
+        anchor.type !== 'global_video' &&
+        tokenOverlap < 2 &&
+        !sharedActionMarker &&
+        timestampHints.length === 0 &&
+        !normalized.includes(anchor.label.toLowerCase());
       let score = jaccardSimilarity(normalized, anchorText);
 
       if (timestampHints.length > 0 && (anchor.timestampStart || anchor.timestampEnd)) {
@@ -309,6 +348,30 @@ export class CommentEnricherService {
 
       if (anchor.type === 'global_video') {
         score = Math.max(score, 0.18);
+        if (broadVideoComment) {
+          score = Math.max(score, 0.28);
+        }
+      }
+
+      // Avoid assigning content anchors when there is no shared signal at all.
+      // This keeps broad controversies from absorbing unrelated comments.
+      if (
+        anchor.type !== 'global_video' &&
+        tokenOverlap === 0 &&
+        !sharedActionMarker &&
+        timestampHints.length === 0 &&
+        !normalized.includes(anchor.label.toLowerCase())
+      ) {
+        score = Math.min(score, 0.18);
+      }
+
+      // Broad praise or persona comments should not snap to a specific moment or
+      // controversy unless they carry real topical overlap. Otherwise they
+      // create false high-level themes from generic audience reactions.
+      if (
+        weakSpecificMatch
+      ) {
+        score = Math.min(score, 0.19);
       }
 
       if (tokenOverlap >= 2 && HIGH_CONTEXT_ANCHOR_TYPES.has(anchor.type)) {
@@ -319,7 +382,7 @@ export class CommentEnricherService {
         score += 0.14;
       }
 
-      if (hasVagueReference && (anchor.type === 'moment' || anchor.type === 'controversy')) {
+      if (!broadVideoComment && hasVagueReference && (anchor.type === 'moment' || anchor.type === 'controversy')) {
         score += 0.22;
       }
 
@@ -335,6 +398,10 @@ export class CommentEnricherService {
         score += 0.3;
       }
 
+      if (weakSpecificMatch) {
+        score = Math.min(score, 0.19);
+      }
+
       if (score > 0.2) {
         scores.push({
           anchorId: anchor.anchorId,
@@ -347,7 +414,10 @@ export class CommentEnricherService {
     scores.sort((left, right) => right.confidence - left.confidence);
 
     const promotedScores = this.promoteSpecificAnchors(scores, anchors);
-    const topMatches: CommentAnchorRef[] = promotedScores.slice(0, 3).map((ref, index) => ({
+    const filteredScores = promotedScores.filter((ref, index) =>
+      index === 0 || ref.confidence >= Math.max((promotedScores[0]?.confidence || 0) - 0.08, 0.28)
+    );
+    const topMatches: CommentAnchorRef[] = filteredScores.slice(0, 3).map((ref, index) => ({
       ...ref,
       role: (index === 0 ? 'primary' : 'secondary') as 'primary' | 'secondary',
     }));
@@ -380,8 +450,10 @@ export class CommentEnricherService {
 
     for (let index = 1; index < promoted.length; index += 1) {
       const candidate = promoted[index];
+      const candidateType = anchorById.get(candidate.anchorId)?.type;
       const candidatePriority = this.anchorPriority(anchorById.get(candidate.anchorId)?.type);
-      const closeEnough = candidate.confidence >= currentTop.confidence - 0.12;
+      const promotionSlack = candidateType === 'controversy' ? 0.05 : 0.02;
+      const closeEnough = candidate.confidence >= currentTop.confidence - promotionSlack;
 
       if (candidatePriority > currentTopPriority && closeEnough) {
         promoted.splice(index, 1);
@@ -493,10 +565,6 @@ export class CommentEnricherService {
     parent: EnrichedComment | undefined,
     confidence: number
   ): string {
-    if (confidence < 0.55) {
-      return rawText;
-    }
-
     const normalized = normalizeForSimilarity(rawText);
     const anchorSummary = primaryAnchor ? summarizeAnchor(primaryAnchor) : '';
 
@@ -504,7 +572,13 @@ export class CommentEnricherService {
       if (normalized === 'same' || normalized === 'exactly' || normalized === 'facts') {
         return `I agree with the parent comment about ${parent.resolvedText.toLowerCase()}.`;
       }
-      return `${rawText} (replying to: ${parent.resolvedText})`;
+      if (confidence >= 0.35 || rawText.length <= 40) {
+        return `${rawText} (replying to: ${parent.resolvedText})`;
+      }
+    }
+
+    if (confidence < 0.45) {
+      return rawText;
     }
 
     if (primaryAnchor && VAGUE_REFERENCE_MARKERS.some(marker => normalized.includes(marker))) {
@@ -523,7 +597,7 @@ export class CommentEnricherService {
     anchors: VideoAnchor[],
     logs: string[]
   ): OpinionUnit[] {
-    const segments = this.splitIntoSegments(enriched.resolvedText);
+    const segments = this.splitIntoSegments(this.stripExplanatorySuffix(enriched.resolvedText));
     const units: OpinionUnit[] = [];
 
     // Cap units per comment so one long comment cannot dominate clustering while
@@ -582,13 +656,153 @@ export class CommentEnricherService {
 
     const roughSegments = normalized
       .split(DISCOURSE_SPLIT_PATTERN)
+      .flatMap(segment => segment.split(SENTENCE_BOUNDARY_PATTERN))
       .map(segment => normalizeWhitespace(segment))
       .filter(Boolean);
 
     if (roughSegments.length <= 1) {
+      return isLowValueOpinionSegment(normalized) ? [] : [normalized];
+    }
+
+    const cleanedSegments: string[] = [];
+
+    for (let index = 0; index < roughSegments.length; index += 1) {
+      const segment = roughSegments[index];
+      const nextSegment = normalizeWhitespace(roughSegments[index + 1] || '');
+
+      if (this.isExplanatoryAnnotationSegment(segment)) {
+        continue;
+      }
+
+      if (isLowValueOpinionSegment(segment)) {
+        continue;
+      }
+
+      if (this.shouldDiscardForFollowingSegment(segment, nextSegment)) {
+        continue;
+      }
+
+      if (shouldMergeOpinionSegment(segment) && index + 1 < roughSegments.length) {
+        if (nextSegment && !isLowValueOpinionSegment(nextSegment)) {
+          cleanedSegments.push(`${segment} ${nextSegment}`.trim());
+          index += 1;
+          continue;
+        }
+      }
+
+      cleanedSegments.push(segment);
+    }
+
+    const uniqueCleaned = Array.from(new Set(cleanedSegments));
+    if (uniqueCleaned.length === 0) {
       return [normalized];
     }
 
-    return roughSegments;
+    return uniqueCleaned;
+  }
+
+  private stripExplanatorySuffix(text: string): string {
+    return normalizeWhitespace(
+      text
+        .replace(/\s*\((?:referring to|about)\s+[^()]*\)\s*$/i, '')
+        .replace(/\s*\(replying to:\s*[^()]*\)\s*$/i, '')
+    );
+  }
+
+  private isExplanatoryAnnotationSegment(text: string): boolean {
+    return /^\((?:referring to|about|replying to:)/i.test(normalizeWhitespace(text));
+  }
+
+  private shouldDiscardForFollowingSegment(current: string, next: string): boolean {
+    if (!next) {
+      return false;
+    }
+
+    const currentNormalized = normalizeForSimilarity(current);
+    const nextNormalized = normalizeForSimilarity(next);
+    const currentTokenCount = countMeaningfulTokens(current);
+    const nextTokenCount = countMeaningfulTokens(next);
+    const currentIsPolitePreface = /^(very informative|informative|helpful|useful|great tips?|good tips?|good info|nice|interesting|thanks|thank you)[.!?]*$/i
+      .test(currentNormalized);
+    const nextHasDominantSignal =
+      nextNormalized.includes('?') ||
+      /(won't|wont|don't|dont|can't|cant|not\b|unsafe|risky|wrong|confusing|forget|remember|should|need|useful|helpful|love|hate)/.test(nextNormalized);
+
+    // Drop a short courtesy/setup sentence when the following sentence carries
+    // the actual opinion, e.g. "Very informative. I won't remember any of them."
+    if (currentIsPolitePreface && nextHasDominantSignal && nextTokenCount >= currentTokenCount) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private extractTranscriptSnippets(transcript: string): string[] {
+    const sentenceLikeChunks = transcript
+      .split(/\n+/)
+      .flatMap(line => line.split(/(?<=[.!?])\s+/))
+      .map(line => normalizeWhitespace(line))
+      .filter(line => line.length >= 12);
+
+    const snippets: string[] = [];
+    for (const chunk of sentenceLikeChunks) {
+      if (chunk.length <= 220) {
+        snippets.push(chunk);
+        continue;
+      }
+
+      const clauses = chunk
+        .split(/(?<=[,;])\s+/)
+        .map(line => normalizeWhitespace(line))
+        .filter(line => line.length >= 12);
+
+      snippets.push(...clauses);
+    }
+
+    return snippets.slice(0, 12);
+  }
+
+  private countFuzzyTokenOverlap(commentTokens: string[], anchorTokens: string[]): number {
+    let overlap = 0;
+
+    for (const commentToken of commentTokens) {
+      const matched = anchorTokens.some(anchorToken =>
+        anchorToken === commentToken ||
+        (anchorToken.length >= 4 &&
+          commentToken.length >= 4 &&
+          (anchorToken.startsWith(commentToken.slice(0, 4)) ||
+            commentToken.startsWith(anchorToken.slice(0, 4))))
+      );
+
+      if (matched) {
+        overlap += 1;
+      }
+    }
+
+    return overlap;
+  }
+
+  private isBroadVideoComment(
+    normalized: string,
+    commentTokens: string[],
+    hasVagueReference: boolean
+  ): boolean {
+    if (GENERIC_PRAISE_PATTERNS.some(pattern => pattern.test(normalized))) {
+      return true;
+    }
+
+    if (hasVagueReference) {
+      return false;
+    }
+
+    if (commentTokens.length <= 3 && /(great|good|love|amazing|cool|best|funny)/.test(normalized)) {
+      return true;
+    }
+
+    if (/(video|vids?|tips?)\b/.test(normalized) && !/(lettuce|burger|corn|sugar|flour|salt|potato|cheese|bacon|egg|ice cream|chives|knife|pan)/.test(normalized)) {
+      return true;
+    }
+
+    return false;
   }
 }
