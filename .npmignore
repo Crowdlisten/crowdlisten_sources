@@ -1,0 +1,3 @@
+# Block everything - this package must NOT be published to npm
+# Sources MCP is a remote-only service, not a distributable package
+*

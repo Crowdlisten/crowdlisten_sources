@@ -109,7 +109,7 @@ export interface TrendingHashtag {
   engagementScore: number;
 }
 
-export type PlatformType = 'tiktok' | 'twitter' | 'reddit' | 'instagram' | 'youtube';
+export type PlatformType = 'tiktok' | 'twitter' | 'reddit' | 'instagram' | 'youtube' | 'moltbook' | 'xiaohongshu';
 
 export interface PlatformCapabilities {
   supportsTrending: boolean;

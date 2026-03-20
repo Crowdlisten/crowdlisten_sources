@@ -18,6 +18,8 @@ import { TwitterAdapter } from '../platforms/TwitterAdapter.js';
 import { RedditAdapter } from '../platforms/RedditAdapter.js';
 import { InstagramAdapter } from '../platforms/InstagramAdapter.js';
 import { YouTubeAdapter } from '../platforms/YouTubeAdapter.js';
+import { MoltbookAdapter } from '../platforms/MoltbookAdapter.js';
+import { XiaohongshuAdapter } from '../platforms/XiaohongshuAdapter.js';
 
 export interface UnifiedServiceConfig {
   platforms: {
@@ -26,6 +28,8 @@ export interface UnifiedServiceConfig {
     reddit?: PlatformConfig;
     instagram?: PlatformConfig;
     youtube?: PlatformConfig;
+    moltbook?: PlatformConfig;
+    xiaohongshu?: PlatformConfig;
   };
   globalOptions?: {
     timeout?: number;
@@ -124,10 +128,40 @@ export class UnifiedSocialMediaService {
       }
     }
 
+    // Initialize Moltbook
+    if (this.config.platforms.moltbook) {
+      try {
+        const adapter = new MoltbookAdapter(this.config.platforms.moltbook);
+        const success = await adapter.initialize();
+        if (success) {
+          this.adapters.set('moltbook', adapter);
+        }
+        results.moltbook = success;
+      } catch (error) {
+        console.error('Failed to initialize Moltbook adapter:', error);
+        results.moltbook = false;
+      }
+    }
+
+    // Initialize Xiaohongshu
+    if (this.config.platforms.xiaohongshu) {
+      try {
+        const adapter = new XiaohongshuAdapter(this.config.platforms.xiaohongshu);
+        const success = await adapter.initialize();
+        if (success) {
+          this.adapters.set('xiaohongshu', adapter);
+        }
+        results.xiaohongshu = success;
+      } catch (error) {
+        console.error('Failed to initialize Xiaohongshu adapter:', error);
+        results.xiaohongshu = false;
+      }
+    }
+
     this.isInitialized = true;
     console.log(`Unified Service initialized with ${this.adapters.size} platforms:`,
                 Array.from(this.adapters.keys()));
-    
+
     return results;
   }
 
