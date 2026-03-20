@@ -36,8 +36,8 @@ CrowdListen Sources gives you one interface across all platforms. Search Reddit,
 ## Quick Start
 
 ```bash
-git clone https://github.com/Crowdlisten/crowdlisten_sources_mcp.git
-cd crowdlisten_sources_mcp
+git clone https://github.com/Crowdlisten/crowdlisten_sources.git
+cd crowdlisten_sources
 npm install
 cp .env.example .env   # Add API keys (Reddit works with zero config)
 npm run build
@@ -138,7 +138,7 @@ npm run start   # stdio transport
   "mcpServers": {
     "crowdlisten": {
       "command": "node",
-      "args": ["/path/to/crowdlisten_sources_mcp/dist/index.js"],
+      "args": ["/path/to/crowdlisten_sources/dist/index.js"],
       "env": { "YOUTUBE_API_KEY": "your-key" }
     }
   }

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Design a **Skills control layer** on top of `crowdlisten_sources_mcp` so CrowdListen can run source workflows with consistent routing, governance, and reliability.
+Design a **Skills control layer** on top of `crowdlisten_sources` so CrowdListen can run source workflows with consistent routing, governance, and reliability.
 
 ---
 
