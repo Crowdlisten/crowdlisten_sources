@@ -2,7 +2,8 @@
 
 /**
  * CrowdListen MCP Server
- * Social media content retrieval and analysis across multiple platforms
+ * Cross-channel feedback analysis — consolidates audience signal from social
+ * platforms into structured, decision-grade context for AI agents.
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';

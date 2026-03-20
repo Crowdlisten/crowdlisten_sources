@@ -1,6 +1,6 @@
 ---
 name: crowdlisten-deep-analysis
-description: "Deep audience analysis with AI-powered tension mapping, structured insight extraction, and multi-source research synthesis. Requires CrowdListen API key from crowdlisten.com/api."
+description: "Deep cross-channel feedback analysis with AI-powered tension mapping, structured insight extraction, and multi-source research synthesis. Converts fragmented audience signal into decision-grade context. Requires CrowdListen API key from crowdlisten.com/api."
 version: 1.0.0
 homepage: https://crowdlisten.com
 metadata: {"openclaw":{"emoji":"brain","requires":{"bins":["crowdlisten"],"env":["CROWDLISTEN_API_KEY"]},"primaryEnv":"CROWDLISTEN_API_KEY","install":[{"id":"crowdlisten","kind":"node","package":"crowdlisten","bins":["crowdlisten"],"label":"CrowdListen CLI"}]}}

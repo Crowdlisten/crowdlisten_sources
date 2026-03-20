@@ -1,6 +1,6 @@
 ---
 name: crowdlisten-analyze
-description: "Analyze social media content with opinion clustering and sentiment analysis. Use when you need structured insights from audience discussions, not just raw comments."
+description: "Analyze cross-channel feedback with opinion clustering and sentiment analysis. Use when you need structured, decision-grade insights from audience discussions, not just raw comments."
 version: 1.0.0
 homepage: https://crowdlisten.com
 metadata: {"openclaw":{"emoji":"bar_chart","requires":{"bins":["crowdlisten"],"env":["OPENAI_API_KEY"],"anyEnv":["YOUTUBE_API_KEY"]},"primaryEnv":"OPENAI_API_KEY","install":[{"id":"crowdlisten","kind":"node","package":"crowdlisten","bins":["crowdlisten"],"label":"CrowdListen CLI"}]}}

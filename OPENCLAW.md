@@ -1,6 +1,6 @@
 # CrowdListen + OpenClaw Integration Guide
 
-> Use CrowdListen's social media intelligence inside OpenClaw — search, extract comments, and analyze audience sentiment across Reddit, YouTube, TikTok, Twitter/X, and Instagram.
+> Cross-channel feedback analysis inside OpenClaw — consolidate audience signal (pain points, feature requests, sentiment) from Reddit, YouTube, TikTok, Twitter/X, and Instagram into structured, decision-grade context for your agents.
 
 ## How It Works
 

@@ -1,7 +1,7 @@
 {
   "name": "crowdlisten",
   "version": "1.0.0",
-  "description": "Social media intelligence for AI agents — CLI, HTTP API, and MCP server",
+  "description": "Cross-channel feedback analysis for AI agents — extract audience signal from Reddit, YouTube, TikTok, Twitter/X, and Instagram",
   "main": "dist/index.js",
   "bin": {
     "crowdlisten": "dist/cli.js"

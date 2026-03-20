@@ -2,8 +2,9 @@
 
 /**
  * CrowdListen CLI
- * Fast, token-efficient social media intelligence for AI agents.
- * JSON output to stdout, errors to stderr. Exit 0 = success, 1 = error.
+ * Cross-channel feedback analysis for AI agents.
+ * Extracts audience signal (pain points, feature requests, sentiment) from
+ * social platforms into structured JSON. stdout = data, stderr = errors.
  */
 
 import { Command } from 'commander';
@@ -26,7 +27,7 @@ const program = new Command();
 
 program
   .name('crowdlisten')
-  .description('Social media intelligence CLI for AI agents')
+  .description('Cross-channel feedback analysis for AI agents')
   .version('1.0.0');
 
 // Shared service instance — initialized lazily

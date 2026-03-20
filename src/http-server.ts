@@ -2,7 +2,8 @@
 
 /**
  * CrowdListen HTTP API Server
- * REST API for AI agent integration — same handlers as CLI and MCP.
+ * Cross-channel feedback analysis REST API — same handlers as CLI and MCP.
+ * Consolidates audience signal into structured context for agent consumption.
  */
 
 import express from 'express';

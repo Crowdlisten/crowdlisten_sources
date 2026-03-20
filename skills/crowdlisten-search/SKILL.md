@@ -1,6 +1,6 @@
 ---
 name: crowdlisten-search
-description: "Search Reddit, YouTube, TikTok, Twitter, Instagram for audience conversations. Use when finding what people say about topics, products, or trends."
+description: "Search cross-channel audience feedback — find what people are saying about topics, products, or trends across Reddit, YouTube, TikTok, Twitter, and Instagram."
 version: 1.0.0
 homepage: https://crowdlisten.com
 metadata: {"openclaw":{"emoji":"ear","requires":{"bins":["crowdlisten"],"anyEnv":["YOUTUBE_API_KEY"]},"primaryEnv":"YOUTUBE_API_KEY","install":[{"id":"crowdlisten","kind":"node","package":"crowdlisten","bins":["crowdlisten"],"label":"CrowdListen CLI"}]}}

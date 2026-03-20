@@ -1,8 +1,10 @@
 # CrowdListen Sources
 
-> What are people *actually* saying? Extract and analyze social media conversations across Reddit, YouTube, TikTok, Twitter/X, and Instagram — one unified interface for AI agents.
+> Cross-channel feedback analysis for AI agents. Consolidates audience signal — pain points, feature requests, sentiment, workarounds — from Reddit, YouTube, TikTok, Twitter/X, and Instagram into structured, decision-grade context.
 
 **CLI** for agents (Claude Code, Codex, Cursor) | **HTTP API** for backends | **MCP** for Claude Desktop
+
+Part of the [CrowdListen](https://crowdlisten.com) system: **Feed** (this repo) captures cross-channel signal → **Workspace** converts signal into validated decisions → **Tasks** routes executable work to coding agents with context intact.
 
 ```bash
 crowdlisten search reddit "what do people think about cursor vs claude code" --limit 20
@@ -27,9 +29,9 @@ crowdlisten search reddit "what do people think about cursor vs claude code" --l
 
 ## Why
 
-If you're building an AI agent that needs to know what people are saying — product feedback, audience sentiment, trending conversations — you need social media data. But every platform has a different API, different auth, different data format.
+Customer feedback fragments across channels. Synthesis remains manual. Intent evaporates between research and delivery. As agents become operational intermediaries, ambiguity compounds execution costs — systems must preserve decision-grade context through handoffs.
 
-CrowdListen Sources gives you one interface across all platforms. Search Reddit, YouTube, TikTok, Twitter, and Instagram with the same command. Get back the same JSON shape every time. No MCP overhead if you don't want it — just a CLI that outputs JSON to stdout.
+CrowdListen Sources is the **Feed layer** — it consolidates cross-channel conversation into a structured signal layer. One interface across all platforms. Same JSON shape every time. Clusters meaning, tracks sentiment, surfaces pain points and feature requests so downstream agents can act on real audience behavior, not assumptions.
 
 **Open source because extraction is commodity.** DOM selectors break, APIs change, new platforms emerge. The community can fix these faster than any single team. The [analysis layer](https://crowdlisten.com) — synthesis, insight clustering, Research Partner API — is where the intelligence lives, and that stays proprietary.
 

@@ -1,6 +1,6 @@
 ---
 name: crowdlisten-comments
-description: "Extract comments from specific social media posts, videos, or threads. Use when you need the actual audience responses to a particular piece of content."
+description: "Extract audience feedback from specific posts, videos, or threads. Use when you need raw signal — pain points, feature requests, reactions — from a particular piece of content."
 version: 1.0.0
 homepage: https://crowdlisten.com
 metadata: {"openclaw":{"emoji":"speech_balloon","requires":{"bins":["crowdlisten"],"anyEnv":["YOUTUBE_API_KEY"]},"primaryEnv":"YOUTUBE_API_KEY","install":[{"id":"crowdlisten","kind":"node","package":"crowdlisten","bins":["crowdlisten"],"label":"CrowdListen CLI"}]}}
