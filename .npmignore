@@ -1,3 +1,18 @@
-# Block everything - this package must NOT be published to npm
-# Sources MCP is a remote-only service, not a distributable package
-*
+# Source and config (dist/ is what gets published)
+src/
+tests/
+docs/
+skills/
+.github/
+
+# Dev files
+tsconfig.json
+jest.config.js
+jest.config.e2e.js
+.env.example
+CONTRIBUTING.md
+
+# Artifacts
+coverage/
+*.log
+.DS_Store
