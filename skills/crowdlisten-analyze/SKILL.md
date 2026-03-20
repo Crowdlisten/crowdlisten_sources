@@ -1,26 +1,9 @@
 ---
 name: crowdlisten-analyze
 description: "Analyze social media content with opinion clustering and sentiment analysis. Use when you need structured insights from audience discussions, not just raw comments."
-compatibility: "Requires Node.js 18+ and crowdlisten CLI. OPENAI_API_KEY needed for clustering."
-metadata:
-  author: crowdlisten
-  version: "1.0.0"
-  openclaw:
-    emoji: "📊"
-    requires:
-      bins:
-        - crowdlisten
-      env:
-        - YOUTUBE_API_KEY
-        - OPENAI_API_KEY
-    primaryEnv: OPENAI_API_KEY
-    install:
-      - id: crowdlisten
-        kind: node
-        package: crowdlisten
-        bins:
-          - crowdlisten
-        label: "CrowdListen CLI"
+version: 1.0.0
+homepage: https://crowdlisten.com
+metadata: {"openclaw":{"emoji":"bar_chart","requires":{"bins":["crowdlisten"],"env":["OPENAI_API_KEY"],"anyEnv":["YOUTUBE_API_KEY"]},"primaryEnv":"OPENAI_API_KEY","install":[{"id":"crowdlisten","kind":"node","package":"crowdlisten","bins":["crowdlisten"],"label":"CrowdListen CLI"}]}}
 allowed-tools: "Bash Read"
 ---
 
@@ -63,6 +46,14 @@ crowdlisten analyze tiktok https://www.tiktok.com/@user/video/7380123456
 ## Output
 
 JSON with: `postId`, `platform`, `sentiment`, `themes[]`, `summary`, `commentCount`, `opinionClusters[]` (each with theme, size, sentiment, examples), `analysisMetadata`.
+
+## Setup
+
+```bash
+npm install -g crowdlisten
+```
+
+Requires `OPENAI_API_KEY` for semantic opinion clustering (embeddings). Without it, basic sentiment is still available.
 
 ## When to Use
 

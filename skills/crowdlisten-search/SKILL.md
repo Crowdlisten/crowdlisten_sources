@@ -1,25 +1,9 @@
 ---
 name: crowdlisten-search
 description: "Search Reddit, YouTube, TikTok, Twitter, Instagram for audience conversations. Use when finding what people say about topics, products, or trends."
-compatibility: "Requires Node.js 18+ and crowdlisten CLI"
-metadata:
-  author: crowdlisten
-  version: "1.0.0"
-  openclaw:
-    emoji: "🔍"
-    requires:
-      bins:
-        - crowdlisten
-      env:
-        - YOUTUBE_API_KEY
-    primaryEnv: YOUTUBE_API_KEY
-    install:
-      - id: crowdlisten
-        kind: node
-        package: crowdlisten
-        bins:
-          - crowdlisten
-        label: "CrowdListen CLI"
+version: 1.0.0
+homepage: https://crowdlisten.com
+metadata: {"openclaw":{"emoji":"ear","requires":{"bins":["crowdlisten"],"anyEnv":["YOUTUBE_API_KEY"]},"primaryEnv":"YOUTUBE_API_KEY","install":[{"id":"crowdlisten","kind":"node","package":"crowdlisten","bins":["crowdlisten"],"label":"CrowdListen CLI"}]}}
 allowed-tools: "Bash Read"
 ---
 
@@ -34,6 +18,8 @@ crowdlisten search <platform> "<query>" [--limit N]
 ```
 
 Platforms: `reddit`, `twitter`, `youtube`, `instagram`, `tiktok`, `all`
+
+Reddit works with zero configuration. Other platforms need API keys (see Setup).
 
 ## Examples
 
@@ -55,6 +41,17 @@ crowdlisten search instagram "skincare routine" --limit 5
 
 JSON to stdout with: `platform`, `query`, `count`, `posts[]`. Each post has:
 `id`, `url`, `content`, `author` (username, displayName, followerCount), `engagement` (likes, comments, shares, views), `timestamp`, `hashtags`.
+
+## Setup
+
+```bash
+npm install -g crowdlisten
+```
+
+Reddit needs no API keys. For other platforms, set environment variables:
+- `YOUTUBE_API_KEY` — YouTube Data API v3 key
+- `TWITTER_API_KEY`, `TWITTER_API_KEY_SECRET`, `TWITTER_ACCESS_TOKEN`, `TWITTER_ACCESS_TOKEN_SECRET` — Twitter/X credentials
+- `INSTAGRAM_USERNAME`, `INSTAGRAM_PASSWORD` — Instagram (optional, uses Playwright)
 
 ## When to Use
 

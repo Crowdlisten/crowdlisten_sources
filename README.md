@@ -145,13 +145,25 @@ npm run start   # stdio transport
 }
 ```
 
-### Agent Skills
+### Agent Skills (OpenClaw, Claude Code)
 
-For agents that support the [Agent Skills spec](https://agentskills.io/specification) (Claude Code, OpenClaw, etc.), copy the `skills/` directory to your agent's skills path:
+For agents that support the [Agent Skills spec](https://agentskills.io/specification):
 
+```bash
+# Via ClawHub (OpenClaw marketplace)
+clawhub install crowdlisten-search crowdlisten-comments crowdlisten-analyze crowdlisten-deep-analysis
+
+# Or copy locally
+cp -r skills/* ~/.openclaw/skills/
+```
+
+Skills available:
 - `crowdlisten-search` — Multi-platform search
 - `crowdlisten-comments` — Comment extraction
-- `crowdlisten-analyze` — Full analysis pipeline
+- `crowdlisten-analyze` — Full analysis pipeline with opinion clustering
+- `crowdlisten-deep-analysis` — Premium AI-powered analysis (requires API key)
+
+See [OPENCLAW.md](OPENCLAW.md) for the full OpenClaw integration guide (MCP + Skills setup, CI/CD, publishing).
 
 ## Platforms
 

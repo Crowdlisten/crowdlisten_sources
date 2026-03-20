@@ -1,25 +1,9 @@
 ---
 name: crowdlisten-comments
 description: "Extract comments from specific social media posts, videos, or threads. Use when you need the actual audience responses to a particular piece of content."
-compatibility: "Requires Node.js 18+ and crowdlisten CLI"
-metadata:
-  author: crowdlisten
-  version: "1.0.0"
-  openclaw:
-    emoji: "💬"
-    requires:
-      bins:
-        - crowdlisten
-      env:
-        - YOUTUBE_API_KEY
-    primaryEnv: YOUTUBE_API_KEY
-    install:
-      - id: crowdlisten
-        kind: node
-        package: crowdlisten
-        bins:
-          - crowdlisten
-        label: "CrowdListen CLI"
+version: 1.0.0
+homepage: https://crowdlisten.com
+metadata: {"openclaw":{"emoji":"speech_balloon","requires":{"bins":["crowdlisten"],"anyEnv":["YOUTUBE_API_KEY"]},"primaryEnv":"YOUTUBE_API_KEY","install":[{"id":"crowdlisten","kind":"node","package":"crowdlisten","bins":["crowdlisten"],"label":"CrowdListen CLI"}]}}
 allowed-tools: "Bash Read"
 ---
 
@@ -55,6 +39,14 @@ crowdlisten comments instagram CxYz123AbCd --limit 30
 
 JSON to stdout with: `platform`, `contentId`, `count`, `comments[]`. Each comment has:
 `id`, `author` (username), `text`, `timestamp`, `likes`, `replies[]`.
+
+## Setup
+
+```bash
+npm install -g crowdlisten
+```
+
+Reddit needs no API keys. For other platforms, set the relevant environment variables (see crowdlisten-search skill for details).
 
 ## When to Use
 

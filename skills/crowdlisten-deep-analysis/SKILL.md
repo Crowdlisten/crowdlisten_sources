@@ -1,25 +1,9 @@
 ---
 name: crowdlisten-deep-analysis
 description: "Deep audience analysis with AI-powered tension mapping, structured insight extraction, and multi-source research synthesis. Requires CrowdListen API key from crowdlisten.com/api."
-compatibility: "Requires Node.js 18+ and crowdlisten CLI with CROWDLISTEN_API_KEY"
-metadata:
-  author: crowdlisten
-  version: "1.0.0"
-  openclaw:
-    emoji: "🧠"
-    requires:
-      bins:
-        - crowdlisten
-      env:
-        - CROWDLISTEN_API_KEY
-    primaryEnv: CROWDLISTEN_API_KEY
-    install:
-      - id: crowdlisten
-        kind: node
-        package: crowdlisten
-        bins:
-          - crowdlisten
-        label: "CrowdListen CLI"
+version: 1.0.0
+homepage: https://crowdlisten.com
+metadata: {"openclaw":{"emoji":"brain","requires":{"bins":["crowdlisten"],"env":["CROWDLISTEN_API_KEY"]},"primaryEnv":"CROWDLISTEN_API_KEY","install":[{"id":"crowdlisten","kind":"node","package":"crowdlisten","bins":["crowdlisten"],"label":"CrowdListen CLI"}]}}
 allowed-tools: "Bash Read"
 ---
 
