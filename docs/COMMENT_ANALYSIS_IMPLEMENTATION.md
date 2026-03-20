@@ -274,6 +274,10 @@ Single-video insights:
 - come from the top local clusters
 - skip spam
 - usually suppress tiny low-signal clusters unless they are clearly meaningful
+- prefer specific grounded themes over broad `global_video` / `video-wide`
+  buckets when both are available
+- de-emphasize singleton entity-only themes so one stray mention does not crowd
+  out stronger discussion clusters
 
 Cross-video insights:
 
@@ -290,6 +294,15 @@ Each insight includes:
 - supporting anchors
 - importance score
 - confidence
+
+Display behavior:
+
+- TikTok `ContentAnalysis.themes` prefers single-video insight titles over raw
+  local-cluster order
+- broad labels such as `Video-wide discussion` are omitted from top themes when
+  more specific insights exist
+- TikTok `ContentAnalysis.summary` prefers the strongest non-broad insight
+  description so the top-level report reflects the actual discussion theme
 
 ### 7. Clusters -> `AskLayerIndex`
 

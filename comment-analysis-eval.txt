@@ -1,0 +1,175 @@
+
+================================================================================
+RUN SUMMARY
+================================================================================
+
+Generated at: 2026-03-20T21:03:25.202Z
+Fixture videos: 2
+Total runtime: 0.107s
+
+================================================================================
+GROUNDING QUALITY
+================================================================================
+
+Enrichment model: deterministic-grounding-v1
+Accuracy: 6/6 = 1
+PASS c1
+  rawText: that part is unsafe
+  predictedPrimaryAnchor: v1_moment_0_42_creator_says_steak_can_sit_at_room_temperature_for_an_hour
+  groundingConfidence: 0.4
+  expectedAnchorFragments: moment_0_42, room_temperature_for_an_hour
+PASS c1r1
+  rawText: same
+  predictedPrimaryAnchor: v1_moment_0_42_creator_says_steak_can_sit_at_room_temperature_for_an_hour
+  groundingConfidence: 0.22
+  expectedAnchorFragments: moment_0_42, room_temperature_for_an_hour
+PASS c2
+  rawText: do not move it once it hits the pan is actually useful
+  predictedPrimaryAnchor: v1_quote_1_do_not_move_it_once_it_hits_the_pan
+  groundingConfidence: 0.98
+  expectedAnchorFragments: quote_1, do_not_move_it_once_it_hits_the_pan
+PASS d1
+  rawText: leaving steak out that long is risky
+  predictedPrimaryAnchor: v2_moment_0_30_creator_repeats_the_one_hour_room_temperature_advice
+  groundingConfidence: 0.4
+  expectedAnchorFragments: moment_0_30, room_temperature_advice
+PASS d2
+  rawText: what temp should the pan be?
+  predictedPrimaryAnchor: v2_object_pan
+  groundingConfidence: 0.5
+  expectedAnchorFragments: object_pan, pan
+PASS c5
+  rawText: Great tips keep it up
+  predictedPrimaryAnchor: v1_global_video
+  groundingConfidence: 0.28
+  expectedAnchorFragments: global_video
+
+================================================================================
+OPINION UNIT QUALITY
+================================================================================
+
+Accuracy: 1/1 = 1
+PASS c4
+  actualUnitCount: 1
+  expectedUnitCount: 1
+  spans: I won't remember any of them.
+  stances: negative
+  checks: count=true requiredSpan=true forbiddenSpan=true stance=true
+
+================================================================================
+LOCAL CLUSTER PURITY
+================================================================================
+
+Purity: 7/7 = 1
+Silhouette score: 0.27
+v1_controversy_creator_says_steak_can_sit_a_opinion_negative_2
+  videoId: v1
+  label: Criticism of Creator says steak can sit at room temperature for an hour
+  clusterType: opinion
+  dominantGoldLabel: room_temp_safety_negative
+  purity: 1
+  labeledUnits: 2
+  distribution: {"room_temp_safety_negative":2}
+v1_spoken_quote_do_not_move_it_once_it_hits_opinion_positive_1
+  videoId: v1
+  label: Praise for Do not move it once it hits the pan.
+  clusterType: opinion
+  dominantGoldLabel: pan_handling_positive
+  purity: 1
+  labeledUnits: 1
+  distribution: {"pan_handling_positive":1}
+v1_global_video_steak_cooking_tutorial_opinion_positive_1
+  videoId: v1
+  label: Praise for Steak cooking tutorial
+  clusterType: opinion
+  dominantGoldLabel: generic_video_praise
+  purity: 1
+  labeledUnits: 1
+  distribution: {"generic_video_praise":1}
+v1_video_video_wide_discussion_opinion_negative_1
+  videoId: v1
+  label: Criticism of Video-wide discussion
+  clusterType: opinion
+  dominantGoldLabel: retention_negative
+  purity: 1
+  labeledUnits: 1
+  distribution: {"retention_negative":1}
+v2_controversy_creator_repeats_the_one_hour_opinion_negative_1
+  videoId: v2
+  label: Criticism of Creator repeats the one hour room temperature advice
+  clusterType: opinion
+  dominantGoldLabel: room_temp_safety_negative
+  purity: 1
+  labeledUnits: 1
+  distribution: {"room_temp_safety_negative":1}
+v2_entity_pan_question_question_1
+  videoId: v2
+  label: Questions about pan
+  clusterType: question
+  dominantGoldLabel: pan_temperature_question
+  purity: 1
+  labeledUnits: 1
+  distribution: {"pan_temperature_question":1}
+
+------------------------------------------------------------
+LOCAL CLUSTER SILHOUETTE LOGS
+------------------------------------------------------------
+
+Embedded 7 texts with deterministic hash fallback
+
+================================================================================
+META CLUSTER RECURRENCE QUALITY
+================================================================================
+
+Meta merge purity: 2/2 = 1
+Incorrect merge count: 0
+Recurring-label precision: 1
+Recurring-label recall: 1
+Recurring-label F1: 1
+Gold recurring labels: room_temp_safety_negative
+Predicted recurring labels: room_temp_safety_negative
+meta_cluster_1
+  label: Recurring criticism of Creator repeats the one hour room temperature advice
+  dominantGoldLabel: room_temp_safety_negative
+  purity: 1
+  sourceClusterCount: 2
+  distribution: {"room_temp_safety_negative":2}
+
+================================================================================
+PIPELINE LOGS
+================================================================================
+
+Flattened 6 comments (including replies)
+Built 12 video anchors
+No opinion units extracted for comment c3
+Generated 6 enriched comments
+Generated 5 opinion units
+Flattened 2 comments (including replies)
+Built 12 video anchors
+Generated 2 enriched comments
+Generated 2 opinion units
+Flattened 6 comments (including replies)
+Built 12 video anchors
+No opinion units extracted for comment c3
+Generated 6 enriched comments
+Generated 5 opinion units
+Created 4 coarse buckets for v1
+Embedded 2 texts with deterministic hash fallback
+Embedded 1 texts with deterministic hash fallback
+Embedded 1 texts with deterministic hash fallback
+Embedded 1 texts with deterministic hash fallback
+Built 4 local clusters for v1
+Built 3 single-video insights for v1
+Flattened 2 comments (including replies)
+Built 12 video anchors
+Generated 2 enriched comments
+Generated 2 opinion units
+Created 2 coarse buckets for v2
+Embedded 1 texts with deterministic hash fallback
+Embedded 1 texts with deterministic hash fallback
+Built 2 local clusters for v2
+Built 2 single-video insights for v2
+Embedded 5 texts with deterministic hash fallback
+Created 4 meta-cluster candidates
+Built 1 meta clusters across 2 videos
+Built 1 cross-video insights

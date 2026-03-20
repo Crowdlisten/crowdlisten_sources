@@ -87,8 +87,8 @@ export class TikTokCommentAnalysisService {
     });
 
     const sentiment = this.inferSentiment(clustering.localClusters || []);
-    const themes = (clustering.localClusters || []).slice(0, 5).map(cluster => cluster.label);
-    const summary = clustering.insights?.[0]?.description || clustering.overallAnalysis;
+    const themes = this.selectDisplayThemes(clustering);
+    const summary = this.selectDisplaySummary(clustering);
 
     const analysis: ContentAnalysis = {
       postId: videoId,
@@ -214,5 +214,30 @@ export class TikTokCommentAnalysisService {
     if (topCluster.stanceProfile.dominant === 'positive') return 'positive';
     if (topCluster.stanceProfile.dominant === 'negative') return 'negative';
     return 'neutral';
+  }
+
+  private selectDisplayThemes(clustering: NonNullable<ContentAnalysis['clustering']>): string[] {
+    const insightTitles = (clustering.insights || [])
+      .map(insight => insight.title)
+      .filter(title => !this.isBroadThemeLabel(title))
+      .slice(0, 5);
+
+    if (insightTitles.length > 0) {
+      return insightTitles;
+    }
+
+    return (clustering.localClusters || [])
+      .map(cluster => cluster.label)
+      .filter(label => !this.isBroadThemeLabel(label))
+      .slice(0, 5);
+  }
+
+  private selectDisplaySummary(clustering: NonNullable<ContentAnalysis['clustering']>): string {
+    const specificInsight = (clustering.insights || []).find(insight => !this.isBroadThemeLabel(insight.title));
+    return specificInsight?.description || clustering.insights?.[0]?.description || clustering.overallAnalysis;
+  }
+
+  private isBroadThemeLabel(label: string): boolean {
+    return /video-wide discussion/i.test(label) || /a collection of .*tips/i.test(label);
   }
 }
