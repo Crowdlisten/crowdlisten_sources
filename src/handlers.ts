@@ -269,3 +269,83 @@ export async function healthCheck(service: UnifiedSocialMediaService) {
   const health = await service.healthCheck();
   return { healthStatus: health, timestamp: new Date().toISOString() };
 }
+
+// ---------- Paid Agent API Proxy ----------
+
+const AGENT_API_BASE = process.env.CROWDLISTEN_AGENT_URL || 'https://agent.crowdlisten.com';
+
+function requireApiKey(): string {
+  const apiKey = process.env.CROWDLISTEN_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      'CROWDLISTEN_API_KEY required for this feature.\n' +
+      'Get one at https://crowdlisten.com/api\n\n' +
+      'Free features: search, comments, basic analyze, cluster\n' +
+      'Paid features: deep analysis, insights, research synthesis'
+    );
+  }
+  return apiKey;
+}
+
+async function agentPost(path: string, body: Record<string, unknown>): Promise<any> {
+  const apiKey = requireApiKey();
+  const url = `${AGENT_API_BASE}${path}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Agent API error (${response.status}): ${errorBody}`);
+  }
+
+  return response.json();
+}
+
+export interface DeepAnalyzeArgs {
+  platform: string;
+  contentId: string;
+  analysisDepth: 'deep' | 'comprehensive';
+}
+
+export interface InsightsArgs {
+  platform: string;
+  contentId: string;
+  categories?: string[];
+}
+
+export interface ResearchArgs {
+  query: string;
+  platforms?: string[];
+  depth?: 'quick' | 'standard' | 'deep';
+}
+
+export async function deepAnalyze(args: DeepAnalyzeArgs) {
+  return agentPost('/api/v1/analyze', {
+    platform: args.platform,
+    content_id: args.contentId,
+    depth: args.analysisDepth,
+  });
+}
+
+export async function extractInsights(args: InsightsArgs) {
+  return agentPost('/api/v1/insights', {
+    platform: args.platform,
+    content_id: args.contentId,
+    categories: args.categories,
+  });
+}
+
+export async function researchSynthesis(args: ResearchArgs) {
+  return agentPost('/api/v1/research', {
+    query: args.query,
+    platforms: args.platforms || ['reddit', 'twitter', 'youtube'],
+    depth: args.depth || 'standard',
+  });
+}

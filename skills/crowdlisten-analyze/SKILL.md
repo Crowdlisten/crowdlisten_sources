@@ -1,15 +1,27 @@
 ---
 name: crowdlisten-analyze
-description: >
-  Full analysis pipeline for social media content: extracts comments, clusters
-  opinions by theme using embeddings, and provides sentiment analysis. Use when
-  you need structured insights from audience discussions, not just raw comments.
+description: "Analyze social media content with opinion clustering and sentiment analysis. Use when you need structured insights from audience discussions, not just raw comments."
+compatibility: "Requires Node.js 18+ and crowdlisten CLI. OPENAI_API_KEY needed for clustering."
 metadata:
   author: crowdlisten
-  version: "1.0"
-allowed-tools:
-  - Bash
-  - Read
+  version: "1.0.0"
+  openclaw:
+    emoji: "📊"
+    requires:
+      bins:
+        - crowdlisten
+      env:
+        - YOUTUBE_API_KEY
+        - OPENAI_API_KEY
+    primaryEnv: OPENAI_API_KEY
+    install:
+      - id: crowdlisten
+        kind: node
+        package: crowdlisten
+        bins:
+          - crowdlisten
+        label: "CrowdListen CLI"
+allowed-tools: "Bash Read"
 ---
 
 # CrowdListen Analyze
@@ -23,7 +35,7 @@ crowdlisten analyze <platform> <contentId> [--depth LEVEL] [--no-clustering]
 crowdlisten cluster <platform> <contentId> [--clusters N]
 ```
 
-Platforms: `reddit`, `twitter`, `youtube`, `instagram`, `tiktok`, `moltbook`
+Platforms: `reddit`, `twitter`, `youtube`, `instagram`, `tiktok`
 
 ## Examples
 
@@ -41,11 +53,16 @@ crowdlisten cluster reddit t3_abc123 --clusters 8
 crowdlisten analyze tiktok https://www.tiktok.com/@user/video/7380123456
 ```
 
+## Depth Levels
+
+- `surface` — basic sentiment only
+- `standard` — sentiment + 5 opinion clusters (default)
+- `deep` — premium synthesis with tension mapping (requires CROWDLISTEN_API_KEY, see crowdlisten-deep-analysis skill)
+- `comprehensive` — full research synthesis (requires CROWDLISTEN_API_KEY)
+
 ## Output
 
 JSON with: `postId`, `platform`, `sentiment`, `themes[]`, `summary`, `commentCount`, `opinionClusters[]` (each with theme, size, sentiment, examples), `analysisMetadata`.
-
-Cluster output includes: `clusterId`, `theme`, `size`, `percentage`, `sentiment`, `engagement` (totalLikes, avgLikes), `summary`, `examples[]`.
 
 ## When to Use
 

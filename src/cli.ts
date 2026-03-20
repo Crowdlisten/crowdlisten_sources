@@ -17,6 +17,9 @@ import {
   getUserContent,
   getPlatformStatus,
   healthCheck,
+  deepAnalyze,
+  extractInsights,
+  researchSynthesis,
 } from './handlers.js';
 
 const program = new Command();
@@ -92,15 +95,21 @@ program
   .option('-d, --depth <level>', 'Analysis depth (surface|standard|deep|comprehensive)', 'standard')
   .option('--no-clustering', 'Disable opinion clustering')
   .action(async (platform: string, contentId: string, opts: any) => {
-    await run(async () => {
-      const svc = await getService();
-      return analyzeContent(svc, {
-        platform,
-        contentId,
-        analysisDepth: opts.depth,
-        enableClustering: opts.clustering !== false,
+    const depth = opts.depth;
+    // Route deep/comprehensive to paid agent API
+    if (depth === 'deep' || depth === 'comprehensive') {
+      await run(async () => deepAnalyze({ platform, contentId, analysisDepth: depth }));
+    } else {
+      await run(async () => {
+        const svc = await getService();
+        return analyzeContent(svc, {
+          platform,
+          contentId,
+          analysisDepth: depth,
+          enableClustering: opts.clustering !== false,
+        });
       });
-    });
+    }
   });
 
 program
@@ -161,6 +170,33 @@ program
       const svc = await getService();
       return healthCheck(svc);
     });
+  });
+
+// --- Paid Commands (require CROWDLISTEN_API_KEY) ---
+
+program
+  .command('insights <platform> <contentId>')
+  .description('Extract structured insights with categorization and confidence (paid)')
+  .option('-c, --categories <list>', 'Comma-separated insight categories', '')
+  .action(async (platform: string, contentId: string, opts: any) => {
+    await run(async () => extractInsights({
+      platform,
+      contentId,
+      categories: opts.categories ? opts.categories.split(',') : undefined,
+    }));
+  });
+
+program
+  .command('research <query>')
+  .description('Multi-source research synthesis with AI analysis (paid)')
+  .option('-p, --platforms <list>', 'Comma-separated platforms', 'reddit,twitter,youtube')
+  .option('-d, --depth <level>', 'Research depth (quick|standard|deep)', 'standard')
+  .action(async (query: string, opts: any) => {
+    await run(async () => researchSynthesis({
+      query,
+      platforms: opts.platforms.split(','),
+      depth: opts.depth,
+    }));
   });
 
 program.parse();

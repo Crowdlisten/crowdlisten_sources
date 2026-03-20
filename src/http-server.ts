@@ -16,6 +16,9 @@ import {
   getUserContent,
   getPlatformStatus,
   healthCheck,
+  deepAnalyze,
+  extractInsights,
+  researchSynthesis,
 } from './handlers.js';
 
 const app = express();
@@ -46,6 +49,27 @@ app.post('/v1/trending', wrap((svc, body) => getTrendingContent(svc, body)));
 app.post('/v1/user-content', wrap((svc, body) => getUserContent(svc, body)));
 app.get('/v1/status', wrap((svc) => getPlatformStatus(svc)));
 app.get('/v1/health', wrap((svc) => healthCheck(svc)));
+
+// --- Paid endpoints (proxy to agent.crowdlisten.com) ---
+app.post('/v1/insights', async (req, res) => {
+  try {
+    const result = await extractInsights(req.body);
+    res.json(result);
+  } catch (err: any) {
+    const status = err.message?.includes('API_KEY required') ? 402 : 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+app.post('/v1/research', async (req, res) => {
+  try {
+    const result = await researchSynthesis(req.body);
+    res.json(result);
+  } catch (err: any) {
+    const status = err.message?.includes('API_KEY required') ? 402 : 500;
+    res.status(status).json({ error: err.message });
+  }
+});
 
 // --- Server ---
 

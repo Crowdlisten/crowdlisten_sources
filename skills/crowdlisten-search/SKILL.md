@@ -1,15 +1,26 @@
 ---
 name: crowdlisten-search
-description: >
-  Search social media platforms (Reddit, Twitter, YouTube, Instagram, TikTok)
-  for audience conversations about any topic. Use when asked to find what
-  people are saying, research audience sentiment, or gather crowd intelligence.
+description: "Search Reddit, YouTube, TikTok, Twitter, Instagram for audience conversations. Use when finding what people say about topics, products, or trends."
+compatibility: "Requires Node.js 18+ and crowdlisten CLI"
 metadata:
   author: crowdlisten
-  version: "1.0"
-allowed-tools:
-  - Bash
-  - Read
+  version: "1.0.0"
+  openclaw:
+    emoji: "🔍"
+    requires:
+      bins:
+        - crowdlisten
+      env:
+        - YOUTUBE_API_KEY
+    primaryEnv: YOUTUBE_API_KEY
+    install:
+      - id: crowdlisten
+        kind: node
+        package: crowdlisten
+        bins:
+          - crowdlisten
+        label: "CrowdListen CLI"
+allowed-tools: "Bash Read"
 ---
 
 # CrowdListen Search
@@ -22,7 +33,7 @@ Search across social media for real audience conversations.
 crowdlisten search <platform> "<query>" [--limit N]
 ```
 
-Platforms: `reddit`, `twitter`, `youtube`, `instagram`, `tiktok`, `moltbook`, `all`
+Platforms: `reddit`, `twitter`, `youtube`, `instagram`, `tiktok`, `all`
 
 ## Examples
 
