@@ -1,5 +1,6 @@
 node_modules/
 .env
+.env.*
 dist/
 .serena/
 .DS_Store
@@ -8,3 +9,11 @@ dist/
 .twitter-session/
 debug-*.png
 .twitter-cookies.json
+
+# Files that previously contained secrets — never re-commit
+vercel-env-setup.md
+deployment-guide.md
+*env-setup*
+*.pem
+*.key
+.secret*

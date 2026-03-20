@@ -1,3 +1,4 @@
+// @ts-nocheck — instagram-private-api types not fully available
 /**
  * Instagram Platform Adapter
  * Enhanced with trending discovery, removing business analytics features

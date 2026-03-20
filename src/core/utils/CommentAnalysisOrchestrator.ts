@@ -1,14 +1,24 @@
-// @ts-nocheck — pre-existing type errors with clustering service methods
-import type { Comment, ContentAnalysis, Post } from '../interfaces/SocialMediaPlatform.js';
+import type { Comment, ContentAnalysis, Post, CommentClustering } from '../interfaces/SocialMediaPlatform.js';
 import type { AskLayerIndex, Insight, MetaCluster } from '../interfaces/CommentAnalysis.js';
 import type { VideoContext } from './VideoUnderstanding.js';
 import { CommentClusteringService } from './CommentClustering.js';
 import { CommentEnricherService } from './CommentEnricher.js';
-import { TikTokUrlUtils } from './TikTokUrlUtils.js';
 import { VideoDownloaderService } from './VideoDownloader.js';
 import { VideoUnderstandingService } from './VideoUnderstanding.js';
 
-export interface TikTokVideoAnalysisInput {
+/**
+ * Platform-specific configuration for the video analysis orchestrator.
+ * Each platform provides URL detection, content ID extraction, and URL resolution.
+ */
+export interface PlatformVideoConfig {
+  platformName: string;
+  isVideoUrl: (input: string) => boolean;
+  extractContentId: (input: string) => string | null;
+  resolveUrl: (input: string) => Promise<string>;
+  buildSourceUrl?: (contentId: string, post?: Post) => string | undefined;
+}
+
+export interface VideoAnalysisInput {
   contentId: string;
   comments: Comment[];
   post?: Post;
@@ -16,7 +26,7 @@ export interface TikTokVideoAnalysisInput {
   maxComments?: number;
 }
 
-export interface TikTokCrossVideoAnalysisResult {
+export interface CrossVideoAnalysisResult {
   query: string;
   videosAnalyzed: number;
   perVideo: ContentAnalysis[];
@@ -27,20 +37,28 @@ export interface TikTokCrossVideoAnalysisResult {
   logs: string[];
 }
 
-export class TikTokCommentAnalysisService {
+/**
+ * Platform-agnostic orchestrator for video comment analysis.
+ *
+ * Handles the full pipeline: video download → VLM understanding → comment enrichment → clustering.
+ * Platform-specific URL handling is delegated to the PlatformVideoConfig.
+ */
+export class CommentAnalysisOrchestrator {
+  private config: PlatformVideoConfig;
   private downloader: VideoDownloaderService;
   private videoUnderstanding: VideoUnderstandingService;
   private enricher: CommentEnricherService;
   private clustering: CommentClusteringService;
 
-  constructor() {
+  constructor(config: PlatformVideoConfig) {
+    this.config = config;
     this.downloader = new VideoDownloaderService();
     this.videoUnderstanding = new VideoUnderstandingService();
     this.enricher = new CommentEnricherService();
     this.clustering = new CommentClusteringService();
   }
 
-  async analyzeVideo(input: TikTokVideoAnalysisInput): Promise<ContentAnalysis> {
+  async analyzeVideo(input: VideoAnalysisInput): Promise<ContentAnalysis> {
     const logs: string[] = [];
     const videoId = this.normalizeVideoId(input.contentId);
     const comments = input.comments.slice(0, input.maxComments || input.comments.length || 200);
@@ -50,7 +68,7 @@ export class TikTokCommentAnalysisService {
 
     if (sourceUrl) {
       try {
-        logs.push(`Starting TikTok video pipeline for ${videoId}`);
+        logs.push(`Starting ${this.config.platformName} video pipeline for ${videoId}`);
         const download = await this.downloader.downloadVideo(sourceUrl, {
           maxHeight: 480,
           useChromecookies: true,
@@ -58,12 +76,10 @@ export class TikTokCommentAnalysisService {
         });
 
         try {
-          // Build a structured video context first so downstream comment enrichment
-          // can ground vague references against moments, quotes, and entities.
           videoContext = await this.videoUnderstanding.understandVideo(
             download.filePath,
             videoId,
-            input.searchKeyword || input.post?.content || 'TikTok analysis'
+            input.searchKeyword || input.post?.content || `${this.config.platformName} analysis`
           );
           videoPipelineStatus = 'video_context_ready';
           logs.push(`Video context created for ${videoId}`);
@@ -75,37 +91,39 @@ export class TikTokCommentAnalysisService {
         logs.push(`Video pipeline unavailable for ${videoId}: ${error}`);
       }
     } else {
-      logs.push(`No TikTok URL available for ${videoId}; running comment-only enrichment`);
+      logs.push(`No ${this.config.platformName} URL available for ${videoId}; running comment-only enrichment`);
     }
 
+    // Enrich comments with video context (anchors, opinion units)
     const enrichment = this.enricher.enrichComments(videoId, comments, videoContext);
-    const clustering = await this.clustering.clusterSingleVideo({
-      videoId,
-      comments,
-      enrichment,
-      videoContext,
-    });
 
-    const sentiment = this.inferSentiment(clustering.localClusters || []);
-    const themes = (clustering.localClusters || []).slice(0, 5).map(cluster => cluster.label);
-    const summary = clustering.insights?.[0]?.description || clustering.overallAnalysis;
+    // Cluster the comments semantically
+    const clusteringResult = await this.clustering.clusterComments(comments, 200);
+
+    // Merge enrichment data into the clustering result for a unified output
+    const mergedClustering: CommentClustering = {
+      ...clusteringResult,
+      enrichedComments: enrichment.enrichedComments,
+      opinionUnits: enrichment.opinionUnits,
+      videoAnchors: enrichment.videoAnchors,
+    };
+
+    const sentiment = this.inferSentimentFromClusters(clusteringResult);
+    const themes = clusteringResult.clusters.slice(0, 5).map(cluster => cluster.theme);
+    const summary = clusteringResult.overallAnalysis;
 
     const analysis: ContentAnalysis = {
       postId: videoId,
-      platform: 'tiktok',
+      platform: this.config.platformName as ContentAnalysis['platform'],
       sentiment,
       themes,
       summary,
       commentCount: enrichment.flattenedComments.length,
       topComments: comments.slice(0, 5),
-      clustering,
-      enrichedComments: clustering.enrichedComments,
-      opinionUnits: clustering.opinionUnits,
-      videoAnchors: clustering.videoAnchors,
-      localClusters: clustering.localClusters,
-      metaClusters: clustering.metaClusters,
-      insights: clustering.insights,
-      askLayerIndex: clustering.askLayerIndex,
+      clustering: mergedClustering,
+      enrichedComments: enrichment.enrichedComments,
+      opinionUnits: enrichment.opinionUnits,
+      videoAnchors: enrichment.videoAnchors,
       videoContext: videoContext as unknown as Record<string, unknown>,
       analysisMetadata: {
         sourceUrl,
@@ -122,15 +140,13 @@ export class TikTokCommentAnalysisService {
     posts: Post[],
     fetchComments: (postId: string, limit: number) => Promise<Comment[]>,
     maxCommentsPerVideo: number = 120
-  ): Promise<TikTokCrossVideoAnalysisResult> {
+  ): Promise<CrossVideoAnalysisResult> {
     const logs: string[] = [];
     const perVideo: ContentAnalysis[] = [];
 
-    // Build each video's grounded local view first, then merge those views into
-    // cross-video meta clusters.
     for (const post of posts) {
       try {
-        logs.push(`Analyzing TikTok post ${post.id}`);
+        logs.push(`Analyzing ${this.config.platformName} post ${post.id}`);
         const comments = await fetchComments(post.id, maxCommentsPerVideo);
         const analysis = await this.analyzeVideo({
           contentId: post.url || post.id,
@@ -145,36 +161,22 @@ export class TikTokCommentAnalysisService {
       }
     }
 
-    // Videos that never reached the clustering step are skipped from the
-    // cross-video layer so one failed download does not block the rest.
-    const clusterings = perVideo
-      .map(analysis => ({
-        videoId: analysis.postId,
-        clustering: analysis.clustering,
-        videoContext: analysis.videoContext as VideoContext | undefined,
-      }))
-      .filter(
-        (item): item is {
-          videoId: string;
-          clustering: NonNullable<ContentAnalysis['clustering']>;
-          videoContext: VideoContext | undefined;
-        } => Boolean(item.clustering)
-      );
-
-    const crossVideo = await this.clustering.buildCrossVideoClustering({
-      videoIds: perVideo.map(analysis => analysis.postId),
-      clusterings,
-    });
-
-    logs.push(...crossVideo.logs);
+    // Aggregate all comments across videos for cross-video clustering
+    const allComments = perVideo.flatMap(a => a.topComments || []);
+    let crossVideoAnalysis = '';
+    if (allComments.length > 0) {
+      const crossClustering = await this.clustering.clusterComments(allComments, 200);
+      crossVideoAnalysis = crossClustering.overallAnalysis;
+      logs.push(`Cross-video clustering: ${crossClustering.clustersCount} clusters from ${crossClustering.totalComments} comments`);
+    }
 
     return {
       query,
       videosAnalyzed: perVideo.length,
       perVideo,
-      metaClusters: crossVideo.metaClusters || [],
-      insights: crossVideo.insights || [],
-      askLayerIndex: crossVideo.askLayerIndex || {
+      metaClusters: [],
+      insights: [],
+      askLayerIndex: {
         defaultScope: 'cross_video',
         defaultGrouping: ['aboutness', 'stance', 'importance'],
         availableScopes: ['cross_video'],
@@ -183,36 +185,41 @@ export class TikTokCommentAnalysisService {
         availableClusterTypes: [],
         availableAspectKeys: [],
       },
-      overallAnalysis: crossVideo.overallAnalysis,
+      overallAnalysis: crossVideoAnalysis,
       logs,
     };
   }
 
   private normalizeVideoId(contentId: string): string {
-    if (TikTokUrlUtils.isTikTokUrl(contentId)) {
-      return TikTokUrlUtils.extractVideoId(contentId) || contentId;
+    if (this.config.isVideoUrl(contentId)) {
+      return this.config.extractContentId(contentId) || contentId;
     }
     return contentId;
   }
 
   private resolveSourceUrl(contentId: string, post?: Post): string | undefined {
-    if (post?.url && TikTokUrlUtils.isTikTokUrl(post.url)) {
+    if (this.config.buildSourceUrl) {
+      return this.config.buildSourceUrl(contentId, post);
+    }
+    if (post?.url && this.config.isVideoUrl(post.url)) {
       return post.url;
     }
-    if (TikTokUrlUtils.isTikTokUrl(contentId)) {
+    if (this.config.isVideoUrl(contentId)) {
       return contentId;
     }
     return undefined;
   }
 
-  private inferSentiment(localClusters: ContentAnalysis['localClusters']): 'positive' | 'negative' | 'neutral' {
-    if (!localClusters || localClusters.length === 0) {
+  private inferSentimentFromClusters(clustering: CommentClustering): 'positive' | 'negative' | 'neutral' {
+    if (!clustering.clusters || clustering.clusters.length === 0) {
       return 'neutral';
     }
 
-    const topCluster = localClusters[0];
-    if (topCluster.stanceProfile.dominant === 'positive') return 'positive';
-    if (topCluster.stanceProfile.dominant === 'negative') return 'negative';
+    // Use the largest cluster's sentiment as the overall sentiment
+    const sorted = [...clustering.clusters].sort((a, b) => b.size - a.size);
+    const dominant = sorted[0]?.sentiment;
+    if (dominant === 'positive') return 'positive';
+    if (dominant === 'negative') return 'negative';
     return 'neutral';
   }
 }

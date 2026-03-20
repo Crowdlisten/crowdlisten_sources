@@ -1,29 +1,30 @@
 {
-  "name": "crowdlisten_mcp",
+  "name": "crowdlisten",
   "version": "1.0.0",
-  "description": "CrowdListen MCP server for social media content retrieval and analysis across multiple platforms",
-  "main": "api/mcp.js",
+  "description": "Social media intelligence for AI agents — CLI, HTTP API, and MCP server",
+  "main": "dist/index.js",
+  "bin": {
+    "crowdlisten": "dist/cli.js"
+  },
   "scripts": {
-    "build": "echo 'Using streamlined JavaScript implementation - no build needed'",
+    "build": "tsc",
     "build:watch": "tsc --watch",
-    "start": "echo 'MCP Server ready at /api/mcp'",
-    "dev": "vercel dev",
-    "deploy": "vercel --prod",
+    "start": "node dist/index.js",
+    "start:cli": "node dist/cli.js",
+    "start:http": "node dist/http-server.js",
+    "dev": "tsx src/cli.ts",
     "test": "jest",
     "test:e2e": "jest --config jest.config.e2e.js",
     "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --forceExit",
-    "test:legacy": "node test_mcp.js",
-    "audit": "npm audit",
-    "verify:tiktok-url-flow": "node scripts/verify-tiktok-url-flow.cjs",
-    "verify:comment-analysis": "node test-comment-analysis.cjs",
-    "verify:tiktok-comment-analysis": "node test-comment-intelligence.cjs"
+    "test:ci": "jest --ci --coverage --forceExit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@the-convocation/twitter-scraper": "^0.22.1",
     "axios": "^1.13.1",
+    "commander": "^14.0.3",
     "dotenv": "^17.3.1",
+    "express": "^5.2.1",
     "instagram-private-api": "^1.46.1",
     "node-fetch": "^3.3.2",
     "openai": "^6.22.0"
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@google/generative-ai": "^0.24.1",
+    "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
     "@types/node-fetch": "^2.6.4",
@@ -41,13 +43,16 @@
     "typescript": "^5.0.0"
   },
   "keywords": [
-    "mcp",
     "social-media",
+    "crowd-intelligence",
+    "reddit",
+    "youtube",
     "tiktok",
     "twitter",
-    "reddit",
     "instagram",
-    "crowdlisten"
+    "mcp",
+    "cli",
+    "ai-agents"
   ],
   "author": "CrowdListen Team",
   "license": "MIT"
