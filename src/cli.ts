@@ -200,4 +200,9 @@ program
     }));
   });
 
-program.parse();
+// When called by an MCP client (piped stdin, no CLI args), start MCP server
+if (process.argv.length <= 2 && !process.stdin.isTTY) {
+  import('./index.js').then(({ main }) => main());
+} else {
+  program.parse();
+}

@@ -1,171 +1,41 @@
 # CrowdListen Sources
 
-> Cross-channel feedback analysis for AI agents. Consolidates audience signal — pain points, feature requests, sentiment, workarounds — from Reddit, YouTube, TikTok, Twitter/X, and Instagram into structured, decision-grade context.
+> Cross-channel audience signal for AI agents. Consolidates pain points, feature requests, sentiment, and workarounds from Reddit, YouTube, TikTok, Twitter/X, and Instagram into structured JSON.
 
-**CLI** for agents (Claude Code, Codex, Cursor) | **HTTP API** for backends | **MCP** for Claude Desktop
+## Try It Now
 
-Part of the [CrowdListen](https://crowdlisten.com) system: **Feed** (this repo) captures cross-channel signal → **Workspace** converts signal into validated decisions → **Tasks** routes executable work to coding agents with context intact.
-
-```bash
-crowdlisten search reddit "what do people think about cursor vs claude code" --limit 20
-```
-```json
-{
-  "platform": "reddit",
-  "query": "what do people think about cursor vs claude code",
-  "count": 20,
-  "posts": [
-    {
-      "id": "t3_1jk8m2x",
-      "url": "https://reddit.com/r/programming/comments/1jk8m2x/...",
-      "content": "I've been using both for a month and here's what I found...",
-      "author": { "username": "dev_user", "displayName": "Dev User" },
-      "engagement": { "likes": 142, "comments": 67, "shares": 12 },
-      "timestamp": "2026-03-18T14:30:00.000Z"
-    }
-  ]
-}
-```
-
-## Why
-
-Customer feedback fragments across channels. Synthesis remains manual. Intent evaporates between research and delivery. As agents become operational intermediaries, ambiguity compounds execution costs — systems must preserve decision-grade context through handoffs.
-
-CrowdListen Sources is the **Feed layer** — it consolidates cross-channel conversation into a structured signal layer. One interface across all platforms. Same JSON shape every time. Clusters meaning, tracks sentiment, surfaces pain points and feature requests so downstream agents can act on real audience behavior, not assumptions.
-
-**Open source because extraction is commodity.** DOM selectors break, APIs change, new platforms emerge. The community can fix these faster than any single team. The [analysis layer](https://crowdlisten.com) — synthesis, insight clustering, Research Partner API — is where the intelligence lives, and that stays proprietary.
-
-## Quick Start
+Zero config -- Reddit works immediately:
 
 ```bash
-git clone https://github.com/Crowdlisten/crowdlisten_sources.git
-cd crowdlisten_sources
-npm install
-cp .env.example .env   # Add API keys (Reddit works with zero config)
-npm run build
+npx crowdlisten search reddit "cursor vs claude code" --limit 5
 ```
 
-Try it immediately — Reddit needs no API keys:
+## Install for Your Agent
 
 ```bash
-node dist/cli.js search reddit "AI agents" --limit 5
-node dist/cli.js status
+npx @crowdlisten/planner login
 ```
 
-For global CLI access:
+One command installs both CrowdListen Planner and Sources into your agent's MCP config. Just restart your agent.
 
-```bash
-npm install -g .
-crowdlisten search reddit "remote work" --limit 10
-```
-
-## Usage
-
-### CLI
-
-Best for AI agents — fast, plain JSON to stdout, errors to stderr, exit codes.
-
-```bash
-# Search
-crowdlisten search reddit "cursor vs claude code" --limit 20
-crowdlisten search youtube "AI agent frameworks" --limit 10
-crowdlisten search all "remote work productivity" --limit 30
-
-# Comments from a specific post
-crowdlisten comments reddit t3_abc123 --limit 50
-crowdlisten comments youtube dQw4w9WgXcQ --limit 100
-crowdlisten comments tiktok https://www.tiktok.com/@user/video/7380123456 --limit 200
-
-# Full analysis: comments + opinion clustering + sentiment
-crowdlisten analyze reddit t3_abc123
-crowdlisten analyze youtube dQw4w9WgXcQ --depth deep
-
-# Cluster opinions by theme (uses OpenAI embeddings if OPENAI_API_KEY set)
-crowdlisten cluster reddit t3_abc123 --clusters 8
-
-# Trending content / user content
-crowdlisten trending reddit --limit 10
-crowdlisten user reddit spez --limit 5
-
-# Platform info
-crowdlisten status
-crowdlisten health
-```
-
-### HTTP API
-
-Best for backend services and agent frameworks.
-
-```bash
-npm run start:http   # Runs on http://localhost:3001
-```
-
-```bash
-curl -X POST http://localhost:3001/v1/search \
-  -H 'Content-Type: application/json' \
-  -d '{"platform":"reddit","query":"AI agents","limit":10}'
-
-curl -X POST http://localhost:3001/v1/comments \
-  -H 'Content-Type: application/json' \
-  -d '{"platform":"youtube","contentId":"dQw4w9WgXcQ","limit":50}'
-
-curl -X POST http://localhost:3001/v1/analyze \
-  -H 'Content-Type: application/json' \
-  -d '{"platform":"reddit","contentId":"t3_abc123"}'
-
-curl http://localhost:3001/v1/health
-```
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/v1/search` | Search posts |
-| POST | `/v1/comments` | Get comments |
-| POST | `/v1/analyze` | Full analysis pipeline |
-| POST | `/v1/cluster` | Opinion clustering |
-| POST | `/v1/trending` | Trending content |
-| POST | `/v1/user-content` | User's content |
-| GET | `/v1/status` | Available platforms |
-| GET | `/v1/health` | Platform health |
-
-### MCP
-
-For Claude Desktop and other MCP clients.
-
-```bash
-npm run start   # stdio transport
-```
+Or add manually:
 
 ```json
 {
   "mcpServers": {
-    "crowdlisten": {
-      "command": "node",
-      "args": ["/path/to/crowdlisten_sources/dist/index.js"],
-      "env": { "YOUTUBE_API_KEY": "your-key" }
+    "crowdlisten/sources": {
+      "command": "npx",
+      "args": ["-y", "crowdlisten"]
     }
   }
 }
 ```
 
-### Agent Skills (OpenClaw, Claude Code)
+## What This Does
 
-For agents that support the [Agent Skills spec](https://agentskills.io/specification):
+Customer feedback fragments across channels. CrowdListen Sources consolidates cross-channel conversation into structured signal -- same JSON shape every time. Search, extract comments, cluster opinions by theme, track sentiment. One interface across all platforms.
 
-```bash
-# Via ClawHub (OpenClaw marketplace)
-clawhub install crowdlisten-search crowdlisten-comments crowdlisten-analyze crowdlisten-deep-analysis
-
-# Or copy locally
-cp -r skills/* ~/.openclaw/skills/
-```
-
-Skills available:
-- `crowdlisten-search` — Multi-platform search
-- `crowdlisten-comments` — Comment extraction
-- `crowdlisten-analyze` — Full analysis pipeline with opinion clustering
-- `crowdlisten-deep-analysis` — Premium AI-powered analysis (requires API key)
-
-See [OPENCLAW.md](OPENCLAW.md) for the full OpenClaw integration guide (MCP + Skills setup, CI/CD, publishing).
+Open source because extraction is commodity -- DOM selectors break, APIs change, the community fixes these faster than any single team. The [analysis layer](https://crowdlisten.com) is where the intelligence lives.
 
 ## Platforms
 
@@ -176,6 +46,40 @@ See [OPENCLAW.md](OPENCLAW.md) for the full OpenClaw integration guide (MCP + Sk
 | TikTok | Optional | Playwright browser search + video pipeline |
 | Twitter/X | Yes | Developer account (free: 1,500 tweets/month) |
 | Instagram | No | Playwright browser scraping |
+
+## CLI Commands
+
+```bash
+# Search
+crowdlisten search reddit "AI agents" --limit 20
+crowdlisten search youtube "AI agent frameworks" --limit 10
+crowdlisten search all "remote work productivity" --limit 30
+
+# Comments
+crowdlisten comments reddit t3_abc123 --limit 50
+crowdlisten comments youtube dQw4w9WgXcQ --limit 100
+
+# Analysis (comments + clustering + sentiment)
+crowdlisten analyze reddit t3_abc123
+crowdlisten analyze youtube dQw4w9WgXcQ --depth deep
+
+# Cluster opinions by theme
+crowdlisten cluster reddit t3_abc123 --clusters 8
+
+# Trending / user content
+crowdlisten trending reddit --limit 10
+crowdlisten user reddit spez --limit 5
+
+# Platform info
+crowdlisten status
+crowdlisten health
+```
+
+Also available as HTTP API and MCP server -- see [docs/HTTP_API.md](docs/HTTP_API.md) and [docs/PLATFORMS.md](docs/PLATFORMS.md).
+
+## For Agents
+
+See [AGENTS.md](AGENTS.md) for machine-readable tool descriptions, MCP config, and example calls.
 
 ## Configuration
 
@@ -193,61 +97,56 @@ TWITTER_API_KEY_SECRET=your-secret
 TWITTER_ACCESS_TOKEN=your-token
 TWITTER_ACCESS_TOKEN_SECRET=your-token-secret
 
-# Optional — semantic opinion clustering
+# Optional -- semantic opinion clustering
 OPENAI_API_KEY=your-key
 
-# Optional — TikTok video understanding
+# Optional -- TikTok video understanding
 GEMINI_API_KEY=your-key
 ANTHROPIC_API_KEY=your-key
 ```
 
-### TikTok Video Pipeline
-
-Requires additional setup:
-1. **yt-dlp** — `brew install yt-dlp`
-2. **Playwright** — included via `npm install`
-3. **Chrome profile** (optional) — `TIKTOK_CHROME_PROFILE_PATH` to reuse your TikTok login session
+Platform-specific setup details: [docs/PLATFORMS.md](docs/PLATFORMS.md)
 
 ## Architecture
 
 ```
 src/
-  cli.ts              — CLI entry point (commander)
-  http-server.ts      — HTTP API (Express)
-  index.ts            — MCP server (stdio)
-  handlers.ts         — Shared handler logic (pure functions)
-  service-config.ts   — Platform configuration factory
-  services/           — UnifiedSocialMediaService orchestrator
-  platforms/          — Platform adapters (one per platform)
+  cli.ts              -- CLI entry (commander)
+  http-server.ts      -- HTTP API (Express)
+  index.ts            -- MCP server (stdio)
+  handlers.ts         -- Shared handler logic
+  service-config.ts   -- Platform config factory
+  services/           -- UnifiedSocialMediaService
+  platforms/          -- Platform adapters (one per platform)
   core/
-    base/             — BaseAdapter abstract class
-    interfaces/       — TypeScript types (Post, Comment, ContentAnalysis)
-    utils/            — Clustering, URL resolution, video analysis
-skills/               — Agent Skills (SKILL.md files)
+    base/             -- BaseAdapter abstract class
+    interfaces/       -- TypeScript types
+    utils/            -- Clustering, URL resolution, video analysis
 ```
 
-All three entry points (CLI, HTTP, MCP) call the same pure handler functions. Each platform adapter extends `BaseAdapter` and implements a standard interface — search, comments, trending, user content, analysis.
+All three entry points call the same handler functions.
 
 ## Development
 
 ```bash
-npm run build         # TypeScript compile
-npm run build:watch   # Watch mode
-npm run dev           # Run CLI via tsx (no build step)
+git clone https://github.com/Crowdlisten/crowdlisten_sources.git
+cd crowdlisten_sources
+npm install && npm run build
 npm test              # Unit tests
 npm run test:e2e      # E2E tests (needs API keys)
-npm run test:coverage # Coverage report
 ```
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). The highest-value contributions are **new platform adapters** — we'd love help with Threads, Bluesky, Hacker News, Product Hunt, Mastodon, and others. Browser scraping fixes are also always welcome since DOM selectors break frequently.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Highest-value contributions: new platform adapters (Threads, Bluesky, Hacker News, Product Hunt, Mastodon) and browser scraping fixes.
 
 ## Background
 
-- [The Very Beginning](https://chenterry.com/posts/the_very_beginning/) — CrowdListen's origin story
-- [MCPs vs Skills for Agents](https://chenterry.com/posts/skills_vs_mcps_for_agents/) — why this boundary exists
+- [The Very Beginning](https://chenterry.com/posts/the_very_beginning/)
+- [MCPs vs Skills for Agents](https://chenterry.com/posts/skills_vs_mcps_for_agents/)
 
 ## License
 
 MIT
+
+Part of the [CrowdListen](https://crowdlisten.com) open source ecosystem -- see also [@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_tasks).
