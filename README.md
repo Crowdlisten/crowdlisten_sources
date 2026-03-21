@@ -37,6 +37,50 @@ Customer feedback fragments across channels. CrowdListen Sources consolidates cr
 
 Open source because extraction is commodity -- DOM selectors break, APIs change, the community fixes these faster than any single team. The [analysis layer](https://crowdlisten.com) is where the intelligence lives.
 
+## Interfaces
+
+| Interface | How to use | Best for |
+|-----------|-----------|----------|
+| **MCP** | Add to agent config, agents call tools directly | AI agents (Claude Code, Cursor, Gemini CLI, etc.) |
+| **CLI** | `npx crowdlisten search reddit "query"` | Scripts, shell, quick lookups |
+| **HTTP API** | `POST /v1/search` on port 3001 | Web apps, custom integrations |
+
+All three interfaces share the same handler logic and return the same JSON shape. See [docs/HTTP_API.md](docs/HTTP_API.md) for HTTP endpoint details.
+
+## Capability Matrix
+
+| Capability | MCP | CLI | HTTP | Auth needed |
+|-----------|-----|-----|------|-------------|
+| Search | Y | Y | Y | None (Reddit free) |
+| Comments | Y | Y | Y | None |
+| Analyze (surface/standard) | Y | Y | Y | None |
+| Analyze (deep/comprehensive) | Y | Y | Y | `CROWDLISTEN_API_KEY` |
+| Cluster opinions | Y | Y | Y | `OPENAI_API_KEY` optional |
+| Deep analyze | Y | Y | Y | `CROWDLISTEN_API_KEY` |
+| Extract insights | Y | Y | Y | `CROWDLISTEN_API_KEY` |
+| Research synthesis | Y | Y | Y | `CROWDLISTEN_API_KEY` |
+| Trending | Y | Y | Y | None |
+| User content | Y | Y | Y | None |
+| Platform status | Y | Y | Y | None |
+| Health check | Y | Y | Y | None |
+
+## Free vs Paid
+
+**Free (open source, no key needed):**
+- `search_content` — Search posts across platforms
+- `get_content_comments` — Get comments for a post
+- `analyze_content` (surface/standard) — Local sentiment and theme analysis
+- `cluster_opinions` — Semantic opinion clustering (OPENAI_API_KEY improves quality but not required)
+- `get_trending_content` — Trending posts
+- `get_user_content` — Posts from a specific user
+- `get_platform_status` / `health_check` — Diagnostics
+
+**Paid (requires `CROWDLISTEN_API_KEY` — get one at [crowdlisten.com/api](https://crowdlisten.com/api)):**
+- `deep_analyze` — AI-powered audience intelligence: segments, pain points, feature requests, competitive signals
+- `extract_insights` — Categorized insight extraction (pain points, feature requests, praise, complaints)
+- `research_synthesis` — Cross-platform research reports from a single query
+- `analyze_content` (deep/comprehensive) — Automatically upgrades to deep_analyze, falls back to local if no key
+
 ## Platforms
 
 | Platform | Auth Required | Notes |
@@ -75,7 +119,29 @@ crowdlisten status
 crowdlisten health
 ```
 
-Also available as HTTP API and MCP server -- see [docs/HTTP_API.md](docs/HTTP_API.md) and [docs/PLATFORMS.md](docs/PLATFORMS.md).
+## Agent Onboarding
+
+**Path 1 — One command (recommended):**
+```bash
+npx @crowdlisten/planner login
+```
+Opens browser, sign in to CrowdListen, auto-configures MCP for 7 agents (Claude Code, Cursor, Gemini CLI, Codex, Amp, OpenClaw, and more). Installs both Sources and Planner.
+
+**Path 2 — Manual config:**
+Add to your agent's MCP config file:
+```json
+{
+  "mcpServers": {
+    "crowdlisten/sources": {
+      "command": "npx",
+      "args": ["-y", "crowdlisten"]
+    }
+  }
+}
+```
+
+**Path 3 — Web:**
+Sign in at [crowdlisten.com](https://crowdlisten.com). Your agent can read [AGENTS.md](AGENTS.md) for tool reference.
 
 ## For Agents
 
@@ -103,6 +169,9 @@ OPENAI_API_KEY=your-key
 # Optional -- TikTok video understanding
 GEMINI_API_KEY=your-key
 ANTHROPIC_API_KEY=your-key
+
+# Optional -- paid analysis features
+CROWDLISTEN_API_KEY=your-key
 ```
 
 Platform-specific setup details: [docs/PLATFORMS.md](docs/PLATFORMS.md)

@@ -2,16 +2,23 @@
 
 Machine-readable capability description for AI agents.
 
-## Install
+## Ecosystem
 
+CrowdListen is two MCP servers that work together:
+- **Sources** (this server) — discovers audience signal from social platforms
+- **Planner** ([@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_tasks)) — plans and tracks work with a cloud-synced knowledge base
+
+Install both with one command: `npx @crowdlisten/planner login`
+
+## Onboard
+
+### One command
 ```bash
 npx @crowdlisten/planner login
 ```
+Auto-configures MCP for Claude Code, Cursor, Gemini CLI, Codex, Amp, OpenClaw.
 
-Installs both Planner and Sources into your agent's MCP config.
-
-## MCP Entry
-
+### Manual MCP config
 ```json
 {
   "crowdlisten/sources": {
@@ -21,33 +28,141 @@ Installs both Planner and Sources into your agent's MCP config.
 }
 ```
 
-## Tools
+## Interfaces
 
-- `search_content(platform, query, limit?)` — Search posts across platforms
-- `get_content_comments(platform, contentId, limit?)` — Get comments for a post
-- `analyze_content(platform, contentId, analysisDepth?, enableClustering?)` — Full analysis pipeline
-- `cluster_opinions(platform, contentId, clusterCount?, includeExamples?, weightByEngagement?)` — Semantic opinion clustering
-- `get_trending_content(platform, limit?)` — Trending content
-- `get_user_content(platform, userId, limit?)` — Content from a specific user
-- `get_platform_status()` — Available platforms and capabilities
-- `health_check()` — Platform health status
+| Interface | Access | Best for |
+|-----------|--------|----------|
+| MCP (this server) | Agents call tools via stdio | AI agents |
+| CLI | `npx crowdlisten <command>` | Scripts, shell |
+| HTTP API | `POST /v1/<endpoint>` on port 3001 | Web apps, integrations |
+
+All interfaces share the same handlers and return the same JSON shape.
+
+## Free Tools (8)
+
+### search_content
+Search posts across platforms. Start here, then drill into results.
+```
+search_content(platform, query, limit?)
+```
+- `platform`: reddit, youtube, tiktok, twitter, instagram, moltbook, all
+- `query`: Search keywords or hashtags
+- `limit`: 1-50, default 10
+
+### get_content_comments
+Get comments/replies for a specific post.
+```
+get_content_comments(platform, contentId, limit?)
+```
+- `platform`: reddit, youtube, tiktok, twitter, instagram, moltbook
+- `contentId`: Post ID from search results
+- `limit`: 1-100, default 20
+
+### analyze_content
+Analyze a post and its comments — sentiment, themes, opinion clustering. For surface/standard depth, runs locally. For deep/comprehensive, upgrades to paid API if `CROWDLISTEN_API_KEY` is set, otherwise falls back to local.
+```
+analyze_content(platform, contentId, analysisDepth?, enableClustering?)
+```
+- `analysisDepth`: surface, standard (default), deep, comprehensive
+- `enableClustering`: true (default) — uses OPENAI_API_KEY if available
+
+### cluster_opinions
+Group comments into semantic opinion clusters. Identifies themes, consensus, and minority viewpoints.
+```
+cluster_opinions(platform, contentId, clusterCount?, includeExamples?, weightByEngagement?)
+```
+- `clusterCount`: 2-15, default 5
+- `includeExamples`: true (default)
+- `weightByEngagement`: true (default)
+
+### get_trending_content
+Currently trending posts from a platform.
+```
+get_trending_content(platform, limit?)
+```
+
+### get_user_content
+Recent posts from a specific user/creator.
+```
+get_user_content(platform, userId, limit?)
+```
+
+### get_platform_status
+List which platforms are available and their capabilities.
+```
+get_platform_status()
+```
+
+### health_check
+Check connectivity and health of all configured platforms.
+```
+health_check()
+```
+
+## Paid Tools (3) — requires CROWDLISTEN_API_KEY
+
+Get a key at [crowdlisten.com/api](https://crowdlisten.com/api).
+
+### deep_analyze
+AI-powered deep analysis: audience segments, pain points, feature requests, competitive signals.
+```
+deep_analyze(platform, contentId, analysisDepth?)
+```
+- `analysisDepth`: deep (default), comprehensive
+- **Free alternative**: `analyze_content` with depth=standard
+
+### extract_insights
+Categorized insight extraction: pain points, feature requests, praise, complaints, suggestions.
+```
+extract_insights(platform, contentId, categories?)
+```
+- `categories`: optional array, e.g. `["pain_points", "feature_requests"]`
+- **Free alternative**: `analyze_content` + `cluster_opinions`
+
+### research_synthesis
+Cross-platform research — searches multiple platforms, analyzes results, produces a unified report.
+```
+research_synthesis(query, platforms?, depth?)
+```
+- `platforms`: default `["reddit", "twitter", "youtube"]`
+- `depth`: quick (~10 sources), standard (~25, default), deep (~50+)
+- **Free alternative**: `search_content` on each platform + `analyze_content` on top results
 
 ## Platforms
 
-| Platform | Auth | platform value |
-|----------|------|---------------|
-| Reddit | None | `reddit` |
-| YouTube | `YOUTUBE_API_KEY` | `youtube` |
-| TikTok | Optional | `tiktok` |
-| Twitter/X | OAuth tokens | `twitter` |
-| Instagram | None | `instagram` |
-| All | — | `all` |
+| Platform | Auth required | platform value | Notes |
+|----------|--------------|----------------|-------|
+| Reddit | None | `reddit` | Works immediately, public JSON API |
+| YouTube | `YOUTUBE_API_KEY` | `youtube` | Free: 10k units/day |
+| TikTok | Optional | `tiktok` | Playwright browser search |
+| Twitter/X | OAuth tokens | `twitter` | Free: 1,500 tweets/month |
+| Instagram | None | `instagram` | Playwright browser scraping |
+| All platforms | — | `all` | Search only |
 
 ## Example Calls
 
 ```
+# Find discussions about a topic
 search_content(platform="reddit", query="cursor vs claude code", limit=20)
+
+# Get comments from a specific post
 get_content_comments(platform="youtube", contentId="dQw4w9WgXcQ", limit=50)
+
+# Analyze with local pipeline
+analyze_content(platform="reddit", contentId="t3_abc123", analysisDepth="standard")
+
+# Analyze with paid API (falls back to local if no key)
 analyze_content(platform="reddit", contentId="t3_abc123", analysisDepth="deep")
+
+# Cluster opinions into themes
 cluster_opinions(platform="reddit", contentId="t3_abc123", clusterCount=8)
+
+# Paid: deep analysis
+deep_analyze(platform="reddit", contentId="t3_abc123", analysisDepth="comprehensive")
+
+# Paid: extract categorized insights
+extract_insights(platform="reddit", contentId="t3_abc123", categories=["pain_points", "feature_requests"])
+
+# Paid: cross-platform research
+research_synthesis(query="AI coding assistants", platforms=["reddit", "youtube", "twitter"], depth="deep")
 ```
