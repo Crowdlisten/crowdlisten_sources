@@ -1,4 +1,4 @@
-# CrowdListen Sources
+# CrowdListen Insights
 
 > Allow your agent to research user insights, perform topic modeling and in-depth analysis across the web and social media.
 
@@ -11,6 +11,12 @@
 3. **MCP-native for AI agents** — Built as an MCP server. Your agent calls tools directly — no REST wrappers, no middleware.
 4. **Opinion clustering & topic modeling** — Semantic clustering groups comments by theme. Surface consensus, dissent, and emerging patterns.
 5. **Free core, paid intelligence** — Search, comments, trending, and analysis run locally for free. Deep analysis and research synthesis available via the CrowdListen API.
+
+## Demo
+
+https://github.com/user-attachments/assets/DEMO_VIDEO_ID
+
+> Get the whole system, and more, deployed for you at [crowdlisten.com](https://crowdlisten.com)
 
 ## Try It Now
 
@@ -26,14 +32,14 @@ npx crowdlisten search reddit "cursor vs claude code" --limit 5
 npx @crowdlisten/planner login
 ```
 
-One command installs both CrowdListen Planner and Sources into your agent's MCP config. Just restart your agent.
+One command installs both CrowdListen Planner and Insights into your agent's MCP config. Just restart your agent.
 
 Or add manually:
 
 ```json
 {
   "mcpServers": {
-    "crowdlisten/sources": {
+    "crowdlisten/insights": {
       "command": "npx",
       "args": ["-y", "crowdlisten"]
     }
@@ -41,9 +47,45 @@ Or add manually:
 }
 ```
 
+## How the Two Systems Work Together
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                        CrowdListen Ecosystem                            │
+│                                                                         │
+│  ┌─────────────────────────────┐    ┌─────────────────────────────┐    │
+│  │   CrowdListen Insights      │    │   CrowdListen Planner       │    │
+│  │   (crowdlisten_insights)    │    │   (crowdlisten_tasks)       │    │
+│  │                             │    │                             │    │
+│  │   "What are people saying?" │    │   "What should we build?"   │    │
+│  │                             │    │                             │    │
+│  │  ┌───────────────────────┐  │    │  ┌───────────────────────┐  │    │
+│  │  │  Search 7 platforms   │  │    │  │  Plan with context    │  │    │
+│  │  │  Extract comments     │  │    │  │  Execute with agents  │  │    │
+│  │  │  Cluster opinions     │  │    │  │  Capture learnings    │  │    │
+│  │  │  Analyze sentiment    │  │    │  │  Compound knowledge   │  │    │
+│  │  └───────────────────────┘  │    │  └───────────────────────┘  │    │
+│  │                             │    │                             │    │
+│  │  Reddit · YouTube · TikTok  │    │  Tasks → Plans → Knowledge  │    │
+│  │  Twitter · Instagram · more │    │  Cloud-synced across agents │    │
+│  └──────────────┬──────────────┘    └──────────────┬──────────────┘    │
+│                 │                                   │                   │
+│                 │    ┌─────────────────────────┐    │                   │
+│                 └───►│   Your AI Agent          │◄───┘                   │
+│                      │   (Claude Code, Cursor,  │                       │
+│                      │    Gemini CLI, Codex...) │                       │
+│                      └─────────────────────────┘                       │
+│                                                                         │
+│                 npx @crowdlisten/planner login                          │
+│                 One command installs both.                               │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+**Insights** discovers what audiences are saying across social platforms. **Planner** turns that signal into planned, tracked work — with context that compounds across every task. Together, your agent can research a topic, plan a response, execute it, and remember what it learned for next time.
+
 ## What This Does
 
-Customer feedback fragments across channels. CrowdListen Sources consolidates cross-channel conversation into structured signal -- same JSON shape every time. Search, extract comments, cluster opinions by theme, track sentiment. One interface across all platforms.
+Customer feedback fragments across channels. CrowdListen Insights consolidates cross-channel conversation into structured signal -- same JSON shape every time. Search, extract comments, cluster opinions by theme, track sentiment. One interface across all platforms.
 
 Open source because extraction is commodity -- DOM selectors break, APIs change, the community fixes these faster than any single team. The [analysis layer](https://crowdlisten.com) is where the intelligence lives.
 
@@ -135,14 +177,14 @@ crowdlisten health
 ```bash
 npx @crowdlisten/planner login
 ```
-Opens browser, sign in to CrowdListen, auto-configures MCP for 5 agents (Claude Code, Cursor, Gemini CLI, Codex, OpenClaw). Installs both Sources and Planner.
+Opens browser, sign in to CrowdListen, auto-configures MCP for 5 agents (Claude Code, Cursor, Gemini CLI, Codex, OpenClaw). Installs both Insights and Planner.
 
 **Path 2 — Manual config:**
 Add to your agent's MCP config file:
 ```json
 {
   "mcpServers": {
-    "crowdlisten/sources": {
+    "crowdlisten/insights": {
       "command": "npx",
       "args": ["-y", "crowdlisten"]
     }
@@ -207,8 +249,8 @@ Both entry points call the same handler functions.
 ## Development
 
 ```bash
-git clone https://github.com/Crowdlisten/crowdlisten_sources.git
-cd crowdlisten_sources
+git clone https://github.com/Crowdlisten/crowdlisten_insights.git
+cd crowdlisten_insights
 npm install && npm run build
 npm test              # Unit tests
 npm run test:e2e      # E2E tests (needs API keys)
@@ -227,4 +269,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Highest-value contributions: new platfor
 
 MIT
 
-Part of the [CrowdListen](https://crowdlisten.com) open source ecosystem -- see also [@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_tasks).
+Get the whole system, and more, deployed for you at [crowdlisten.com](https://crowdlisten.com). See also [@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_tasks).

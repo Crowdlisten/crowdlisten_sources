@@ -1,8 +1,8 @@
-# CrowdListen Sources MCP — Skills Layer Design
+# CrowdListen Insights MCP — Skills Layer Design
 
 ## Goal
 
-Design a **Skills control layer** on top of `crowdlisten_sources` so CrowdListen can run source workflows with consistent routing, governance, and reliability.
+Design a **Skills control layer** on top of `crowdlisten_insights` so CrowdListen can run source workflows with consistent routing, governance, and reliability.
 
 ---
 

@@ -5,8 +5,8 @@ Thanks for your interest in contributing! CrowdListen's extraction layer is open
 ## Quick Start
 
 ```bash
-git clone https://github.com/Crowdlisten/crowdlisten_sources.git
-cd crowdlisten_sources
+git clone https://github.com/Crowdlisten/crowdlisten_insights.git
+cd crowdlisten_insights
 npm install
 cp .env.example .env   # Add your API keys
 npm run build

@@ -35,7 +35,7 @@ export async function main() {
 
   const server = new Server(
     {
-      name: 'crowdlisten/sources',
+      name: 'crowdlisten/insights',
       version: '1.0.0',
     },
     {

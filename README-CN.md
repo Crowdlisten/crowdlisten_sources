@@ -1,4 +1,4 @@
-# CrowdListen Sources
+# CrowdListen Insights
 
 > 让你的 AI 智能体研究用户洞察，进行主题建模和深度分析 —— 覆盖全网和社交媒体。
 
@@ -11,6 +11,12 @@
 3. **MCP 原生，为 AI 智能体而生** — 作为 MCP 服务器构建。你的智能体直接调用工具 —— 无需 REST 封装，无需中间件。
 4. **观点聚类与主题建模** — 语义聚类按主题归类评论。发现共识、异议和新兴趋势。
 5. **免费核心，付费智能** — 搜索、评论、热门和分析完全免费在本地运行。深度分析和研究综合通过 CrowdListen API 提供。
+
+## 演示
+
+https://github.com/user-attachments/assets/DEMO_VIDEO_ID
+
+> 获取完整系统及更多功能，部署在 [crowdlisten.com](https://crowdlisten.com)
 
 ## 立即体验
 
@@ -26,14 +32,14 @@ npx crowdlisten search reddit "cursor vs claude code" --limit 5
 npx @crowdlisten/planner login
 ```
 
-一条命令同时安装 CrowdListen Planner 和 Sources 到你的智能体 MCP 配置中。重启智能体即可。
+一条命令同时安装 CrowdListen Planner 和 Insights 到你的智能体 MCP 配置中。重启智能体即可。
 
 或手动添加：
 
 ```json
 {
   "mcpServers": {
-    "crowdlisten/sources": {
+    "crowdlisten/insights": {
       "command": "npx",
       "args": ["-y", "crowdlisten"]
     }
@@ -41,9 +47,45 @@ npx @crowdlisten/planner login
 }
 ```
 
+## 两个系统如何协作
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                        CrowdListen 生态系统                              │
+│                                                                         │
+│  ┌─────────────────────────────┐    ┌─────────────────────────────┐    │
+│  │   CrowdListen Insights      │    │   CrowdListen Planner       │    │
+│  │   (crowdlisten_insights)    │    │   (crowdlisten_tasks)       │    │
+│  │                             │    │                             │    │
+│  │   "用户在说什么？"           │    │   "我们应该构建什么？"       │    │
+│  │                             │    │                             │    │
+│  │  ┌───────────────────────┐  │    │  ┌───────────────────────┐  │    │
+│  │  │  搜索 7 大平台        │  │    │  │  带上下文规划          │  │    │
+│  │  │  提取评论              │  │    │  │  用智能体执行          │  │    │
+│  │  │  聚类观点              │  │    │  │  捕获经验              │  │    │
+│  │  │  分析情感              │  │    │  │  复合知识              │  │    │
+│  │  └───────────────────────┘  │    │  └───────────────────────┘  │    │
+│  │                             │    │                             │    │
+│  │  Reddit · YouTube · TikTok  │    │  任务 → 计划 → 知识        │    │
+│  │  Twitter · Instagram · 更多 │    │  云端同步，跨智能体流转    │    │
+│  └──────────────┬──────────────┘    └──────────────┬──────────────┘    │
+│                 │                                   │                   │
+│                 │    ┌─────────────────────────┐    │                   │
+│                 └───►│   你的 AI 智能体         │◄───┘                   │
+│                      │   (Claude Code, Cursor,  │                       │
+│                      │    Gemini CLI, Codex...) │                       │
+│                      └─────────────────────────┘                       │
+│                                                                         │
+│                 npx @crowdlisten/planner login                          │
+│                 一条命令安装两者。                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+**Insights** 发现受众在各社交平台上的讨论。**Planner** 将这些信号转化为有计划、可追踪的工作 —— 上下文在每个任务间不断积累。两者配合，你的智能体可以研究话题、规划应对、执行任务，并记住所学以备下次使用。
+
 ## 功能介绍
 
-用户反馈分散在各个渠道。CrowdListen Sources 将跨渠道对话整合为结构化信号 —— 每次返回相同的 JSON 结构。搜索、提取评论、按主题聚类观点、追踪情感。所有平台统一接口。
+用户反馈分散在各个渠道。CrowdListen Insights 将跨渠道对话整合为结构化信号 —— 每次返回相同的 JSON 结构。搜索、提取评论、按主题聚类观点、追踪情感。所有平台统一接口。
 
 开源是因为数据提取是基础设施 —— DOM 选择器会失效，API 会变更，社区修复这些比任何单一团队都快。[分析层](https://crowdlisten.com)才是智能所在。
 
@@ -135,14 +177,14 @@ crowdlisten health
 ```bash
 npx @crowdlisten/planner login
 ```
-打开浏览器，登录 CrowdListen，自动为 5 个智能体配置 MCP（Claude Code、Cursor、Gemini CLI、Codex、OpenClaw）。同时安装 Sources 和 Planner。
+打开浏览器，登录 CrowdListen，自动为 5 个智能体配置 MCP（Claude Code、Cursor、Gemini CLI、Codex、OpenClaw）。同时安装 Insights 和 Planner。
 
 **方式二 — 手动配置：**
 添加到你的智能体 MCP 配置文件：
 ```json
 {
   "mcpServers": {
-    "crowdlisten/sources": {
+    "crowdlisten/insights": {
       "command": "npx",
       "args": ["-y", "crowdlisten"]
     }
@@ -207,8 +249,8 @@ src/
 ## 开发
 
 ```bash
-git clone https://github.com/Crowdlisten/crowdlisten_sources.git
-cd crowdlisten_sources
+git clone https://github.com/Crowdlisten/crowdlisten_insights.git
+cd crowdlisten_insights
 npm install && npm run build
 npm test              # 单元测试
 npm run test:e2e      # E2E 测试（需要 API 密钥）
@@ -227,4 +269,4 @@ npm run test:e2e      # E2E 测试（需要 API 密钥）
 
 MIT
 
-[CrowdListen](https://crowdlisten.com) 开源生态的一部分 —— 另见 [@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_tasks)。
+获取完整系统及更多功能，部署在 [crowdlisten.com](https://crowdlisten.com)。另见 [@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_tasks)。

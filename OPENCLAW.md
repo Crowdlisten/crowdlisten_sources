@@ -58,10 +58,10 @@ Skills auto-install the `crowdlisten` CLI as a dependency. You just need API key
 
 ```bash
 # Clone the repo
-git clone https://github.com/Crowdlisten/crowdlisten_sources.git
+git clone https://github.com/Crowdlisten/crowdlisten_insights.git
 
 # Copy skills to OpenClaw's skill directory
-cp -r crowdlisten_sources/skills/* ~/.openclaw/skills/
+cp -r crowdlisten_insights/skills/* ~/.openclaw/skills/
 
 # Install the CLI
 npm install -g crowdlisten

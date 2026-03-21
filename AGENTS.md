@@ -1,11 +1,11 @@
-# CrowdListen Sources — Agent Reference
+# CrowdListen Insights — Agent Reference
 
 Machine-readable capability description for AI agents.
 
 ## Ecosystem
 
 CrowdListen is two MCP servers that work together:
-- **Sources** (this server) — discovers audience signal from social platforms
+- **Insights** (this server) — discovers audience signal from social platforms
 - **Planner** ([@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_tasks)) — plans and tracks work with a cloud-synced knowledge base
 
 Install both with one command: `npx @crowdlisten/planner login`
@@ -21,7 +21,7 @@ Auto-configures MCP for Claude Code, Cursor, Gemini CLI, Codex, OpenClaw.
 ### Manual MCP config
 ```json
 {
-  "crowdlisten/sources": {
+  "crowdlisten/insights": {
     "command": "npx",
     "args": ["-y", "crowdlisten"]
   }
