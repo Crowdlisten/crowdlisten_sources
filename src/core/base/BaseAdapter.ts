@@ -1,6 +1,9 @@
 /**
  * Base adapter class providing common functionality for all social media platforms
  * Implements shared features like rate limiting, error handling, and logging
+ *
+ * Analysis (clustering, enrichment) has been moved to the CrowdListen API.
+ * This class now only handles data retrieval.
  */
 
 import {
@@ -15,7 +18,6 @@ import {
   SocialMediaError,
   RateLimitError
 } from '../interfaces/SocialMediaPlatform.js';
-import { CommentClusteringService } from '../utils/CommentClustering.js';
 
 export abstract class BaseAdapter implements SocialMediaPlatform {
   protected config: PlatformConfig;
@@ -24,11 +26,9 @@ export abstract class BaseAdapter implements SocialMediaPlatform {
   protected requestCount: number = 0;
   protected rateLimitWindow: number = 60000; // 1 minute window
   protected maxRequestsPerWindow: number = 30; // Max 30 requests per minute
-  private clusteringService: CommentClusteringService;
 
   constructor(config: PlatformConfig) {
     this.config = config;
-    this.clusteringService = new CommentClusteringService();
   }
 
   protected async enforceRateLimit(): Promise<void> {
@@ -110,7 +110,7 @@ export abstract class BaseAdapter implements SocialMediaPlatform {
     const timestamp = new Date().toISOString();
     const platformName = this.getPlatformName();
     const prefix = `[${timestamp}] [${platformName.toUpperCase()}]`;
-    
+
     switch (level) {
       case 'error':
         console.error(`${prefix} ERROR: ${message}`);
@@ -155,37 +155,21 @@ export abstract class BaseAdapter implements SocialMediaPlatform {
 
   async analyzeContent(contentId: string, enableClustering: boolean = true): Promise<ContentAnalysis> {
     this.validateContentId(contentId);
-    
+
     try {
       await this.enforceRateLimit();
-      const comments = await this.getContentComments(contentId, 200); // Get more comments for clustering
-      
+      const comments = await this.getContentComments(contentId, 200);
+
+      // Return basic post metadata only — analysis is handled by the CrowdListen API
       const analysis: ContentAnalysis = {
         postId: contentId,
         platform: this.getPlatformName(),
-        sentiment: 'neutral', // Basic implementation
+        sentiment: 'neutral',
         themes: ['general'],
-        summary: `Analysis for ${contentId}`,
+        summary: `Retrieved ${comments.length} comments for ${contentId}. Use analyze_content with CROWDLISTEN_API_KEY for full analysis.`,
         commentCount: comments.length,
-        topComments: comments.slice(0, 5)
+        topComments: comments.slice(0, 5),
       };
-
-      // Add clustering analysis if enabled and clustering service is available
-      if (enableClustering && this.clusteringService.isClusteringAvailable() && comments.length > 0) {
-        this.log(`Performing clustering analysis on ${comments.length} comments`);
-        analysis.clustering = await this.clusteringService.clusterComments(comments);
-        // Surface the richer clustering objects at the top level so callers that
-        // expect ContentAnalysis do not need to manually unpack the clustering payload.
-        analysis.enrichedComments = analysis.clustering.enrichedComments;
-        analysis.opinionUnits = analysis.clustering.opinionUnits;
-        analysis.videoAnchors = analysis.clustering.videoAnchors;
-        analysis.localClusters = analysis.clustering.localClusters;
-        analysis.metaClusters = analysis.clustering.metaClusters;
-        analysis.insights = analysis.clustering.insights;
-        analysis.askLayerIndex = analysis.clustering.askLayerIndex;
-      } else if (enableClustering && !this.clusteringService.isClusteringAvailable()) {
-        this.log('Clustering requested but OpenAI API key not available', 'warn');
-      }
 
       return analysis;
     } catch (error) {

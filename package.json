@@ -1,7 +1,7 @@
 {
   "name": "crowdlisten",
-  "version": "1.0.0",
-  "description": "Cross-channel feedback analysis for AI agents — extract audience signal from Reddit, YouTube, TikTok, Twitter/X, and Instagram",
+  "version": "2.0.0",
+  "description": "Cross-channel feedback retrieval for AI agents — extract audience signal from Reddit, YouTube, TikTok, Twitter/X, and Instagram. Analysis via CrowdListen API.",
   "main": "dist/index.js",
   "bin": {
     "crowdlisten": "dist/cli.js"
@@ -17,15 +17,7 @@
     "test:e2e": "jest --config jest.config.e2e.js",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --forceExit",
-    "test:legacy": "node test_mcp.js",
-    "audit": "npm audit",
-    "verify:tiktok-url-flow": "node scripts/verify-tiktok-url-flow.cjs",
-    "verify:comment-analysis": "node test-comment-analysis.cjs",
-    "verify:tiktok-comment-analysis": "node test-comment-intelligence.cjs",
-    "report:comment-analysis": "node test-comment-analysis-report.cjs",
-    "report:tiktok-comment-analysis": "node test-comment-intelligence-report.cjs",
-    "report:tiktok-comment-replay": "node test-comment-intelligence-replay.cjs",
-    "eval:comment-analysis": "node scripts/evaluate-comment-analysis.cjs"
+    "audit": "npm audit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
@@ -35,12 +27,9 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "instagram-private-api": "^1.46.1",
-    "node-fetch": "^3.3.2",
-    "openai": "^6.22.0"
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
-    "@google/generative-ai": "^0.24.1",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",

@@ -1,13 +1,15 @@
 /**
  * CrowdListen Shared Handlers
  * Pure functions that return plain objects — used by CLI and MCP server.
+ *
+ * Retrieval handlers (free, local): search, comments, trending, user content
+ * Analysis handlers (paid, API): analyze, cluster, enrich, deep_analyze, insights, research
  */
 
 import { UnifiedSocialMediaService } from './services/UnifiedSocialMediaService.js';
 import { PlatformType } from './core/interfaces/SocialMediaPlatform.js';
 import { TikTokUrlUtils } from './core/utils/TikTokUrlUtils.js';
 import { InstagramUrlUtils } from './core/utils/InstagramUrlUtils.js';
-import { CommentClusteringService } from './core/utils/CommentClustering.js';
 
 // ---------- Types ----------
 
@@ -27,7 +29,6 @@ export interface AnalyzeArgs {
   platform: string;
   contentId: string;
   analysisDepth?: 'surface' | 'standard' | 'deep' | 'comprehensive';
-  enableClustering?: boolean;
 }
 
 export interface ClusterArgs {
@@ -36,6 +37,12 @@ export interface ClusterArgs {
   clusterCount?: number;
   includeExamples?: boolean;
   weightByEngagement?: boolean;
+}
+
+export interface EnrichArgs {
+  platform: string;
+  contentId: string;
+  question?: string;
 }
 
 export interface TrendingArgs {
@@ -49,7 +56,7 @@ export interface UserContentArgs {
   limit?: number;
 }
 
-// ---------- Handlers ----------
+// ---------- Free Retrieval Handlers ----------
 
 export async function getTrendingContent(service: UnifiedSocialMediaService, args: TrendingArgs) {
   const { platform, limit = 10 } = args;
@@ -106,126 +113,6 @@ export async function getContentComments(service: UnifiedSocialMediaService, arg
   return { platform, contentId: normalizedContentId, count: comments.length, comments };
 }
 
-export async function clusterOpinions(service: UnifiedSocialMediaService, args: ClusterArgs) {
-  const { platform, contentId, clusterCount = 5, includeExamples = true, weightByEngagement = true } = args;
-
-  const comments = await service.getContentComments(platform as PlatformType, contentId, 500);
-
-  if (comments.length === 0) {
-    return {
-      platform,
-      contentId,
-      analysisType: 'opinion_clustering',
-      totalComments: 0,
-      clusterCount: 0,
-      clusters: [],
-      message: 'No comments found for clustering',
-    };
-  }
-
-  const clusteringService = new CommentClusteringService();
-
-  if (!clusteringService.isClusteringAvailable()) {
-    return {
-      platform,
-      contentId,
-      analysisType: 'opinion_clustering',
-      totalComments: comments.length,
-      clusterCount: 0,
-      clusters: [],
-      error: 'Semantic clustering requires OPENAI_API_KEY. Set it in your environment for local clustering, or get a CROWDLISTEN_API_KEY at crowdlisten.com/api for the full analysis suite.',
-    };
-  }
-
-  const clusteringResult = await clusteringService.clusterComments(comments, 200);
-
-  const clusters = clusteringResult.clusters.map((cluster) => {
-    const totalLikes = cluster.comments.reduce((sum, c) => sum + (c.likes || 0), 0);
-    return {
-      clusterId: cluster.id,
-      theme: cluster.theme,
-      size: cluster.size,
-      percentage: (cluster.size / comments.length * 100).toFixed(1),
-      engagement: {
-        totalLikes,
-        avgLikes: cluster.size > 0 ? (totalLikes / cluster.size).toFixed(1) : '0',
-      },
-      sentiment: { label: cluster.sentiment },
-      summary: cluster.summary,
-      examples: includeExamples
-        ? cluster.comments.slice(0, 3).map(c => ({
-            text: c.text,
-            likes: c.likes || 0,
-            author: c.author?.username || 'anonymous',
-          }))
-        : [],
-    };
-  });
-
-  return {
-    platform,
-    contentId,
-    analysisType: 'opinion_clustering',
-    totalComments: comments.length,
-    clusterCount: clusters.length,
-    clusters: clusters.sort((a, b) => b.size - a.size),
-    overallAnalysis: clusteringResult.overallAnalysis,
-    metadata: {
-      weightByEngagement,
-      includeExamples,
-      clusteringMethod: 'openai_embeddings_kmeans',
-      timestamp: new Date().toISOString(),
-    },
-  };
-}
-
-export async function analyzeContent(service: UnifiedSocialMediaService, args: AnalyzeArgs) {
-  const { platform, contentId, analysisDepth = 'standard', enableClustering = true } = args;
-
-  // Base analysis from the platform adapter
-  const baseAnalysis = await service.analyzeContent(platform as PlatformType, contentId, enableClustering);
-
-  const enhancedAnalysis: any = {
-    ...baseAnalysis,
-    verticalSliceAnalysis: {
-      analysisDepth,
-      enabledFeatures: { clustering: enableClustering },
-    },
-  };
-
-  // Add opinion clustering if enabled
-  if (enableClustering) {
-    try {
-      const clusterData = await clusterOpinions(service, {
-        platform,
-        contentId,
-        clusterCount: analysisDepth === 'comprehensive' ? 8 : analysisDepth === 'deep' ? 6 : 5,
-        includeExamples: true,
-        weightByEngagement: true,
-      });
-      enhancedAnalysis.opinionClusters = clusterData.clusters;
-      enhancedAnalysis.totalComments = clusterData.totalComments;
-    } catch (clusterError) {
-      console.error('Clustering failed:', clusterError);
-      enhancedAnalysis.clusteringError = 'Opinion clustering failed';
-    }
-  }
-
-  const completenessScore = [
-    baseAnalysis ? 0.5 : 0,
-    enableClustering && enhancedAnalysis.opinionClusters ? 0.5 : 0,
-  ].reduce((sum, score) => sum + score, 0);
-
-  enhancedAnalysis.analysisMetadata = {
-    completenessScore: (completenessScore * 100).toFixed(1) + '%',
-    analysisDepth,
-    timestamp: new Date().toISOString(),
-    verticalSliceApproach: true,
-  };
-
-  return enhancedAnalysis;
-}
-
 export function getPlatformStatus(service: UnifiedSocialMediaService) {
   const platforms = service.getAvailablePlatforms();
   return { availablePlatforms: platforms, totalPlatforms: Object.keys(platforms).length };
@@ -246,8 +133,8 @@ function requireApiKey(): string {
     throw new Error(
       'CROWDLISTEN_API_KEY required for this feature.\n' +
       'Get one at https://crowdlisten.com/api\n\n' +
-      'Free features: search, comments, basic analyze, cluster\n' +
-      'Paid features: deep analysis, insights, research synthesis'
+      'Free features (no key): search, comments, trending, user content\n' +
+      'Paid features (key required): analyze, cluster, enrich, deep analysis, insights, research'
     );
   }
   return apiKey;
@@ -273,6 +160,83 @@ async function agentPost(path: string, body: Record<string, unknown>): Promise<a
 
   return response.json();
 }
+
+// ---------- Analysis Handlers (all delegate to API) ----------
+
+export async function analyzeContent(service: UnifiedSocialMediaService, args: AnalyzeArgs) {
+  const { platform, contentId, analysisDepth = 'standard' } = args;
+
+  // All analysis now goes through the API
+  return agentPost('/api/v1/analyze', {
+    platform,
+    content_id: contentId,
+    depth: analysisDepth,
+  });
+}
+
+export async function clusterOpinions(service: UnifiedSocialMediaService, args: ClusterArgs) {
+  const { platform, contentId, clusterCount = 5 } = args;
+
+  // Fetch comments locally (free), then send to API for clustering (paid)
+  const comments = await service.getContentComments(platform as PlatformType, contentId, 500);
+
+  if (comments.length === 0) {
+    return {
+      platform,
+      contentId,
+      analysisType: 'opinion_clustering',
+      totalComments: 0,
+      clusterCount: 0,
+      clusters: [],
+      message: 'No comments found for clustering',
+    };
+  }
+
+  // Send comments to the clustering API
+  const commentPayload = comments.map(c => ({
+    text: c.text,
+    author: c.author?.username || 'anonymous',
+    likes: c.likes || 0,
+    replies: c.replies?.length || 0,
+  }));
+
+  return agentPost('/api/v1/cluster', {
+    comments: commentPayload,
+    question: `Analyze comments for ${platform} content ${contentId}`,
+    max_comments: Math.min(comments.length, 150),
+  });
+}
+
+export async function enrichContent(service: UnifiedSocialMediaService, args: EnrichArgs) {
+  const { platform, contentId, question = '' } = args;
+
+  // Fetch comments locally (free), send to API for enrichment (paid)
+  const comments = await service.getContentComments(platform as PlatformType, contentId, 200);
+
+  if (comments.length === 0) {
+    return {
+      platform,
+      contentId,
+      totalComments: 0,
+      enrichedComments: [],
+      message: 'No comments found for enrichment',
+    };
+  }
+
+  const commentPayload = comments.map(c => ({
+    text: c.text,
+    author: c.author?.username || 'anonymous',
+    likes: c.likes || 0,
+    replies: c.replies?.length || 0,
+  }));
+
+  return agentPost('/api/v1/enrich', {
+    comments: commentPayload,
+    question: question || `Enrich comments for ${platform} content ${contentId}`,
+  });
+}
+
+// ---------- Deep Analysis Handlers (always API) ----------
 
 export interface DeepAnalyzeArgs {
   platform: string;

@@ -1,17 +1,10 @@
 /**
  * Core interface that all social media platform adapters must implement
  * Provides a unified API for content retrieval across different platforms
+ *
+ * Analysis types (EnrichedComment, OpinionUnit, etc.) have been moved to
+ * the CrowdListen API. This file now only contains retrieval types.
  */
-
-import type {
-  AskLayerIndex,
-  EnrichedComment,
-  Insight,
-  LocalCluster,
-  MetaCluster,
-  OpinionUnit,
-  VideoAnchor,
-} from './CommentAnalysis.js';
 
 export interface Post {
   id: string;
@@ -52,7 +45,7 @@ export interface Comment {
   replies?: Comment[];
   engagement?: {
     upvotes?: number;      // Reddit upvotes
-    downvotes?: number;    // Reddit downvotes  
+    downvotes?: number;    // Reddit downvotes
     shares?: number;       // Platform shares/retweets
     views?: number;        // View count if available
     score?: number;        // Calculated engagement score
@@ -67,15 +60,6 @@ export interface ContentAnalysis {
   summary?: string;
   commentCount: number;
   topComments: Comment[];
-  clustering?: CommentClustering;
-  enrichedComments?: EnrichedComment[];
-  opinionUnits?: OpinionUnit[];
-  videoAnchors?: VideoAnchor[];
-  localClusters?: LocalCluster[];
-  metaClusters?: MetaCluster[];
-  insights?: Insight[];
-  askLayerIndex?: AskLayerIndex;
-  videoContext?: Record<string, unknown>;
   analysisMetadata?: Record<string, unknown>;
 }
 
@@ -86,21 +70,6 @@ export interface CommentCluster {
   comments: Comment[];
   summary: string;
   size: number;
-}
-
-export interface CommentClustering {
-  totalComments: number;
-  clustersCount: number;
-  clusters: CommentCluster[];
-  overallAnalysis: string;
-  logs: string[];
-  enrichedComments?: EnrichedComment[];
-  opinionUnits?: OpinionUnit[];
-  videoAnchors?: VideoAnchor[];
-  localClusters?: LocalCluster[];
-  metaClusters?: MetaCluster[];
-  insights?: Insight[];
-  askLayerIndex?: AskLayerIndex;
 }
 
 export interface TrendingHashtag {
@@ -123,49 +92,14 @@ export interface PlatformCapabilities {
  * Main interface that all platform adapters must implement
  */
 export interface SocialMediaPlatform {
-  /**
-   * Get trending/hot content from the platform
-   */
   getTrendingContent(limit?: number): Promise<Post[]>;
-  
-  /**
-   * Get content from a specific user
-   */
   getUserContent(userId: string, limit?: number): Promise<Post[]>;
-  
-  /**
-   * Search for content using keywords/hashtags
-   */
   searchContent(query: string, limit?: number): Promise<Post[]>;
-  
-  /**
-   * Get comments for a specific piece of content
-   */
   getContentComments(contentId: string, limit?: number): Promise<Comment[]>;
-  
-  /**
-   * Analyze content and extract insights with optional clustering
-   */
   analyzeContent(contentId: string, enableClustering?: boolean): Promise<ContentAnalysis>;
-  
-  /**
-   * Get platform information
-   */
   getPlatformName(): PlatformType;
-  
-  /**
-   * Get supported capabilities for this platform
-   */
   getSupportedFeatures(): PlatformCapabilities;
-  
-  /**
-   * Initialize the platform adapter
-   */
   initialize(): Promise<boolean>;
-  
-  /**
-   * Cleanup resources
-   */
   cleanup(): Promise<void>;
 }
 

@@ -4,6 +4,9 @@
  * CrowdListen MCP Server
  * Cross-channel feedback analysis — consolidates audience signal from social
  * platforms into structured, decision-grade context for AI agents.
+ *
+ * Free tools (no key): search, comments, trending, user content, platform status, health
+ * Paid tools (CROWDLISTEN_API_KEY): analyze, cluster, enrich, deep_analyze, insights, research
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -25,6 +28,7 @@ import {
   getPlatformStatus,
   healthCheck,
   clusterOpinions,
+  enrichContent,
   deepAnalyze,
   extractInsights,
   researchSynthesis,
@@ -36,7 +40,7 @@ export async function main() {
   const server = new Server(
     {
       name: 'crowdlisten/insights',
-      version: '1.0.0',
+      version: '2.0.0',
     },
     {
       capabilities: {
@@ -47,9 +51,10 @@ export async function main() {
 
   // Tool definitions
   const tools = [
+    // ── Free tools — no API key needed ──────────────────────────────────────
     {
       name: 'search_content',
-      description: 'Search for posts and discussions across social platforms. Use this first to find content, then use get_content_comments or analyze_content on specific results. Free, no API key needed.',
+      description: 'Search for posts and discussions across social platforms. Use this first to find content, then use get_content_comments on specific results. Free, no API key needed.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -94,72 +99,6 @@ export async function main() {
             maximum: 100,
             default: 20,
             description: 'Maximum number of comments to retrieve'
-          }
-        },
-        required: ['platform', 'contentId']
-      }
-    },
-    {
-      name: 'analyze_content',
-      description: 'Analyze a post and its comments locally — sentiment, themes, opinion clustering. Free, no API key needed. For surface/standard depth, runs entirely locally. For deep/comprehensive depth, automatically upgrades to the paid CrowdListen analysis API (requires CROWDLISTEN_API_KEY) and falls back to local analysis if no key is set.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          platform: {
-            type: 'string',
-            enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'moltbook'],
-            description: 'Platform where the content is located'
-          },
-          contentId: {
-            type: 'string',
-            description: 'ID of the content to analyze'
-          },
-          analysisDepth: {
-            type: 'string',
-            enum: ['surface', 'standard', 'deep', 'comprehensive'],
-            default: 'standard',
-            description: 'Depth of analysis. surface/standard are free and local. deep/comprehensive use the paid API if CROWDLISTEN_API_KEY is set, otherwise fall back to local.'
-          },
-          enableClustering: {
-            type: 'boolean',
-            default: true,
-            description: 'Enable semantic opinion clustering using embeddings (uses OPENAI_API_KEY if available)'
-          }
-        },
-        required: ['platform', 'contentId']
-      }
-    },
-    {
-      name: 'cluster_opinions',
-      description: 'Group comments into semantic opinion clusters using OpenAI embeddings. Identifies recurring themes, consensus, and minority viewpoints. Requires OPENAI_API_KEY for embeddings. Without it, returns an error with upgrade instructions. Best after get_content_comments when you want structured opinion analysis.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          platform: {
-            type: 'string',
-            enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'moltbook'],
-            description: 'Platform where the content is located'
-          },
-          contentId: {
-            type: 'string',
-            description: 'ID of the content to analyze comments from'
-          },
-          clusterCount: {
-            type: 'number',
-            default: 5,
-            minimum: 2,
-            maximum: 15,
-            description: 'Number of opinion clusters to generate'
-          },
-          includeExamples: {
-            type: 'boolean',
-            default: true,
-            description: 'Include example comments for each cluster'
-          },
-          weightByEngagement: {
-            type: 'boolean',
-            default: true,
-            description: 'Weight clusters by comment engagement (likes, replies)'
           }
         },
         required: ['platform', 'contentId']
@@ -233,8 +172,92 @@ export async function main() {
     // ── Paid tools — require CROWDLISTEN_API_KEY ─────────────────────────────
 
     {
+      name: 'analyze_content',
+      description: 'Analyze a post and its comments via the CrowdListen analysis API — sentiment, themes, tension synthesis. Requires CROWDLISTEN_API_KEY. Get one at crowdlisten.com/api. Comment retrieval is free; analysis requires a key.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          platform: {
+            type: 'string',
+            enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'moltbook'],
+            description: 'Platform where the content is located'
+          },
+          contentId: {
+            type: 'string',
+            description: 'ID of the content to analyze'
+          },
+          analysisDepth: {
+            type: 'string',
+            enum: ['surface', 'standard', 'deep', 'comprehensive'],
+            default: 'standard',
+            description: 'Depth of analysis'
+          }
+        },
+        required: ['platform', 'contentId']
+      }
+    },
+    {
+      name: 'cluster_opinions',
+      description: 'Group comments into engagement-weighted semantic opinion clusters. Identifies recurring themes, consensus, and minority viewpoints. Retrieves comments locally (free), sends to CrowdListen API for clustering (requires CROWDLISTEN_API_KEY). Get one at crowdlisten.com/api.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          platform: {
+            type: 'string',
+            enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'moltbook'],
+            description: 'Platform where the content is located'
+          },
+          contentId: {
+            type: 'string',
+            description: 'ID of the content to analyze comments from'
+          },
+          clusterCount: {
+            type: 'number',
+            default: 5,
+            minimum: 2,
+            maximum: 15,
+            description: 'Number of opinion clusters to generate'
+          },
+          includeExamples: {
+            type: 'boolean',
+            default: true,
+            description: 'Include example comments for each cluster'
+          },
+          weightByEngagement: {
+            type: 'boolean',
+            default: true,
+            description: 'Weight clusters by comment engagement (likes, replies)'
+          }
+        },
+        required: ['platform', 'contentId']
+      }
+    },
+    {
+      name: 'enrich_content',
+      description: 'Enrich comments with intent detection, stance analysis, engagement scoring, and timestamp hints. Retrieves comments locally (free), sends to CrowdListen API for enrichment (requires CROWDLISTEN_API_KEY). Get one at crowdlisten.com/api.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          platform: {
+            type: 'string',
+            enum: ['tiktok', 'twitter', 'reddit', 'instagram', 'youtube', 'moltbook'],
+            description: 'Platform where the content is located'
+          },
+          contentId: {
+            type: 'string',
+            description: 'ID of the content to enrich comments for'
+          },
+          question: {
+            type: 'string',
+            description: 'Optional analysis context/question'
+          }
+        },
+        required: ['platform', 'contentId']
+      }
+    },
+    {
       name: 'deep_analyze',
-      description: 'AI-powered deep analysis of content via the CrowdListen analysis API. Returns structured insights including audience segments, pain points, feature requests, and competitive signals. Requires CROWDLISTEN_API_KEY — get one at crowdlisten.com/api. Free alternative: analyze_content with depth=standard.',
+      description: 'AI-powered deep analysis of content via the CrowdListen analysis API. Returns structured insights including audience segments, pain points, feature requests, and competitive signals. Requires CROWDLISTEN_API_KEY — get one at crowdlisten.com/api.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -259,7 +282,7 @@ export async function main() {
     },
     {
       name: 'extract_insights',
-      description: 'Extract categorized insights (pain points, feature requests, praise, complaints, suggestions) from content via the CrowdListen analysis API. Requires CROWDLISTEN_API_KEY — get one at crowdlisten.com/api. Free alternative: analyze_content + cluster_opinions.',
+      description: 'Extract categorized insights (pain points, feature requests, praise, complaints, suggestions) from content via the CrowdListen analysis API. Requires CROWDLISTEN_API_KEY — get one at crowdlisten.com/api.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -283,7 +306,7 @@ export async function main() {
     },
     {
       name: 'research_synthesis',
-      description: 'Cross-platform research synthesis — searches multiple platforms, analyzes results, and produces a unified research report. Requires CROWDLISTEN_API_KEY — get one at crowdlisten.com/api. Free alternative: search_content on each platform + analyze_content on top results.',
+      description: 'Cross-platform research synthesis — searches multiple platforms, analyzes results, and produces a unified research report. Requires CROWDLISTEN_API_KEY — get one at crowdlisten.com/api.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -324,46 +347,12 @@ export async function main() {
 
     try {
       switch (name) {
+        // ── Free tools ──────────────────────────────────────────────────
         case 'search_content':
           return mcpText(await searchContent(unifiedService, args as any));
 
         case 'get_content_comments':
           return mcpText(await getContentComments(unifiedService, args as any));
-
-        case 'analyze_content': {
-          const depth = (args as any)?.analysisDepth;
-          if (depth === 'deep' || depth === 'comprehensive') {
-            try {
-              return mcpText(await deepAnalyze({
-                platform: (args as any).platform,
-                contentId: (args as any).contentId,
-                analysisDepth: depth,
-              }));
-            } catch (error: any) {
-              if (error.message?.includes('CROWDLISTEN_API_KEY')) {
-                const local = await analyzeContent(unifiedService, args as any);
-                return mcpText({
-                  ...local,
-                  _note: 'Deep analysis requires CROWDLISTEN_API_KEY. Showing local analysis instead. Get a key at crowdlisten.com/api',
-                });
-              }
-              throw error;
-            }
-          }
-          return mcpText(await analyzeContent(unifiedService, args as any));
-        }
-
-        case 'cluster_opinions':
-          try {
-            return mcpText(await clusterOpinions(unifiedService, args as any));
-          } catch (error: any) {
-            return mcpText({
-              error: 'Failed to cluster opinions',
-              message: error.message,
-              platform: (args as any)?.platform,
-              contentId: (args as any)?.contentId,
-            });
-          }
 
         case 'get_trending_content':
           return mcpText(await getTrendingContent(unifiedService, args as any));
@@ -377,7 +366,15 @@ export async function main() {
         case 'health_check':
           return mcpText(await healthCheck(unifiedService));
 
-        // ── Paid tools ─────────────────────────────────────────────────
+        // ── Paid tools (all delegate to agent API) ──────────────────────
+        case 'analyze_content':
+          return mcpText(await analyzeContent(unifiedService, args as any));
+
+        case 'cluster_opinions':
+          return mcpText(await clusterOpinions(unifiedService, args as any));
+
+        case 'enrich_content':
+          return mcpText(await enrichContent(unifiedService, args as any));
 
         case 'deep_analyze':
           return mcpText(await deepAnalyze(args as any));
