@@ -1,6 +1,16 @@
 # CrowdListen Sources
 
-> Cross-channel audience signal for AI agents. Consolidates pain points, feature requests, sentiment, and workarounds from Reddit, YouTube, TikTok, Twitter/X, and Instagram into structured JSON.
+> Allow your agent to research user insights, perform topic modeling and in-depth analysis across the web and social media.
+
+[English](README.md) | [中文文档](README-CN.md)
+
+## Highlights
+
+1. **Zero-config start** — `npx crowdlisten search reddit "query"` works immediately. No API keys, no setup, no server.
+2. **7 platforms, one interface** — Reddit, YouTube, TikTok, Twitter/X, Instagram, Xiaohongshu, Moltbook. Same JSON shape every time.
+3. **MCP-native for AI agents** — Built as an MCP server. Your agent calls tools directly — no REST wrappers, no middleware.
+4. **Opinion clustering & topic modeling** — Semantic clustering groups comments by theme. Surface consensus, dissent, and emerging patterns.
+5. **Free core, paid intelligence** — Search, comments, trending, and analysis run locally for free. Deep analysis and research synthesis available via the CrowdListen API.
 
 ## Try It Now
 
