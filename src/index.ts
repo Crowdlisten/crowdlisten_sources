@@ -131,7 +131,7 @@ export async function main() {
     },
     {
       name: 'cluster_opinions',
-      description: 'Group comments into semantic opinion clusters using embeddings. Identifies recurring themes, consensus, and minority viewpoints. Best after get_content_comments when you want structured opinion analysis. Free; uses OPENAI_API_KEY for embeddings if available, otherwise falls back to keyword clustering.',
+      description: 'Group comments into semantic opinion clusters using OpenAI embeddings. Identifies recurring themes, consensus, and minority viewpoints. Requires OPENAI_API_KEY for embeddings. Without it, returns an error with upgrade instructions. Best after get_content_comments when you want structured opinion analysis.',
       inputSchema: {
         type: 'object',
         properties: {

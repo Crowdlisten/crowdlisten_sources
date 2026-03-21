@@ -1,29 +1,22 @@
 /**
- * TikTokBrowserSearch - Playwright-based TikTok search with Claude Vision selection
+ * TikTokBrowserSearch - Playwright-based TikTok search with multi-provider vision selection
  *
  * This module implements Module 1 of the CrowdListen video pipeline.
  * It drives a real browser to perform a TikTok keyword search, extracts video
  * candidates from the DOM, captures a screenshot of the results page, then uses
- * Claude Vision to intelligently select the most relevant videos.
+ * a vision model to intelligently select the most relevant videos.
  *
- * Why browser automation instead of the TikTok HTTP API?
- *   TikTok's internal search API (searchViaHttp) requires signed request parameters
- *   that change frequently and are hard to replicate outside a real browser session.
- *   Playwright with a real Chrome profile (including the user's TikTok login cookies)
- *   is the most reliable way to get search results consistently.
- *
- * Why Claude Vision for selection instead of just taking the top N results?
- *   TikTok's ranking algorithm does not sort by topical relevance — it interleaves
- *   sponsored content, algorithmic recommendations, and loosely related videos.
- *   Claude Vision reads the thumbnails, captions, and engagement signals visible
- *   in the screenshot to select genuinely relevant content.
+ * Vision provider fallback order:
+ *   1. Claude Vision (ANTHROPIC_API_KEY) — best quality for this task
+ *   2. Gemini Vision (GEMINI_API_KEY) — good alternative
+ *   3. OpenAI GPT-4o (OPENAI_API_KEY) — widely available
+ *   4. First N candidates (no vision model available)
  *
  * Pipeline position:
  *   [TikTokBrowserSearch] → VideoDownloader → VideoUnderstanding → CommentEnricher
  */
 
 import type { BrowserContext, Page } from 'playwright';
-import Anthropic from '@anthropic-ai/sdk';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -32,7 +25,7 @@ import * as os from 'os';
 
 /**
  * A single TikTok video candidate extracted from the search results page.
- * index is used by Claude to refer back to specific videos in its selection.
+ * index is used by the vision model to refer back to specific videos in its selection.
  */
 export interface TikTokVideoCandidate {
   index: number;   // 0-based position in the candidates array
@@ -42,13 +35,13 @@ export interface TikTokVideoCandidate {
 }
 
 /**
- * The result of a browser search + Claude Vision selection pass.
+ * The result of a browser search + vision selection pass.
  */
 export interface BrowserSearchResult {
   searchQuery: string;
-  /** Videos selected by Claude as most relevant to the keyword */
+  /** Videos selected by the vision model as most relevant to the keyword */
   selectedVideos: TikTokVideoCandidate[];
-  /** Total candidates extracted from the page before Claude's selection */
+  /** Total candidates extracted from the page before selection */
   totalCandidates: number;
   /** Absolute path to the saved screenshot (kept for debugging / audit) */
   screenshotPath: string;
@@ -64,8 +57,8 @@ const DEFAULT_VIDEOS_TO_SELECT = 5;
 
 /**
  * Maximum video candidates to extract from the DOM.
- * Keeping this reasonable prevents the Claude prompt from becoming too long
- * while still giving Claude enough choice for good selection.
+ * Keeping this reasonable prevents the prompt from becoming too long
+ * while still giving the model enough choice for good selection.
  */
 const MAX_CANDIDATES = 40;
 
@@ -75,41 +68,34 @@ const MAX_CANDIDATES = 40;
  */
 const POST_LOAD_WAIT_MS = 1500;
 
-/**
- * Claude model used for visual selection.
- * claude-sonnet-4-6 has strong vision capabilities and low latency.
- */
-const CLAUDE_MODEL = 'claude-sonnet-4-6';
-
 // ─── Service class ────────────────────────────────────────────────────────────
 
 export class TikTokBrowserSearchService {
-  private readonly anthropic: Anthropic;
-
   /**
    * Path to a persistent Playwright Chromium profile directory.
    * When set, Playwright reuses the existing TikTok login session, avoiding
    * login walls and bot-detection challenges.
    *
-   * Recommended: use a dedicated directory (e.g. ~/.playwright-tiktok-profile),
-   * log into TikTok once in the opened Chromium, then reuse on every subsequent run.
    * Set via env var: TIKTOK_CHROME_PROFILE_PATH
    */
   private readonly chromiumProfilePath: string | undefined;
 
   constructor() {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY environment variable is required for browser search');
+    // No longer requires any specific API key at construction time.
+    // Vision provider is selected at runtime based on available keys.
+    if (!process.env.ANTHROPIC_API_KEY && !process.env.GEMINI_API_KEY && !process.env.OPENAI_API_KEY) {
+      console.warn(
+        '[TikTokSearch] No vision API key found (ANTHROPIC_API_KEY, GEMINI_API_KEY, or OPENAI_API_KEY). ' +
+        'Video selection will fall back to returning first N candidates.'
+      );
     }
-    this.anthropic = new Anthropic({ apiKey });
     this.chromiumProfilePath = process.env.TIKTOK_CHROME_PROFILE_PATH;
   }
 
   // ─── Public API ──────────────────────────────────────────────────────────
 
   /**
-   * Search TikTok for a keyword, then use Claude Vision to select the most
+   * Search TikTok for a keyword, then use a vision model to select the most
    * relevant videos from the results page.
    *
    * Steps:
@@ -117,11 +103,8 @@ export class TikTokBrowserSearchService {
    *   2. Navigate to TikTok search and wait for results to render
    *   3. Extract video candidates from the DOM (URLs + metadata)
    *   4. Capture a screenshot of the results page
-   *   5. Ask Claude Vision to select the best N candidates
+   *   5. Ask a vision model to select the best N candidates
    *   6. Return selected videos
-   *
-   * @param keyword         Search term to query on TikTok
-   * @param videosToSelect  How many videos Claude should select (default: 5)
    */
   async searchAndSelect(
     keyword: string,
@@ -169,11 +152,11 @@ export class TikTokBrowserSearchService {
         };
       }
 
-      // Capture screenshot so Claude can see the visual layout of the results
+      // Capture screenshot so the vision model can see the visual layout
       const screenshotPath = await this.captureScreenshot(page, keyword);
 
-      // Ask Claude Vision to pick the most relevant videos
-      const selectedIndices = await this.selectWithClaude(
+      // Ask a vision model to pick the most relevant videos
+      const selectedIndices = await this.selectVideos(
         screenshotPath,
         candidates,
         keyword,
@@ -209,21 +192,15 @@ export class TikTokBrowserSearchService {
    *
    * Priority:
    *   1. Persistent Chrome profile (TIKTOK_CHROME_PROFILE_PATH is set)
-   *      → Reuses existing TikTok login; headed mode required for real profiles.
    *   2. Fresh headless context (fallback)
-   *      → No login session; TikTok may show a login wall or limited results.
-   *
-   * The AutomationControlled flag is disabled to reduce bot-detection likelihood.
    */
   private async launchBrowser(): Promise<BrowserContext> {
-    // Lazy-import playwright so the MCP server can start without it installed.
-    // Playwright is only needed when TikTok browser search is actually invoked.
     const { chromium } = await import('playwright');
 
     const commonArgs = [
       '--no-sandbox',
       '--disable-blink-features=AutomationControlled',
-      '--ignore-certificate-errors', // Bypass SSL errors caused by proxies/VPNs
+      '--ignore-certificate-errors',
     ];
 
     if (this.chromiumProfilePath) {
@@ -260,10 +237,6 @@ export class TikTokBrowserSearchService {
   /**
    * Navigate to TikTok search, wait for the page to fully render,
    * and extract video candidates from the DOM.
-   *
-   * If TikTok shows a login wall (0 candidates extracted) and a Chrome profile
-   * path is configured (headed mode), this method waits up to 3 minutes for
-   * the user to log in manually, then retries the search automatically.
    */
   private async loadSearchResults(
     page: Page,
@@ -273,15 +246,12 @@ export class TikTokBrowserSearchService {
     console.log(`[TikTokSearch] Navigating to: ${searchUrl}`);
 
     await page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 30000 });
-
-    // TikTok's React app needs extra time to populate the video grid
     await page.waitForTimeout(POST_LOAD_WAIT_MS);
 
     let candidates = await this.extractCandidatesFromDOM(page);
 
     // If no candidates and we're in headed mode (profile path set), TikTok is
-    // likely showing a login wall. Wait up to 3 minutes for the user to log in,
-    // then navigate back to the search page and retry.
+    // likely showing a login wall. Wait up to 3 minutes for the user to log in.
     if (candidates.length === 0 && this.chromiumProfilePath) {
       console.log('[TikTokSearch] No results — TikTok may be showing a login wall.');
       console.log('[TikTokSearch] Please log in to TikTok in the opened browser.');
@@ -290,7 +260,6 @@ export class TikTokBrowserSearchService {
       const deadline = Date.now() + 180_000;
       while (Date.now() < deadline && candidates.length === 0) {
         await page.waitForTimeout(5_000);
-        // After login TikTok may redirect away — navigate back to search if needed
         if (!page.url().includes('/search/')) {
           await page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 30000 });
           await page.waitForTimeout(POST_LOAD_WAIT_MS);
@@ -308,23 +277,11 @@ export class TikTokBrowserSearchService {
 
   /**
    * Extract video metadata from all TikTok video card links on the page.
-   *
-   * Strategy: anchor elements whose href contains "/video/" are the most
-   * reliable cross-version selector on TikTok's frequently-changing DOM.
-   * Author username is parsed directly from the URL pattern /@username/video/.
-   * Card text (caption) is scraped from the closest container element.
-   *
-   * Deduplication by URL ensures each video appears only once even if multiple
-   * anchor elements link to the same video (thumbnail + title link pattern).
    */
   private async extractCandidatesFromDOM(page: Page): Promise<TikTokVideoCandidate[]> {
-    // page.$$eval runs entirely in the browser context (serializable return value only)
     const rawLinks = await page.$$eval('a[href*="/video/"]', (anchors) =>
       anchors.map((a) => {
-        // Cast to any — HTMLAnchorElement is a DOM type not available in lib: ["ES2020"].
-        // This callback runs in the browser context anyway; the cast is only for tsc.
         const anchor = a as any;
-        // Walk up the DOM to find the video card container and grab its text
         const card = anchor.closest(
           '[class*="Container"], [class*="Item"], [class*="Card"], [class*="wrapper"]'
         );
@@ -339,17 +296,14 @@ export class TikTokBrowserSearchService {
     const seenUrls = new Set<string>();
 
     for (const link of rawLinks) {
-      // Skip non-video links and duplicates
       if (!link.href.includes('/video/') || seenUrls.has(link.href)) continue;
       seenUrls.add(link.href);
 
-      // Extract the username from the URL: /@username/video/12345
       const authorMatch = link.href.match(/\/@([^/]+)\/video\//);
       const author = authorMatch ? authorMatch[1] : 'unknown';
 
       candidates.push({
         index: candidates.length,
-        // Truncate long captions to keep the Claude prompt manageable
         title: link.cardText.substring(0, 120) || `Video by @${author}`,
         author,
         url: link.href,
@@ -365,23 +319,9 @@ export class TikTokBrowserSearchService {
   // ─── Private: screenshot ──────────────────────────────────────────────────
 
   /**
-   * Zoom out the page to 40%, then capture a viewport screenshot.
-   *
-   * TikTok uses React virtualization — only video cards within the viewport
-   * are rendered; cards below the fold have blank thumbnails. Scrolling down
-   * then back up does not help because TikTok clears off-screen img.src on
-   * the return pass.
-   *
-   * At 50% zoom the viewport effectively becomes 1800px tall (900 / 0.5),
-   * which fits all 5 rows of 4 results (≈ 5 × 350px = 1750px). TikTok sees
-   * everything as "in viewport" and renders every thumbnail at once.
-   *
-   * Zoom was applied at DOMContentLoaded (via addInitScript) so all ~20 cards
-   * fit in the viewport from the start and TikTok loaded their thumbnails during
-   * initial page render. This method just waits for any remaining fetches and shoots.
+   * Capture a viewport screenshot of the search results page.
    */
   private async captureScreenshot(page: Page, keyword: string): Promise<string> {
-    // Images load during the POST_LOAD_WAIT_MS window; a short extra settle is enough.
     await page.waitForTimeout(500);
 
     const safeKeyword = keyword.replace(/[^a-z0-9]/gi, '_').toLowerCase().substring(0, 40);
@@ -396,46 +336,130 @@ export class TikTokBrowserSearchService {
     return screenshotPath;
   }
 
-  // ─── Private: Claude Vision selection ────────────────────────────────────
+  // ─── Private: multi-provider vision selection ──────────────────────────────
 
   /**
-   * Send the search results screenshot and candidate list to Claude Vision.
-   *
-   * Claude receives:
-   *   - The screenshot image (so it can see thumbnails, engagement numbers, visual context)
-   *   - The text list of candidates with their indices (so it can reference them by number)
-   *   - The search keyword (to judge relevance)
-   *
-   * Claude returns a JSON object with a "selected" array of candidate indices.
-   * The response is parsed by parseClaudeSelection(), which falls back to the
-   * first N candidates if parsing fails.
-   *
-   * @returns Array of selected candidate indices
+   * Build the prompt text shared across all vision providers.
    */
-  private async selectWithClaude(
-    screenshotPath: string,
+  private buildSelectionPrompt(
     candidates: TikTokVideoCandidate[],
     keyword: string,
     videosToSelect: number
-  ): Promise<number[]> {
-    const screenshotBase64 = fs.readFileSync(screenshotPath).toString('base64');
-
-    // Build a numbered list of candidates for the text part of the prompt
+  ): string {
     const candidateList = candidates
       .map(c => `[${c.index}] @${c.author}: ${c.title}`)
       .join('\n');
 
-    const prompt =
+    return (
       `This is a screenshot of TikTok search results for the keyword: "${keyword}".\n\n` +
       `Here are the extracted video candidates:\n${candidateList}\n\n` +
       `Please select the ${videosToSelect} videos that are MOST relevant to "${keyword}".\n` +
       `Consider: content relevance, visible engagement signals, caption quality, and variety.\n\n` +
       `Return ONLY this JSON — no explanation, no markdown:\n` +
       `{"selected": [0, 2, 4, 6, 8]}\n` +
-      `The array must contain exactly ${videosToSelect} valid index numbers from the list above.`;
+      `The array must contain exactly ${videosToSelect} valid index numbers from the list above.`
+    );
+  }
 
-    const response = await this.anthropic.messages.create({
-      model: CLAUDE_MODEL,
+  /**
+   * Parse a JSON response from any vision model to extract selected indices.
+   * Falls back to first N candidates if parsing fails.
+   */
+  private parseSelectionResponse(
+    text: string,
+    totalCandidates: number,
+    videosToSelect: number,
+    provider: string
+  ): number[] {
+    try {
+      const jsonMatch = text.match(/\{[^}]+\}/);
+      if (!jsonMatch) throw new Error('No JSON object found in response');
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      const rawSelected: unknown[] = parsed.selected ?? [];
+
+      const validIndices = rawSelected.filter(
+        (i): i is number =>
+          typeof i === 'number' &&
+          Number.isInteger(i) &&
+          i >= 0 &&
+          i < totalCandidates
+      );
+
+      if (validIndices.length === 0) {
+        throw new Error(`No valid indices found in: ${JSON.stringify(parsed)}`);
+      }
+
+      console.log(`[TikTokSearch] ${provider} selected indices: [${validIndices.join(', ')}]`);
+      return validIndices;
+    } catch (err) {
+      console.warn(
+        `[TikTokSearch] Could not parse ${provider} selection (${err}). ` +
+        `Falling back to first ${videosToSelect} candidates.`
+      );
+      return Array.from({ length: Math.min(videosToSelect, totalCandidates) }, (_, i) => i);
+    }
+  }
+
+  /**
+   * Try vision providers in order of preference, falling back through the chain.
+   * Last resort: return first N candidates without any vision analysis.
+   */
+  private async selectVideos(
+    screenshotPath: string,
+    candidates: TikTokVideoCandidate[],
+    keyword: string,
+    videosToSelect: number
+  ): Promise<number[]> {
+    const screenshotBase64 = fs.readFileSync(screenshotPath).toString('base64');
+    const prompt = this.buildSelectionPrompt(candidates, keyword, videosToSelect);
+
+    // 1. Claude Vision (best quality for this task)
+    if (process.env.ANTHROPIC_API_KEY) {
+      try {
+        return await this.selectWithClaude(screenshotBase64, prompt, candidates.length, videosToSelect);
+      } catch (err) {
+        console.warn(`[TikTokSearch] Claude Vision failed: ${err}. Trying next provider...`);
+      }
+    }
+
+    // 2. Gemini Vision
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        return await this.selectWithGemini(screenshotBase64, prompt, candidates.length, videosToSelect);
+      } catch (err) {
+        console.warn(`[TikTokSearch] Gemini Vision failed: ${err}. Trying next provider...`);
+      }
+    }
+
+    // 3. OpenAI GPT-4o
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        return await this.selectWithOpenAI(screenshotBase64, prompt, candidates.length, videosToSelect);
+      } catch (err) {
+        console.warn(`[TikTokSearch] OpenAI Vision failed: ${err}. Using fallback.`);
+      }
+    }
+
+    // 4. Last resort: first N candidates
+    console.warn(`[TikTokSearch] No vision model available — returning first ${videosToSelect} candidates.`);
+    return Array.from({ length: Math.min(videosToSelect, candidates.length) }, (_, i) => i);
+  }
+
+  /**
+   * Select videos using Claude Vision (claude-sonnet-4-6).
+   */
+  private async selectWithClaude(
+    screenshotBase64: string,
+    prompt: string,
+    totalCandidates: number,
+    videosToSelect: number
+  ): Promise<number[]> {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default;
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-6',
       max_tokens: 256,
       messages: [
         {
@@ -455,60 +479,73 @@ export class TikTokBrowserSearchService {
       ],
     });
 
-    return this.parseClaudeSelection(response, candidates.length, videosToSelect);
+    const text = response.content
+      .filter((block: any) => block.type === 'text')
+      .map((block: any) => block.text)
+      .join('');
+
+    return this.parseSelectionResponse(text, totalCandidates, videosToSelect, 'Claude');
   }
 
   /**
-   * Parse Claude's JSON response to extract the array of selected indices.
-   *
-   * Validates that:
-   *   - The response contains a JSON object with a "selected" array
-   *   - All indices are integers within the valid range
-   *
-   * Falls back to the first N candidates if the response cannot be parsed,
-   * so the pipeline can continue even if Claude returns an unexpected format.
+   * Select videos using Gemini Vision (gemini-2.5-flash).
    */
-  private parseClaudeSelection(
-    response: Anthropic.Message,
+  private async selectWithGemini(
+    screenshotBase64: string,
+    prompt: string,
     totalCandidates: number,
     videosToSelect: number
-  ): number[] {
-    try {
-      // Concatenate all text blocks from the response
-      const text = response.content
-        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-        .map(block => block.text)
-        .join('');
+  ): Promise<number[]> {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-      // Extract the first JSON object from the response
-      const jsonMatch = text.match(/\{[^}]+\}/);
-      if (!jsonMatch) throw new Error('No JSON object found in Claude response');
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: 'image/png',
+          data: screenshotBase64,
+        },
+      },
+      { text: prompt },
+    ]);
 
-      const parsed = JSON.parse(jsonMatch[0]);
-      const rawSelected: unknown[] = parsed.selected ?? [];
+    const text = result.response.text();
+    return this.parseSelectionResponse(text, totalCandidates, videosToSelect, 'Gemini');
+  }
 
-      // Validate: keep only integer indices within the valid candidate range
-      const validIndices = rawSelected.filter(
-        (i): i is number =>
-          typeof i === 'number' &&
-          Number.isInteger(i) &&
-          i >= 0 &&
-          i < totalCandidates
-      );
+  /**
+   * Select videos using OpenAI GPT-4o.
+   */
+  private async selectWithOpenAI(
+    screenshotBase64: string,
+    prompt: string,
+    totalCandidates: number,
+    videosToSelect: number
+  ): Promise<number[]> {
+    const OpenAI = (await import('openai')).default;
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-      if (validIndices.length === 0) {
-        throw new Error(`No valid indices found in: ${JSON.stringify(parsed)}`);
-      }
+    const response = await client.chat.completions.create({
+      model: 'gpt-4o',
+      max_tokens: 256,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/png;base64,${screenshotBase64}`,
+              },
+            },
+            { type: 'text', text: prompt },
+          ],
+        },
+      ],
+    });
 
-      console.log(`[TikTokSearch] Claude selected indices: [${validIndices.join(', ')}]`);
-      return validIndices;
-    } catch (err) {
-      console.warn(
-        `[TikTokSearch] Could not parse Claude selection (${err}). ` +
-        `Falling back to first ${videosToSelect} candidates.`
-      );
-      // Fallback: return first N candidates in order
-      return Array.from({ length: Math.min(videosToSelect, totalCandidates) }, (_, i) => i);
-    }
+    const text = response.choices[0]?.message?.content ?? '';
+    return this.parseSelectionResponse(text, totalCandidates, videosToSelect, 'OpenAI');
   }
 }

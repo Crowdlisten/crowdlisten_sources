@@ -11,7 +11,7 @@
     "build:watch": "tsc --watch",
     "start": "node dist/index.js",
     "start:cli": "node dist/cli.js",
-    "start:http": "node dist/http-server.js",
+
     "dev": "tsx src/cli.ts",
     "test": "jest",
     "test:e2e": "jest --config jest.config.e2e.js",

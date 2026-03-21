@@ -1,6 +1,6 @@
 /**
  * CrowdListen Shared Handlers
- * Pure functions that return plain objects — used by CLI, HTTP API, and MCP server.
+ * Pure functions that return plain objects — used by CLI and MCP server.
  */
 
 import { UnifiedSocialMediaService } from './services/UnifiedSocialMediaService.js';
@@ -125,77 +125,42 @@ export async function clusterOpinions(service: UnifiedSocialMediaService, args: 
 
   const clusteringService = new CommentClusteringService();
 
-  if (clusteringService.isClusteringAvailable()) {
-    const clusteringResult = await clusteringService.clusterComments(comments, 200);
-
-    const clusters = clusteringResult.clusters.map((cluster) => {
-      const totalLikes = cluster.comments.reduce((sum, c) => sum + (c.likes || 0), 0);
-      return {
-        clusterId: cluster.id,
-        theme: cluster.theme,
-        size: cluster.size,
-        percentage: (cluster.size / comments.length * 100).toFixed(1),
-        engagement: {
-          totalLikes,
-          avgLikes: cluster.size > 0 ? (totalLikes / cluster.size).toFixed(1) : '0',
-        },
-        sentiment: { label: cluster.sentiment },
-        summary: cluster.summary,
-        examples: includeExamples
-          ? cluster.comments.slice(0, 3).map(c => ({
-              text: c.text,
-              likes: c.likes || 0,
-              author: c.author?.username || 'anonymous',
-            }))
-          : [],
-      };
-    });
-
+  if (!clusteringService.isClusteringAvailable()) {
     return {
       platform,
       contentId,
       analysisType: 'opinion_clustering',
       totalComments: comments.length,
-      clusterCount: clusters.length,
-      clusters: clusters.sort((a, b) => b.size - a.size),
-      overallAnalysis: clusteringResult.overallAnalysis,
-      metadata: {
-        weightByEngagement,
-        includeExamples,
-        clusteringMethod: 'openai_embeddings_kmeans',
-        timestamp: new Date().toISOString(),
-      },
+      clusterCount: 0,
+      clusters: [],
+      error: 'Semantic clustering requires OPENAI_API_KEY. Set it in your environment for local clustering, or get a CROWDLISTEN_API_KEY at crowdlisten.com/api for the full analysis suite.',
     };
   }
 
-  // Fallback: simple equal-split clustering if no OpenAI key
-  const clusters = [];
-  const commentsPerCluster = Math.ceil(comments.length / clusterCount);
+  const clusteringResult = await clusteringService.clusterComments(comments, 200);
 
-  for (let i = 0; i < clusterCount; i++) {
-    const clusterComments = comments.slice(i * commentsPerCluster, (i + 1) * commentsPerCluster);
-    if (clusterComments.length === 0) continue;
-
-    const totalLikes = clusterComments.reduce((sum, comment) => sum + (comment.likes || 0), 0);
-    clusters.push({
-      clusterId: i + 1,
-      theme: `Opinion Theme ${i + 1}`,
-      size: clusterComments.length,
-      percentage: (clusterComments.length / comments.length * 100).toFixed(1),
+  const clusters = clusteringResult.clusters.map((cluster) => {
+    const totalLikes = cluster.comments.reduce((sum, c) => sum + (c.likes || 0), 0);
+    return {
+      clusterId: cluster.id,
+      theme: cluster.theme,
+      size: cluster.size,
+      percentage: (cluster.size / comments.length * 100).toFixed(1),
       engagement: {
         totalLikes,
-        avgLikes: (totalLikes / clusterComments.length).toFixed(1),
+        avgLikes: cluster.size > 0 ? (totalLikes / cluster.size).toFixed(1) : '0',
       },
-      sentiment: { label: 'neutral' },
+      sentiment: { label: cluster.sentiment },
+      summary: cluster.summary,
       examples: includeExamples
-        ? clusterComments.slice(0, 3).map(c => ({
+        ? cluster.comments.slice(0, 3).map(c => ({
             text: c.text,
             likes: c.likes || 0,
             author: c.author?.username || 'anonymous',
           }))
         : [],
-    });
-  }
+    };
+  });
 
   return {
     platform,
@@ -204,10 +169,11 @@ export async function clusterOpinions(service: UnifiedSocialMediaService, args: 
     totalComments: comments.length,
     clusterCount: clusters.length,
     clusters: clusters.sort((a, b) => b.size - a.size),
+    overallAnalysis: clusteringResult.overallAnalysis,
     metadata: {
       weightByEngagement,
       includeExamples,
-      clusteringMethod: 'simple_fallback',
+      clusteringMethod: 'openai_embeddings_kmeans',
       timestamp: new Date().toISOString(),
     },
   };

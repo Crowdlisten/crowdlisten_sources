@@ -1,6 +1,6 @@
 /**
  * CrowdListen Service Configuration
- * Shared service factory used by MCP, CLI, and HTTP entry points.
+ * Shared service factory used by MCP and CLI entry points.
  */
 
 import * as dotenv from 'dotenv';
@@ -53,6 +53,14 @@ export function createServiceConfig(): UnifiedServiceConfig {
       credentials: { apiKey: process.env.MOLTBOOK_API_KEY },
     };
   }
+
+  // Xiaohongshu (Playwright-based — no API key needed, optional Chrome profile)
+  config.platforms.xiaohongshu = {
+    platform: 'xiaohongshu',
+    credentials: {
+      profilePath: process.env.XHS_CHROME_PROFILE_PATH || '',
+    },
+  };
 
   return config;
 }

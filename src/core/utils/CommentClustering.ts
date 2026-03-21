@@ -136,7 +136,7 @@ export class CommentClusteringService {
   }
 
   isClusteringAvailable(): boolean {
-    return true;
+    return !!process.env.OPENAI_API_KEY;
   }
 
   private async buildLocalClusters(

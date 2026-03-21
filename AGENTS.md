@@ -16,7 +16,7 @@ Install both with one command: `npx @crowdlisten/planner login`
 ```bash
 npx @crowdlisten/planner login
 ```
-Auto-configures MCP for Claude Code, Cursor, Gemini CLI, Codex, Amp, OpenClaw.
+Auto-configures MCP for Claude Code, Cursor, Gemini CLI, Codex, OpenClaw.
 
 ### Manual MCP config
 ```json
@@ -34,11 +34,10 @@ Auto-configures MCP for Claude Code, Cursor, Gemini CLI, Codex, Amp, OpenClaw.
 |-----------|--------|----------|
 | MCP (this server) | Agents call tools via stdio | AI agents |
 | CLI | `npx crowdlisten <command>` | Scripts, shell |
-| HTTP API | `POST /v1/<endpoint>` on port 3001 | Web apps, integrations |
 
-All interfaces share the same handlers and return the same JSON shape.
+Both interfaces share the same handlers and return the same JSON shape.
 
-## Free Tools (8)
+## Free Tools (7)
 
 ### search_content
 Search posts across platforms. Start here, then drill into results.
@@ -64,16 +63,7 @@ Analyze a post and its comments — sentiment, themes, opinion clustering. For s
 analyze_content(platform, contentId, analysisDepth?, enableClustering?)
 ```
 - `analysisDepth`: surface, standard (default), deep, comprehensive
-- `enableClustering`: true (default) — uses OPENAI_API_KEY if available
-
-### cluster_opinions
-Group comments into semantic opinion clusters. Identifies themes, consensus, and minority viewpoints.
-```
-cluster_opinions(platform, contentId, clusterCount?, includeExamples?, weightByEngagement?)
-```
-- `clusterCount`: 2-15, default 5
-- `includeExamples`: true (default)
-- `weightByEngagement`: true (default)
+- `enableClustering`: true (default) — requires OPENAI_API_KEY for semantic clustering
 
 ### get_trending_content
 Currently trending posts from a platform.
@@ -99,9 +89,19 @@ Check connectivity and health of all configured platforms.
 health_check()
 ```
 
-## Paid Tools (3) — requires CROWDLISTEN_API_KEY
+## Paid Tools (4) — requires API key
 
-Get a key at [crowdlisten.com/api](https://crowdlisten.com/api).
+### cluster_opinions — requires OPENAI_API_KEY
+Group comments into semantic opinion clusters using OpenAI embeddings. Identifies themes, consensus, and minority viewpoints.
+```
+cluster_opinions(platform, contentId, clusterCount?, includeExamples?, weightByEngagement?)
+```
+- `clusterCount`: 2-15, default 5
+- `includeExamples`: true (default)
+- `weightByEngagement`: true (default)
+- **Free alternative**: `get_content_comments` returns raw comments for manual analysis
+
+The following tools require `CROWDLISTEN_API_KEY` — get one at [crowdlisten.com/api](https://crowdlisten.com/api).
 
 ### deep_analyze
 AI-powered deep analysis: audience segments, pain points, feature requests, competitive signals.
@@ -137,6 +137,7 @@ research_synthesis(query, platforms?, depth?)
 | TikTok | Optional | `tiktok` | Playwright browser search |
 | Twitter/X | OAuth tokens | `twitter` | Free: 1,500 tweets/month |
 | Instagram | None | `instagram` | Playwright browser scraping |
+| Xiaohongshu | None | `xiaohongshu` | Playwright browser scraping (optional: `XHS_CHROME_PROFILE_PATH`) |
 | All platforms | — | `all` | Search only |
 
 ## Example Calls
