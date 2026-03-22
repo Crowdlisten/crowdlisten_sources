@@ -11,6 +11,7 @@ import { PlatformType } from './core/interfaces/SocialMediaPlatform.js';
 import { TikTokUrlUtils } from './core/utils/TikTokUrlUtils.js';
 import { InstagramUrlUtils } from './core/utils/InstagramUrlUtils.js';
 import { VisionExtractor } from './vision/VisionExtractor.js';
+import { HealthMonitor } from './core/health/HealthMonitor.js';
 
 // ---------- Types ----------
 
@@ -162,7 +163,63 @@ export function getPlatformStatus(service: UnifiedSocialMediaService) {
   return { availablePlatforms: platforms, totalPlatforms: Object.keys(platforms).length };
 }
 
-export async function healthCheck(service: UnifiedSocialMediaService) {
+export async function healthCheck(
+  service: UnifiedSocialMediaService,
+  monitor?: HealthMonitor
+) {
+  // If the monitor has recent data (< 5 minutes), return the cached summary
+  // instead of running a live probe. This is faster and non-blocking.
+  if (monitor && monitor.hasRecentData(5 * 60 * 1000)) {
+    const summary = monitor.getSummary();
+    const healthStatus: Record<string, unknown> = {};
+
+    for (const [platform, state] of Object.entries(summary.platforms)) {
+      healthStatus[platform] = {
+        status: state.status,
+        responseTimeMs: state.responseTimeMs,
+        lastChecked: state.lastChecked.toISOString(),
+        lastHealthy: state.lastHealthy?.toISOString() ?? null,
+        consecutiveFailures: state.consecutiveFailures,
+        ...(state.error && { error: state.error }),
+      };
+    }
+
+    return {
+      overall: summary.overall,
+      healthStatus,
+      source: 'cached',
+      lastFullCheck: summary.lastFullCheck?.toISOString() ?? null,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // No cached data available -- trigger a fresh check via the monitor if
+  // present, otherwise fall back to the service's built-in health check.
+  if (monitor) {
+    const summary = await monitor.checkAll();
+    const healthStatus: Record<string, unknown> = {};
+
+    for (const [platform, state] of Object.entries(summary.platforms)) {
+      healthStatus[platform] = {
+        status: state.status,
+        responseTimeMs: state.responseTimeMs,
+        lastChecked: state.lastChecked.toISOString(),
+        lastHealthy: state.lastHealthy?.toISOString() ?? null,
+        consecutiveFailures: state.consecutiveFailures,
+        ...(state.error && { error: state.error }),
+      };
+    }
+
+    return {
+      overall: summary.overall,
+      healthStatus,
+      source: 'live',
+      lastFullCheck: summary.lastFullCheck?.toISOString() ?? null,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // Fallback: no monitor (e.g. CLI usage) -- use legacy service.healthCheck()
   const health = await service.healthCheck();
   return { healthStatus: health, timestamp: new Date().toISOString() };
 }
