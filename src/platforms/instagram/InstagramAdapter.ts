@@ -1,8 +1,9 @@
 /**
- * Instagram Platform Adapter — flat browser adapter using API interception.
+ * Instagram Platform Adapter — browser adapter using API interception.
  *
- * Uses BrowserPool + RequestInterceptor to capture Instagram's internal API
- * responses (GraphQL + v1 API). No tiers, no fallback chains.
+ * Tier 1 (API interception) with Tier 3 (Vision) fallback.
+ * When API interception returns empty, automatically attempts vision-based
+ * extraction. Tier 2 (DOM scraping) is intentionally skipped as too brittle.
  *
  * API targets:
  *   - /graphql/query/ — posts, user content
@@ -88,7 +89,9 @@ export class InstagramAdapter extends BaseAdapter {
       await this.waitAndScroll(page);
 
       const apiData = interceptor.getAllData();
-      if (apiData.length === 0) return [];
+      if (apiData.length === 0) {
+        return await this.tryVisionFallback(url, 'comments', limit) as Comment[];
+      }
 
       return this.structureComments(apiData).slice(0, limit);
     } catch (error) {
@@ -112,7 +115,9 @@ export class InstagramAdapter extends BaseAdapter {
       await this.waitAndScroll(page);
 
       const apiData = interceptor.getAllData();
-      if (apiData.length === 0) return [];
+      if (apiData.length === 0) {
+        return await this.tryVisionFallback(url, 'posts', limit) as Post[];
+      }
 
       return this.structurePosts(apiData).slice(0, limit);
     } catch (error) {
@@ -376,7 +381,6 @@ export class InstagramAdapter extends BaseAdapter {
       supportsUserContent: true,
       supportsSearch: true,
       supportsComments: true,
-      supportsAnalysis: true,
     };
   }
 }

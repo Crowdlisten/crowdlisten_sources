@@ -12,9 +12,7 @@ import {
   PlatformConfig,
   PlatformCapabilities,
   Post,
-  User,
   Comment,
-  ContentAnalysis,
   SocialMediaError,
   RateLimitError
 } from '../interfaces/SocialMediaPlatform.js';
@@ -153,30 +151,6 @@ export abstract class BaseAdapter implements SocialMediaPlatform {
     }
   }
 
-  async analyzeContent(contentId: string, enableClustering: boolean = true): Promise<ContentAnalysis> {
-    this.validateContentId(contentId);
-
-    try {
-      await this.enforceRateLimit();
-      const comments = await this.getContentComments(contentId, 200);
-
-      // Return basic post metadata only — analysis is handled by the CrowdListen API
-      const analysis: ContentAnalysis = {
-        postId: contentId,
-        platform: this.getPlatformName(),
-        sentiment: 'neutral',
-        themes: ['general'],
-        summary: `Retrieved ${comments.length} comments for ${contentId}. Use analyze_content with CROWDLISTEN_API_KEY for full analysis.`,
-        commentCount: comments.length,
-        topComments: comments.slice(0, 5),
-      };
-
-      return analysis;
-    } catch (error) {
-      this.handleError(error, 'analyzeContent');
-    }
-  }
-
   protected ensureInitialized(): void {
     if (!this.isInitialized) {
       throw new SocialMediaError(
@@ -195,6 +169,49 @@ export abstract class BaseAdapter implements SocialMediaPlatform {
   abstract getPlatformName(): PlatformType;
   abstract getSupportedFeatures(): PlatformCapabilities;
   abstract initialize(): Promise<boolean>;
+
+  /**
+   * Attempt Tier 3 (Vision) extraction as a fallback when Tier 1 (API interception)
+   * returns empty results. Dynamically imports VisionExtractor to avoid circular
+   * dependencies and to keep vision an optional capability.
+   *
+   * Returns Post[] when mode is 'posts', Comment[] when mode is 'comments'.
+   * Gracefully returns [] if vision is unavailable or fails.
+   */
+  protected async tryVisionFallback(
+    url: string,
+    mode: 'posts' | 'comments',
+    limit: number,
+  ): Promise<Post[] | Comment[]> {
+    try {
+      const { VisionExtractor } = await import('../../vision/VisionExtractor.js');
+      const vision = new VisionExtractor();
+
+      if (!vision.isAvailable()) {
+        this.log('Vision fallback unavailable (no LLM API keys configured)');
+        return [];
+      }
+
+      this.log(`Tier 1 empty -> attempting Tier 3 vision fallback for ${url}`);
+      const result = await vision.extract(url, { mode, limit });
+
+      if (mode === 'posts' && result.posts) {
+        this.log(`Vision fallback returned ${result.posts.length} posts`);
+        return result.posts;
+      }
+
+      if (mode === 'comments' && result.comments) {
+        this.log(`Vision fallback returned ${result.comments.length} comments`);
+        return result.comments;
+      }
+
+      this.log('Vision fallback returned no structured data');
+      return [];
+    } catch (error) {
+      this.log(`Vision fallback failed: ${error}`, 'warn');
+      return [];
+    }
+  }
 
   async cleanup(): Promise<void> {
     this.isInitialized = false;

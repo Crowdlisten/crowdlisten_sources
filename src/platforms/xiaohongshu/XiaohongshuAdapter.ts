@@ -1,9 +1,10 @@
 /**
- * Xiaohongshu (RedNote) Platform Adapter — flat browser adapter using API interception.
+ * Xiaohongshu (RedNote) Platform Adapter — browser adapter using API interception.
  *
- * Uses BrowserPool + RequestInterceptor to capture XHS's internal API responses.
+ * Tier 1 (API interception) with Tier 3 (Vision) fallback.
+ * When API interception returns empty, automatically attempts vision-based
+ * extraction. Tier 2 (DOM scraping) is intentionally skipped as too brittle.
  * Preserves mobile viewport, zh-CN locale, and conservative anti-detection delays.
- * No tiers, no fallback chains.
  *
  * API targets:
  *   - /api/sns/web/v1/search/notes — search
@@ -88,7 +89,9 @@ export class XiaohongshuAdapter extends BaseAdapter {
       await this.waitAndScrollSlow(page);
 
       const apiData = interceptor.getAllData();
-      if (apiData.length === 0) return [];
+      if (apiData.length === 0) {
+        return await this.tryVisionFallback(url, 'comments', limit) as Comment[];
+      }
 
       return this.structureComments(apiData).slice(0, limit);
     } catch (error) {
@@ -112,7 +115,9 @@ export class XiaohongshuAdapter extends BaseAdapter {
       await this.waitAndScrollSlow(page);
 
       const apiData = interceptor.getAllData();
-      if (apiData.length === 0) return [];
+      if (apiData.length === 0) {
+        return await this.tryVisionFallback(url, 'posts', limit) as Post[];
+      }
 
       return this.structurePosts(apiData).slice(0, limit);
     } catch (error) {
@@ -289,7 +294,6 @@ export class XiaohongshuAdapter extends BaseAdapter {
       supportsUserContent: true,
       supportsSearch: true,
       supportsComments: true,
-      supportsAnalysis: true,
     };
   }
 }
