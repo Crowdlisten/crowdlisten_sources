@@ -265,7 +265,6 @@ export class YouTubeAdapter extends BaseAdapter {
       supportsUserContent: true,
       supportsSearch: true,
       supportsComments: true,
-      supportsAnalysis: true
     };
   }
 

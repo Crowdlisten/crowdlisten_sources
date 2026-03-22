@@ -1,10 +1,17 @@
 /**
- * Core interface that all social media platform adapters must implement
- * Provides a unified API for content retrieval across different platforms
+ * Core interface that all social media platform adapters must implement.
+ * Provides a unified API for content retrieval across different platforms.
  *
- * Analysis types (EnrichedComment, OpinionUnit, etc.) have been moved to
- * the CrowdListen API. This file now only contains retrieval types.
+ * This is the retrieval contract only. Analysis (sentiment, clustering,
+ * enrichment) belongs in the Processing layer (CrowdListen agent API).
  */
+
+/**
+ * Contract version shared between the TypeScript and Python stacks.
+ * Bump this when the SocialMediaPlatform interface changes shape so
+ * both sides can assert they are speaking the same version.
+ */
+export const ADAPTER_CONTRACT_VERSION = '1.0.0';
 
 export interface Post {
   id: string;
@@ -52,26 +59,6 @@ export interface Comment {
   };
 }
 
-export interface ContentAnalysis {
-  postId: string;
-  platform: PlatformType;
-  sentiment?: 'positive' | 'negative' | 'neutral';
-  themes?: string[];
-  summary?: string;
-  commentCount: number;
-  topComments: Comment[];
-  analysisMetadata?: Record<string, unknown>;
-}
-
-export interface CommentCluster {
-  id: number;
-  theme: string;
-  sentiment: 'positive' | 'negative' | 'neutral' | 'mixed';
-  comments: Comment[];
-  summary: string;
-  size: number;
-}
-
 export interface TrendingHashtag {
   hashtag: string;
   postCount: number;
@@ -85,18 +72,17 @@ export interface PlatformCapabilities {
   supportsUserContent: boolean;
   supportsSearch: boolean;
   supportsComments: boolean;
-  supportsAnalysis: boolean;
 }
 
 /**
- * Main interface that all platform adapters must implement
+ * Main interface that all platform adapters must implement.
+ * Pure retrieval — no analysis methods.
  */
 export interface SocialMediaPlatform {
   getTrendingContent(limit?: number): Promise<Post[]>;
   getUserContent(userId: string, limit?: number): Promise<Post[]>;
   searchContent(query: string, limit?: number): Promise<Post[]>;
   getContentComments(contentId: string, limit?: number): Promise<Comment[]>;
-  analyzeContent(contentId: string, enableClustering?: boolean): Promise<ContentAnalysis>;
   getPlatformName(): PlatformType;
   getSupportedFeatures(): PlatformCapabilities;
   initialize(): Promise<boolean>;

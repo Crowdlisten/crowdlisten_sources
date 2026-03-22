@@ -54,7 +54,6 @@ class TestAdapter extends BaseAdapter {
       supportsUserContent: true,
       supportsSearch: true,
       supportsComments: true,
-      supportsAnalysis: true,
     };
   }
 }

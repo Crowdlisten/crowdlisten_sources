@@ -227,7 +227,6 @@ export class RedditAdapter extends BaseAdapter {
       supportsUserContent: true,
       supportsSearch: true,
       supportsComments: true,
-      supportsAnalysis: true
     };
   }
 

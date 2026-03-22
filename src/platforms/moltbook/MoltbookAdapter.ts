@@ -189,7 +189,6 @@ export class MoltbookAdapter extends BaseAdapter {
       supportsUserContent: true,
       supportsSearch: true,
       supportsComments: true,
-      supportsAnalysis: true,
     };
   }
 
