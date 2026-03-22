@@ -11,7 +11,7 @@
  * Rate limit: 60 reads/min
  */
 
-import { BaseAdapter } from '../core/base/BaseAdapter.js';
+import { BaseAdapter } from '../../core/base/BaseAdapter.js';
 import {
   Post,
   Comment,
@@ -20,7 +20,7 @@ import {
   PlatformType,
   PlatformConfig,
   NotFoundError
-} from '../core/interfaces/SocialMediaPlatform.js';
+} from '../../core/interfaces/SocialMediaPlatform.js';
 import axios, { AxiosInstance } from 'axios';
 
 export class MoltbookAdapter extends BaseAdapter {

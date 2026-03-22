@@ -18,25 +18,35 @@ export function createServiceConfig(): UnifiedServiceConfig {
     },
   };
 
-  // Twitter
-  if (process.env.TWITTER_API_KEY && process.env.TWITTER_API_KEY_SECRET &&
-      process.env.TWITTER_ACCESS_TOKEN && process.env.TWITTER_ACCESS_TOKEN_SECRET) {
-    config.platforms.twitter = {
-      platform: 'twitter',
-      credentials: {
-        apiKey: process.env.TWITTER_API_KEY,
-        apiSecret: process.env.TWITTER_API_KEY_SECRET,
-        accessToken: process.env.TWITTER_ACCESS_TOKEN,
-        accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
-      },
-    };
-  }
+  // Twitter — uses twitter-scraper, needs TWITTER_USERNAME + TWITTER_PASSWORD
+  config.platforms.twitter = {
+    platform: 'twitter',
+    credentials: {},
+  };
 
-  // Instagram (Playwright-based — no credentials needed)
-  config.platforms.instagram = { platform: 'instagram', credentials: {} };
+  // TikTok — browser adapter
+  config.platforms.tiktok = {
+    platform: 'tiktok',
+    credentials: {},
+  };
+
+  // Instagram — browser adapter
+  config.platforms.instagram = {
+    platform: 'instagram',
+    credentials: {},
+  };
+
+  // Xiaohongshu — browser adapter
+  config.platforms.xiaohongshu = {
+    platform: 'xiaohongshu',
+    credentials: {},
+  };
 
   // Reddit (no credentials needed for public content)
-  config.platforms.reddit = { platform: 'reddit', credentials: {} };
+  config.platforms.reddit = {
+    platform: 'reddit',
+    credentials: {},
+  };
 
   // YouTube
   if (process.env.YOUTUBE_API_KEY) {
@@ -53,14 +63,6 @@ export function createServiceConfig(): UnifiedServiceConfig {
       credentials: { apiKey: process.env.MOLTBOOK_API_KEY },
     };
   }
-
-  // Xiaohongshu (Playwright-based — no API key needed, optional Chrome profile)
-  config.platforms.xiaohongshu = {
-    platform: 'xiaohongshu',
-    credentials: {
-      profilePath: process.env.XHS_CHROME_PROFILE_PATH || '',
-    },
-  };
 
   return config;
 }

@@ -32,6 +32,7 @@ import {
   deepAnalyze,
   extractInsights,
   researchSynthesis,
+  extractWithVision,
 } from './handlers.js';
 
 export async function main() {
@@ -73,6 +74,11 @@ export async function main() {
             maximum: 50,
             default: 10,
             description: 'Maximum number of posts to retrieve'
+          },
+          useVision: {
+            type: 'boolean',
+            default: false,
+            description: 'Force vision extraction mode (screenshot + LLM analysis). Treats query as a URL.'
           }
         },
         required: ['platform', 'query']
@@ -99,6 +105,11 @@ export async function main() {
             maximum: 100,
             default: 20,
             description: 'Maximum number of comments to retrieve'
+          },
+          useVision: {
+            type: 'boolean',
+            default: false,
+            description: 'Force vision extraction mode (screenshot + LLM analysis). Treats contentId as a URL.'
           }
         },
         required: ['platform', 'contentId']
@@ -166,6 +177,35 @@ export async function main() {
       inputSchema: {
         type: 'object',
         properties: {}
+      }
+    },
+
+    // ── Vision extraction — screenshot + LLM analysis, no API key ────────────
+    {
+      name: 'extract_url',
+      description: 'Extract content from any URL using vision (screenshot + LLM analysis). Works with any website — social media, forums, news sites, etc. Requires at least one LLM API key (ANTHROPIC_API_KEY, GEMINI_API_KEY, or OPENAI_API_KEY). Free, no CROWDLISTEN_API_KEY needed.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          url: {
+            type: 'string',
+            description: 'URL to extract content from'
+          },
+          mode: {
+            type: 'string',
+            enum: ['posts', 'comments', 'raw'],
+            default: 'posts',
+            description: 'Extraction mode: posts (structured posts), comments (structured comments), raw (unstructured text)'
+          },
+          limit: {
+            type: 'number',
+            minimum: 1,
+            maximum: 50,
+            default: 10,
+            description: 'Maximum items to extract'
+          }
+        },
+        required: ['url']
       }
     },
 
@@ -365,6 +405,10 @@ export async function main() {
 
         case 'health_check':
           return mcpText(await healthCheck(unifiedService));
+
+        // ── Vision extraction ─────────────────────────────────────────
+        case 'extract_url':
+          return mcpText(await extractWithVision(args as any));
 
         // ── Paid tools (all delegate to agent API) ──────────────────────
         case 'analyze_content':

@@ -21,6 +21,7 @@ import {
   deepAnalyze,
   extractInsights,
   researchSynthesis,
+  extractWithVision,
 } from './handlers.js';
 
 const program = new Command();
@@ -28,7 +29,7 @@ const program = new Command();
 program
   .name('crowdlisten')
   .description('Cross-channel feedback analysis for AI agents')
-  .version('1.0.0');
+  .version('2.0.0');
 
 // Shared service instance — initialized lazily
 let service: ReturnType<typeof createService> | null = null;
@@ -72,10 +73,16 @@ program
   .command('search <platform> <query>')
   .description('Search social media for audience conversations')
   .option('-l, --limit <n>', 'Max results', '10')
+  .option('--vision', 'Force vision extraction mode')
   .action(async (platform: string, query: string, opts: any) => {
     await run(async () => {
       const svc = await getService();
-      return searchContent(svc, { platform, query, limit: parseInt(opts.limit) });
+      return searchContent(svc, {
+        platform,
+        query,
+        limit: parseInt(opts.limit),
+        useVision: opts.vision || false,
+      });
     });
   });
 
@@ -83,10 +90,16 @@ program
   .command('comments <platform> <contentId>')
   .description('Get comments for a specific post/video')
   .option('-l, --limit <n>', 'Max comments', '20')
+  .option('--vision', 'Force vision extraction mode')
   .action(async (platform: string, contentId: string, opts: any) => {
     await run(async () => {
       const svc = await getService();
-      return getContentComments(svc, { platform, contentId, limit: parseInt(opts.limit) });
+      return getContentComments(svc, {
+        platform,
+        contentId,
+        limit: parseInt(opts.limit),
+        useVision: opts.vision || false,
+      });
     });
   });
 
@@ -107,7 +120,6 @@ program
           platform,
           contentId,
           analysisDepth: depth,
-          enableClustering: opts.clustering !== false,
         });
       });
     }
@@ -150,6 +162,21 @@ program
     await run(async () => {
       const svc = await getService();
       return getUserContent(svc, { platform, userId, limit: parseInt(opts.limit) });
+    });
+  });
+
+program
+  .command('vision <url>')
+  .description('Extract content from any URL using vision (LLM screenshot analysis)')
+  .option('-m, --mode <mode>', 'Extraction mode (posts|comments|raw)', 'posts')
+  .option('-l, --limit <n>', 'Max results', '10')
+  .action(async (url: string, opts: any) => {
+    await run(async () => {
+      return extractWithVision({
+        url,
+        mode: opts.mode,
+        limit: parseInt(opts.limit),
+      });
     });
   });
 

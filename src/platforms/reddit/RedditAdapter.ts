@@ -3,8 +3,8 @@
  * Uses Reddit's public JSON API for basic functionality
  */
 
-import { BaseAdapter } from '../core/base/BaseAdapter.js';
-import { DataNormalizer } from '../core/utils/DataNormalizer.js';
+import { BaseAdapter } from '../../core/base/BaseAdapter.js';
+import { DataNormalizer } from '../../core/utils/DataNormalizer.js';
 import {
   Post,
   Comment,
@@ -12,7 +12,7 @@ import {
   PlatformType,
   PlatformConfig,
   NotFoundError
-} from '../core/interfaces/SocialMediaPlatform.js';
+} from '../../core/interfaces/SocialMediaPlatform.js';
 import axios from 'axios';
 
 export class RedditAdapter extends BaseAdapter {

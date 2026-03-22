@@ -6,7 +6,7 @@ Machine-readable capability description for AI agents.
 
 CrowdListen is two MCP servers that work together:
 - **Insights** (this server) — discovers audience signal from social platforms
-- **Planner** ([@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_tasks)) — plans and tracks work with a cloud-synced knowledge base
+- **Planner** ([@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_harness)) — plans and tracks work with a cloud-synced knowledge base
 
 Install both with one command: `npx @crowdlisten/planner login`
 

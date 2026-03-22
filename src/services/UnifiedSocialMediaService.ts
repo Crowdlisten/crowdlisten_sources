@@ -1,6 +1,7 @@
 /**
  * Unified Social Media Service
- * Coordinates all platform adapters and provides a single interface
+ * Coordinates all platform adapters and provides a single interface.
+ * Each platform has one adapter — no visual vs legacy distinction.
  */
 
 import {
@@ -9,17 +10,17 @@ import {
   PlatformConfig,
   Post,
   Comment,
-  ContentAnalysis,
   SocialMediaError
 } from '../core/interfaces/SocialMediaPlatform.js';
 
-import { TikTokAdapter } from '../platforms/TikTokAdapter.js';
-import { TwitterAdapter } from '../platforms/TwitterAdapter.js';
-import { RedditAdapter } from '../platforms/RedditAdapter.js';
-import { InstagramAdapter } from '../platforms/InstagramAdapter.js';
-import { YouTubeAdapter } from '../platforms/YouTubeAdapter.js';
-import { MoltbookAdapter } from '../platforms/MoltbookAdapter.js';
-import { XiaohongshuAdapter } from '../platforms/XiaohongshuAdapter.js';
+import { TwitterAdapter } from '../platforms/twitter/TwitterAdapter.js';
+import { RedditAdapter } from '../platforms/reddit/RedditAdapter.js';
+import { YouTubeAdapter } from '../platforms/youtube/YouTubeAdapter.js';
+import { MoltbookAdapter } from '../platforms/moltbook/MoltbookAdapter.js';
+import { TikTokAdapter } from '../platforms/tiktok/TikTokAdapter.js';
+import { InstagramAdapter } from '../platforms/instagram/InstagramAdapter.js';
+import { XiaohongshuAdapter } from '../platforms/xiaohongshu/XiaohongshuAdapter.js';
+import { getBrowserPool } from '../browser/BrowserPool.js';
 
 export interface UnifiedServiceConfig {
   platforms: {
@@ -48,113 +49,35 @@ export class UnifiedSocialMediaService {
   }
 
   /**
-   * Initialize all configured platform adapters
+   * Initialize all configured platform adapters.
+   * One adapter per platform — flat, no tiers.
    */
   async initialize(): Promise<{ [key in PlatformType]?: boolean }> {
     const results: { [key in PlatformType]?: boolean } = {};
 
-    // Initialize TikTok
-    if (this.config.platforms.tiktok) {
-      try {
-        const adapter = new TikTokAdapter(this.config.platforms.tiktok);
-        const success = await adapter.initialize();
-        if (success) {
-          this.adapters.set('tiktok', adapter);
-        }
-        results.tiktok = success;
-      } catch (error) {
-        console.error('Failed to initialize TikTok adapter:', error);
-        results.tiktok = false;
-      }
-    }
+    const adapterMap: Array<{ platform: PlatformType; create: () => SocialMediaPlatform }> = [
+      { platform: 'twitter', create: () => new TwitterAdapter(this.config.platforms.twitter!) },
+      { platform: 'tiktok', create: () => new TikTokAdapter(this.config.platforms.tiktok!) },
+      { platform: 'instagram', create: () => new InstagramAdapter(this.config.platforms.instagram!) },
+      { platform: 'xiaohongshu', create: () => new XiaohongshuAdapter(this.config.platforms.xiaohongshu!) },
+      { platform: 'reddit', create: () => new RedditAdapter(this.config.platforms.reddit!) },
+      { platform: 'youtube', create: () => new YouTubeAdapter(this.config.platforms.youtube!) },
+      { platform: 'moltbook', create: () => new MoltbookAdapter(this.config.platforms.moltbook!) },
+    ];
 
-    // Initialize Twitter
-    if (this.config.platforms.twitter) {
-      try {
-        const adapter = new TwitterAdapter(this.config.platforms.twitter);
-        const success = await adapter.initialize();
-        if (success) {
-          this.adapters.set('twitter', adapter);
-        }
-        results.twitter = success;
-      } catch (error) {
-        console.error('Failed to initialize Twitter adapter:', error);
-        results.twitter = false;
-      }
-    }
+    for (const { platform, create } of adapterMap) {
+      if (!this.config.platforms[platform]) continue;
 
-    // Initialize Reddit
-    if (this.config.platforms.reddit) {
       try {
-        const adapter = new RedditAdapter(this.config.platforms.reddit);
+        const adapter = create();
         const success = await adapter.initialize();
         if (success) {
-          this.adapters.set('reddit', adapter);
+          this.adapters.set(platform, adapter);
         }
-        results.reddit = success;
+        results[platform] = success;
       } catch (error) {
-        console.error('Failed to initialize Reddit adapter:', error);
-        results.reddit = false;
-      }
-    }
-
-    // Initialize Instagram
-    if (this.config.platforms.instagram) {
-      try {
-        const adapter = new InstagramAdapter(this.config.platforms.instagram);
-        const success = await adapter.initialize();
-        if (success) {
-          this.adapters.set('instagram', adapter);
-        }
-        results.instagram = success;
-      } catch (error) {
-        console.error('Failed to initialize Instagram adapter:', error);
-        results.instagram = false;
-      }
-    }
-
-    // Initialize YouTube
-    if (this.config.platforms.youtube) {
-      try {
-        const adapter = new YouTubeAdapter(this.config.platforms.youtube);
-        const success = await adapter.initialize();
-        if (success) {
-          this.adapters.set('youtube', adapter);
-        }
-        results.youtube = success;
-      } catch (error) {
-        console.error('Failed to initialize YouTube adapter:', error);
-        results.youtube = false;
-      }
-    }
-
-    // Initialize Moltbook
-    if (this.config.platforms.moltbook) {
-      try {
-        const adapter = new MoltbookAdapter(this.config.platforms.moltbook);
-        const success = await adapter.initialize();
-        if (success) {
-          this.adapters.set('moltbook', adapter);
-        }
-        results.moltbook = success;
-      } catch (error) {
-        console.error('Failed to initialize Moltbook adapter:', error);
-        results.moltbook = false;
-      }
-    }
-
-    // Initialize Xiaohongshu
-    if (this.config.platforms.xiaohongshu) {
-      try {
-        const adapter = new XiaohongshuAdapter(this.config.platforms.xiaohongshu);
-        const success = await adapter.initialize();
-        if (success) {
-          this.adapters.set('xiaohongshu', adapter);
-        }
-        results.xiaohongshu = success;
-      } catch (error) {
-        console.error('Failed to initialize Xiaohongshu adapter:', error);
-        results.xiaohongshu = false;
+        console.error(`Failed to initialize ${platform} adapter:`, error);
+        results[platform] = false;
       }
     }
 
@@ -205,29 +128,6 @@ export class UnifiedSocialMediaService {
   }
 
   /**
-   * Get user content from all available platforms
-   */
-  async getAllUserContent(userId: string, limit?: number): Promise<{ [key in PlatformType]?: Post[] }> {
-    const results: { [key in PlatformType]?: Post[] } = {};
-    const limitPerPlatform = limit ? Math.ceil(limit / this.adapters.size) : 10;
-
-    const promises = Array.from(this.adapters.entries()).map(async ([platform, adapter]) => {
-      try {
-        const posts = await adapter.getUserContent(userId, limitPerPlatform);
-        results[platform] = posts;
-      } catch (error) {
-        console.error(`Failed to get user content from ${platform}:`, error);
-        if (this.config.globalOptions?.fallbackStrategy === 'continue') {
-          results[platform] = [];
-        }
-      }
-    });
-
-    await Promise.allSettled(promises);
-    return results;
-  }
-
-  /**
    * Search content on a specific platform
    */
   async searchContent(platform: PlatformType, query: string, limit?: number): Promise<Post[]> {
@@ -267,19 +167,11 @@ export class UnifiedSocialMediaService {
   }
 
   /**
-   * Analyze content on a specific platform
-   */
-  async analyzeContent(platform: PlatformType, contentId: string, enableClustering: boolean = true): Promise<ContentAnalysis> {
-    const adapter = this.getAdapter(platform);
-    return await adapter.analyzeContent(contentId, enableClustering);
-  }
-
-  /**
    * Get available platforms and their capabilities
    */
   getAvailablePlatforms(): { [key in PlatformType]?: any } {
     const platforms: { [key in PlatformType]?: any } = {};
-    
+
     for (const [platform, adapter] of this.adapters) {
       platforms[platform] = {
         name: platform,
@@ -287,7 +179,7 @@ export class UnifiedSocialMediaService {
         initialized: true
       };
     }
-    
+
     return platforms;
   }
 
@@ -297,26 +189,24 @@ export class UnifiedSocialMediaService {
   async getCombinedTrendingContent(limit: number = 30): Promise<Post[]> {
     const allTrending = await this.getAllTrendingContent(limit);
     const combinedPosts: Post[] = [];
-    
-    // Combine posts from all platforms
-    for (const [platform, posts] of Object.entries(allTrending)) {
+
+    for (const [, posts] of Object.entries(allTrending)) {
       if (posts && Array.isArray(posts)) {
         combinedPosts.push(...posts);
       }
     }
-    
-    // Sort by engagement (likes + comments) and timestamp
+
     combinedPosts.sort((a, b) => {
       const aEngagement = (a.engagement.likes || 0) + (a.engagement.comments || 0);
       const bEngagement = (b.engagement.likes || 0) + (b.engagement.comments || 0);
-      
+
       if (aEngagement !== bEngagement) {
-        return bEngagement - aEngagement; // Higher engagement first
+        return bEngagement - aEngagement;
       }
-      
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(); // Newer first
+
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
     });
-    
+
     return combinedPosts.slice(0, limit);
   }
 
@@ -326,28 +216,26 @@ export class UnifiedSocialMediaService {
   async getCombinedSearchResults(query: string, limit: number = 30): Promise<Post[]> {
     const allResults = await this.searchAllPlatforms(query, limit);
     const combinedPosts: Post[] = [];
-    
-    // Combine posts from all platforms
-    for (const [platform, posts] of Object.entries(allResults)) {
+
+    for (const [, posts] of Object.entries(allResults)) {
       if (posts && Array.isArray(posts)) {
         combinedPosts.push(...posts);
       }
     }
-    
-    // Sort by relevance (simple text matching) and engagement
+
     combinedPosts.sort((a, b) => {
       const aRelevance = this.calculateRelevance(a.content, query);
       const bRelevance = this.calculateRelevance(b.content, query);
-      
+
       if (aRelevance !== bRelevance) {
         return bRelevance - aRelevance;
       }
-      
+
       const aEngagement = (a.engagement.likes || 0) + (a.engagement.comments || 0);
       const bEngagement = (b.engagement.likes || 0) + (b.engagement.comments || 0);
       return bEngagement - aEngagement;
     });
-    
+
     return combinedPosts.slice(0, limit);
   }
 
@@ -356,10 +244,9 @@ export class UnifiedSocialMediaService {
    */
   async healthCheck(): Promise<{ [key in PlatformType]?: 'healthy' | 'degraded' | 'down' }> {
     const health: { [key in PlatformType]?: 'healthy' | 'degraded' | 'down' } = {};
-    
+
     const promises = Array.from(this.adapters.entries()).map(async ([platform, adapter]) => {
       try {
-        // Try to get a small amount of trending content as a health check
         await adapter.getTrendingContent(1);
         health[platform] = 'healthy';
       } catch (error) {
@@ -367,39 +254,49 @@ export class UnifiedSocialMediaService {
         health[platform] = 'down';
       }
     });
-    
+
     await Promise.allSettled(promises);
     return health;
   }
 
   /**
-   * Cleanup all adapters
+   * Cleanup all adapters and browser pool
    */
   async cleanup(): Promise<void> {
-    const cleanupPromises = Array.from(this.adapters.values()).map(adapter => 
-      adapter.cleanup().catch(error => 
+    const cleanupPromises = Array.from(this.adapters.values()).map(adapter =>
+      adapter.cleanup().catch(error =>
         console.warn('Cleanup error:', error)
       )
     );
-    
+
     await Promise.allSettled(cleanupPromises);
+
+    // Cleanup browser pool if any browser-based adapters were used
+    const browserPlatforms: PlatformType[] = ['tiktok', 'instagram', 'xiaohongshu'];
+    const hasBrowserAdapters = browserPlatforms.some(p => this.adapters.has(p));
+    if (hasBrowserAdapters) {
+      try {
+        const pool = getBrowserPool();
+        await pool.cleanup();
+      } catch (error) {
+        console.warn('Browser pool cleanup error:', error);
+      }
+    }
+
     this.adapters.clear();
     this.isInitialized = false;
     console.log('Unified Social Media Service cleaned up');
   }
 
-  /**
-   * Private helper methods
-   */
   private getAdapter(platform: PlatformType): SocialMediaPlatform {
     if (!this.isInitialized) {
       throw new SocialMediaError(
         'Service not initialized',
         'NOT_INITIALIZED',
-        'tiktok' // Default platform for service-level errors
+        'tiktok'
       );
     }
-    
+
     const adapter = this.adapters.get(platform);
     if (!adapter) {
       throw new SocialMediaError(
@@ -408,31 +305,29 @@ export class UnifiedSocialMediaService {
         platform
       );
     }
-    
+
     return adapter;
   }
 
   private calculateRelevance(content: string, query: string): number {
     if (!content || !query) return 0;
-    
+
     const contentLower = content.toLowerCase();
     const queryLower = query.toLowerCase();
     const queryWords = queryLower.split(/\s+/);
-    
+
     let score = 0;
-    
-    // Exact match gets highest score
+
     if (contentLower.includes(queryLower)) {
       score += 10;
     }
-    
-    // Individual word matches
+
     for (const word of queryWords) {
       if (contentLower.includes(word)) {
         score += 2;
       }
     }
-    
+
     return score;
   }
 }

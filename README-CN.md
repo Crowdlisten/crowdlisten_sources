@@ -1,30 +1,36 @@
 # CrowdListen Insights
 
-> 让你的 AI 智能体研究用户洞察，进行主题建模和深度分析 —— 覆盖全网和社交媒体。
+> 给你的 AI 智能体装上耳朵。搜索 7 大平台、提取评论、聚类观点、分析情感 — 结构化 JSON，每次如此。
 
 [English](README.md) | [中文文档](README-CN.md)
 
+## 为什么选择 CrowdListen
+
+你的用户正在告诉你该构建什么。问题是他们分散在 Reddit、YouTube、TikTok、Twitter/X、Instagram、小红书等各处 — 而你的智能体什么都听不到。
+
+CrowdListen 给你的智能体一个统一工具来搜索所有平台、提取评论，并将原始对话转化为结构化信号：痛点、功能需求、情感倾向、共识与分歧。
+
+**一条 `npx` 命令。7 大平台。结构化 JSON。无需 API 密钥即可开始。**
+
+## 立即体验
+
+```bash
+npx crowdlisten search reddit "cursor vs claude code" --limit 5
+```
+
 ## 亮点
 
-1. **零配置启动** — `npx crowdlisten search reddit "query"` 即刻运行。无需 API 密钥，无需配置，无需服务器。
-2. **7大平台，统一接口** — Reddit、YouTube、TikTok、Twitter/X、Instagram、小红书、Moltbook。每次返回相同的 JSON 结构。
-3. **MCP 原生，为 AI 智能体而生** — 作为 MCP 服务器构建。你的智能体直接调用工具 —— 无需 REST 封装，无需中间件。
-4. **观点聚类与主题建模** — 语义聚类按主题归类评论。发现共识、异议和新兴趋势。
-5. **免费核心，付费智能** — 搜索、评论、热门和分析完全免费在本地运行。深度分析和研究综合通过 CrowdListen API 提供。
+1. **零配置启动** — Reddit、TikTok、Twitter/X、Instagram 和小红书开箱即用。无需 API 密钥，无需 OAuth，无需配置。
+2. **7 大平台，统一 JSON** — Reddit、YouTube、TikTok、Twitter/X、Instagram、小红书、Moltbook。每次返回相同的 `Post[]` 和 `Comment[]`。
+3. **MCP 原生** — 作为 MCP 服务器构建。你的智能体直接调用工具 — 无需 REST 封装，无需中间件。
+4. **视觉模式** — 无法抓取？将 CrowdListen 指向任意 URL，它会截图页面、发送给 LLM、返回结构化数据。适用于任何网站。
+5. **免费核心，付费智能** — 搜索、评论、热门和视觉提取完全免费在本地运行。深度分析和研究综合通过 CrowdListen API 提供。
 
 ## 演示
 
 https://github.com/user-attachments/assets/DEMO_VIDEO_ID
 
 > 获取完整系统及更多功能，部署在 [crowdlisten.com](https://crowdlisten.com)
-
-## 立即体验
-
-零配置 -- Reddit 即刻可用：
-
-```bash
-npx crowdlisten search reddit "cursor vs claude code" --limit 5
-```
 
 ## 为你的智能体安装
 
@@ -55,121 +61,147 @@ npx @crowdlisten/planner login
 │                                                                         │
 │  ┌─────────────────────────────┐    ┌─────────────────────────────┐    │
 │  │   CrowdListen Insights      │    │   CrowdListen Planner       │    │
-│  │   (crowdlisten_insights)    │    │   (crowdlisten_tasks)       │    │
 │  │                             │    │                             │    │
 │  │   "用户在说什么？"           │    │   "我们应该构建什么？"       │    │
 │  │                             │    │                             │    │
-│  │  ┌───────────────────────┐  │    │  ┌───────────────────────┐  │    │
-│  │  │  搜索 7 大平台        │  │    │  │  带上下文规划          │  │    │
-│  │  │  提取评论              │  │    │  │  用智能体执行          │  │    │
-│  │  │  聚类观点              │  │    │  │  捕获经验              │  │    │
-│  │  │  分析情感              │  │    │  │  复合知识              │  │    │
-│  │  └───────────────────────┘  │    │  └───────────────────────┘  │    │
+│  │   搜索 7 大平台             │    │   带上下文规划              │    │
+│  │   提取评论                   │    │   用智能体执行              │    │
+│  │   聚类观点                   │    │   捕获经验                  │    │
+│  │   视觉提取                   │    │   复合知识                  │    │
 │  │                             │    │                             │    │
-│  │  Reddit · YouTube · TikTok  │    │  任务 → 计划 → 知识        │    │
-│  │  Twitter · Instagram · 更多 │    │  云端同步，跨智能体流转    │    │
 │  └──────────────┬──────────────┘    └──────────────┬──────────────┘    │
 │                 │                                   │                   │
-│                 │    ┌─────────────────────────┐    │                   │
-│                 └───►│   你的 AI 智能体         │◄───┘                   │
-│                      │   (Claude Code, Cursor,  │                       │
-│                      │    Gemini CLI, Codex...) │                       │
-│                      └─────────────────────────┘                       │
+│                 └────────►  你的 AI 智能体  ◄────────┘                   │
+│                     (Claude Code, Cursor, Gemini CLI, Codex...)         │
 │                                                                         │
-│                 npx @crowdlisten/planner login                          │
-│                 一条命令安装两者。                                        │
+│                    npx @crowdlisten/planner login                       │
+│                    一条命令安装两者。                                     │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Insights** 发现受众在各社交平台上的讨论。**Planner** 将这些信号转化为有计划、可追踪的工作 —— 上下文在每个任务间不断积累。两者配合，你的智能体可以研究话题、规划应对、执行任务，并记住所学以备下次使用。
-
-## 功能介绍
-
-用户反馈分散在各个渠道。CrowdListen Insights 将跨渠道对话整合为结构化信号 —— 每次返回相同的 JSON 结构。搜索、提取评论、按主题聚类观点、追踪情感。所有平台统一接口。
-
-开源是因为数据提取是基础设施 —— DOM 选择器会失效，API 会变更，社区修复这些比任何单一团队都快。[分析层](https://crowdlisten.com)才是智能所在。
-
-## 接口
-
-| 接口 | 使用方式 | 适用场景 |
-|------|---------|---------|
-| **MCP** | 添加到智能体配置，智能体直接调用工具 | AI 智能体（Claude Code、Cursor、Gemini CLI 等） |
-| **CLI** | `npx crowdlisten search reddit "query"` | 脚本、命令行、快速查询 |
-
-两种接口共享相同的处理逻辑，返回相同的 JSON 结构。
-
-## 功能矩阵
-
-| 功能 | MCP | CLI | 需要认证 |
-|------|-----|-----|---------|
-| 搜索 | Y | Y | 无（Reddit 免费） |
-| 评论 | Y | Y | 无 |
-| 分析（表面/标准） | Y | Y | 无 |
-| 分析（深度/全面） | Y | Y | `CROWDLISTEN_API_KEY` |
-| 观点聚类 | Y | Y | `OPENAI_API_KEY` |
-| 深度分析 | Y | Y | `CROWDLISTEN_API_KEY` |
-| 洞察提取 | Y | Y | `CROWDLISTEN_API_KEY` |
-| 研究综合 | Y | Y | `CROWDLISTEN_API_KEY` |
-| 热门内容 | Y | Y | 无 |
-| 用户内容 | Y | Y | 无 |
-| 平台状态 | Y | Y | 无 |
-| 健康检查 | Y | Y | 无 |
-
-## 免费 vs 付费
-
-**免费（开源，无需密钥）：**
-- `search_content` — 跨平台搜索帖子
-- `get_content_comments` — 获取帖子评论
-- `analyze_content`（表面/标准） — 本地情感和主题分析
-- `cluster_opinions` — 语义观点聚类（需要 `OPENAI_API_KEY`）
-- `get_trending_content` — 热门帖子
-- `get_user_content` — 特定用户的帖子
-- `get_platform_status` / `health_check` — 诊断
-
-**付费（需要 `CROWDLISTEN_API_KEY` — 在 [crowdlisten.com/api](https://crowdlisten.com/api) 获取）：**
-- `deep_analyze` — AI 驱动的受众洞察：用户细分、痛点、功能需求、竞争信号
-- `extract_insights` — 分类洞察提取（痛点、功能需求、好评、投诉）
-- `research_synthesis` — 单一查询生成跨平台研究报告
-- `analyze_content`（深度/全面） — 自动升级为 deep_analyze，无密钥时降级为本地分析
+**Insights** 发现受众在各社交平台上的讨论。**Planner** 将信号转化为有计划、可追踪的工作。两者配合，你的智能体可以研究话题、规划应对、执行任务，并记住所学以备下次使用。
 
 ## 平台
 
-| 平台 | 需要认证 | 备注 |
-|------|---------|------|
-| Reddit | 否 | 即刻可用，公开 JSON API |
-| YouTube | API 密钥 | YouTube Data API v3（免费：10k 单位/天） |
-| TikTok | 可选 | Playwright 浏览器搜索 + 视频管道 |
-| Twitter/X | 是 | 开发者账号（免费：1,500 推文/月） |
-| Instagram | 否 | Playwright 浏览器抓取 |
-| 小红书 | 可选 | Playwright 浏览器抓取（设置 `XHS_CHROME_PROFILE_PATH` 效果最佳） |
+| 平台 | 认证 | 方法 | 说明 |
+|------|------|------|------|
+| Reddit | 无 | 公开 JSON API | 即刻可用，零配置 |
+| YouTube | `YOUTUBE_API_KEY` | YouTube Data API v3 | 免费额度：10k 单位/天 |
+| TikTok | 无 | 浏览器 + API 拦截 | Playwright 捕获内部 API 响应 |
+| Twitter/X | `TWITTER_USERNAME` + `TWITTER_PASSWORD` | Cookie 认证抓取 | 无需开发者账号 |
+| Instagram | 无 | 浏览器 + API 拦截 | Playwright 捕获 GraphQL 响应 |
+| 小红书 | 无 | 浏览器 + API 拦截 | 保守限速，移动端视口 |
+| Moltbook | `MOLTBOOK_API_KEY` | REST API | 直接 API 访问 |
+| 任意 URL | LLM API 密钥 | 视觉（截图 + LLM） | 适用于任何网站 |
 
 ## CLI 命令
 
 ```bash
 # 搜索
 crowdlisten search reddit "AI agents" --limit 20
-crowdlisten search youtube "AI agent frameworks" --limit 10
-crowdlisten search all "remote work productivity" --limit 30
+crowdlisten search twitter "LLM frameworks" --limit 10
+crowdlisten search all "remote work" --limit 30
 
 # 评论
 crowdlisten comments reddit t3_abc123 --limit 50
 crowdlisten comments youtube dQw4w9WgXcQ --limit 100
 
-# 分析（评论 + 聚类 + 情感）
-crowdlisten analyze reddit t3_abc123
-crowdlisten analyze youtube dQw4w9WgXcQ --depth deep
+# 视觉 — 从任意 URL 提取
+crowdlisten vision https://news.ycombinator.com --limit 10
+crowdlisten vision https://tiktok.com/@user/video/123 --mode comments
+crowdlisten search twitter "AI" --vision   # 强制视觉模式
 
-# 按主题聚类观点
+# 分析（需要 CROWDLISTEN_API_KEY）
+crowdlisten analyze reddit t3_abc123 --depth deep
 crowdlisten cluster reddit t3_abc123 --clusters 8
+crowdlisten insights reddit t3_abc123
+crowdlisten research "AI code editors" --platforms reddit,twitter,youtube
 
 # 热门 / 用户内容
 crowdlisten trending reddit --limit 10
 crowdlisten user reddit spez --limit 5
 
-# 平台信息
+# 诊断
 crowdlisten status
 crowdlisten health
 ```
+
+## MCP 工具
+
+| 工具 | 描述 | 认证 |
+|------|------|------|
+| `search_content` | 跨平台搜索帖子 | 免费 |
+| `get_content_comments` | 获取帖子评论 | 免费 |
+| `get_trending_content` | 平台热门帖子 | 免费 |
+| `get_user_content` | 特定用户的帖子 | 免费 |
+| `extract_url` | 从任意 URL 视觉提取 | LLM API 密钥 |
+| `get_platform_status` | 可用平台和功能 | 免费 |
+| `health_check` | 平台连接检查 | 免费 |
+| `analyze_content` | 情感 + 主题分析 | `CROWDLISTEN_API_KEY` |
+| `cluster_opinions` | 语义观点聚类 | `CROWDLISTEN_API_KEY` |
+| `enrich_content` | 意图检测 + 立场分析 | `CROWDLISTEN_API_KEY` |
+| `deep_analyze` | 完整受众智能报告 | `CROWDLISTEN_API_KEY` |
+| `extract_insights` | 分类洞察提取 | `CROWDLISTEN_API_KEY` |
+| `research_synthesis` | 跨平台研究报告 | `CROWDLISTEN_API_KEY` |
+
+## 配置
+
+```bash
+cp .env.example .env
+```
+
+```bash
+# YouTube（有免费额度）
+YOUTUBE_API_KEY=your-key
+
+# Twitter/X（Cookie 认证，无需开发者账号）
+TWITTER_USERNAME=your-username
+TWITTER_PASSWORD=your-password
+
+# 视觉提取（至少需要一个用于视觉模式）
+ANTHROPIC_API_KEY=your-key    # Claude（首选）
+GEMINI_API_KEY=your-key       # Gemini（备选）
+OPENAI_API_KEY=your-key       # OpenAI（备选）
+
+# 浏览器提供商（默认：本地 Playwright）
+# BROWSER_PROVIDER=docker
+# BROWSER_PROVIDER=remote
+# BROWSER_CDP_URL=ws://localhost:9222
+
+# 付费分析功能
+CROWDLISTEN_API_KEY=your-key
+```
+
+## 架构
+
+```
+src/
+  cli.ts                — CLI 入口（commander）
+  index.ts              — MCP 服务器（stdio）
+  handlers.ts           — 共享处理逻辑（CLI + MCP）
+  service-config.ts     — 平台配置工厂
+  services/
+    UnifiedSocialMediaService.ts  — 协调所有平台适配器
+  platforms/
+    reddit/             — 公开 JSON API（axios）
+    youtube/            — YouTube Data API v3（axios）
+    moltbook/           — Moltbook REST API（axios）
+    twitter/            — Cookie 认证抓取（twitter-scraper）
+    tiktok/             — 浏览器 + API 拦截（Playwright）
+    instagram/          — 浏览器 + API 拦截（Playwright）
+    xiaohongshu/        — 浏览器 + API 拦截（Playwright）
+  browser/
+    BrowserPool.ts      — 浏览器生命周期：本地、Docker 或远程 CDP
+    RequestInterceptor.ts — 按 URL 模式捕获内部 API 响应
+  vision/
+    VisionExtractor.ts  — 截图 + LLM 提取，适用于任意 URL
+  core/
+    base/               — BaseAdapter 抽象类
+    interfaces/         — TypeScript 类型（Post, Comment, User 等）
+    utils/              — URL 解析工具
+```
+
+每个平台一个适配器，各司其职。无层级，无回退链。视觉模式是独立工具，显式调用 — 不是埋在回调链中的后备方案。
 
 ## 智能体接入
 
@@ -180,7 +212,6 @@ npx @crowdlisten/planner login
 打开浏览器，登录 CrowdListen，自动为 5 个智能体配置 MCP（Claude Code、Cursor、Gemini CLI、Codex、OpenClaw）。同时安装 Insights 和 Planner。
 
 **方式二 — 手动配置：**
-添加到你的智能体 MCP 配置文件：
 ```json
 {
   "mcpServers": {
@@ -199,53 +230,6 @@ npx @crowdlisten/planner login
 
 查看 [AGENTS.md](AGENTS.md) 获取机器可读的工具描述、MCP 配置和示例调用。
 
-## 配置
-
-```bash
-cp .env.example .env
-```
-
-```bash
-# YouTube（有免费额度）
-YOUTUBE_API_KEY=your-key
-
-# Twitter/X（4 个密钥全部需要）
-TWITTER_API_KEY=your-key
-TWITTER_API_KEY_SECRET=your-secret
-TWITTER_ACCESS_TOKEN=your-token
-TWITTER_ACCESS_TOKEN_SECRET=your-token-secret
-
-# 可选 -- 语义观点聚类
-OPENAI_API_KEY=your-key
-
-# 可选 -- TikTok 视频理解
-GEMINI_API_KEY=your-key
-ANTHROPIC_API_KEY=your-key
-
-# 可选 -- 付费分析功能
-CROWDLISTEN_API_KEY=your-key
-```
-
-平台详细配置：[docs/PLATFORMS.md](docs/PLATFORMS.md)
-
-## 架构
-
-```
-src/
-  cli.ts              -- CLI 入口（commander）
-  index.ts            -- MCP 服务器（stdio）
-  handlers.ts         -- 共享处理逻辑
-  service-config.ts   -- 平台配置工厂
-  services/           -- UnifiedSocialMediaService
-  platforms/          -- 平台适配器（每个平台一个）
-  core/
-    base/             -- BaseAdapter 抽象类
-    interfaces/       -- TypeScript 类型
-    utils/            -- 聚类、URL 解析、视频分析
-```
-
-两个入口点调用相同的处理函数。
-
 ## 开发
 
 ```bash
@@ -258,7 +242,7 @@ npm run test:e2e      # E2E 测试（需要 API 密钥）
 
 ## 贡献
 
-查看 [CONTRIBUTING.md](CONTRIBUTING.md)。最有价值的贡献：新平台适配器（Threads、Bluesky、Hacker News、Product Hunt、Mastodon）和浏览器抓取修复。
+查看 [CONTRIBUTING.md](CONTRIBUTING.md)。最有价值的贡献：新平台适配器（Threads、Bluesky、Hacker News、Product Hunt、Mastodon）和提取修复。
 
 ## 背景
 
@@ -269,4 +253,4 @@ npm run test:e2e      # E2E 测试（需要 API 密钥）
 
 MIT
 
-获取完整系统及更多功能，部署在 [crowdlisten.com](https://crowdlisten.com)。另见 [@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_tasks)。
+获取完整系统及更多功能，部署在 [crowdlisten.com](https://crowdlisten.com)。另见 [@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_harness)。
