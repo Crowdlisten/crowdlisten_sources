@@ -34,7 +34,7 @@ You'll get back structured JSON with posts, authors, engagement metrics, and tim
 
 ### For AI Agents (MCP)
 
-The fastest path — one command installs both CrowdListen Insights and [CrowdListen Planner](https://github.com/Crowdlisten/crowdlisten_harness) into your agent's MCP config:
+The fastest path — one command installs both CrowdListen Insights and [CrowdListen Harness](https://github.com/Crowdlisten/crowdlisten_harness) into your agent's MCP config:
 
 ```bash
 npx @crowdlisten/planner login
@@ -42,7 +42,7 @@ npx @crowdlisten/planner login
 
 This opens your browser, signs you into CrowdListen, and auto-configures MCP for Claude Code, Cursor, Gemini CLI, Codex, and OpenClaw. Restart your agent and it can start calling tools immediately.
 
-If you only want Insights (no Planner), add it manually to your agent's MCP config:
+If you only want Insights (no Harness), add it manually to your agent's MCP config:
 
 ```json
 {
@@ -72,13 +72,16 @@ Most platforms work with zero configuration. Here's what you actually need:
 | Platform | Setup | What happens without it |
 |----------|-------|------------------------|
 | Reddit | Nothing | Works immediately |
-| TikTok | Nothing | Works immediately (browser-based) |
-| Instagram | Nothing | Works immediately (browser-based) |
-| Xiaohongshu | Nothing | Works immediately (browser-based) |
+| TikTok | Playwright browsers (`npx playwright install chromium`) | Fails with browser not found error |
+| Instagram | Playwright browsers (`npx playwright install chromium`) | Fails with browser not found error |
+| Xiaohongshu | Playwright browsers (`npx playwright install chromium`) | Fails with browser not found error |
+| Moltbook | `MOLTBOOK_API_KEY` in `.env` | Skipped — platform not available |
 | Twitter/X | `TWITTER_USERNAME` + `TWITTER_PASSWORD` in `.env` | Skipped — add credentials for Twitter access |
 | YouTube | `YOUTUBE_API_KEY` in `.env` | Skipped — get a free key from Google Cloud Console |
 | Vision mode | Any one of: `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY` | Vision commands return a clear error |
 | Paid analysis | `CROWDLISTEN_API_KEY` | Free tools still work; paid tools return a clear error with signup link |
+
+> **Browser-based platforms (TikTok, Instagram, Xiaohongshu):** These platforms require Playwright's Chromium browser. Install it once with `npx playwright install chromium`. They also have built-in rate limits of 3–5 requests per minute to prevent IP blocks — if you exceed this, responses slow down automatically.
 
 To configure optional platforms:
 
@@ -177,7 +180,7 @@ BROWSER_PROVIDER=remote BROWSER_CDP_URL=wss://connect.browserbase.com?apiKey=KEY
 
 CrowdListen is two MCP servers that work together:
 
-**Insights** (this repo) discovers what audiences are saying across social platforms. **[Planner](https://github.com/Crowdlisten/crowdlisten_harness)** turns that signal into planned, tracked work — with a knowledge base that compounds across every task. Together, your agent can research a topic, plan a response, execute it, and remember what it learned for next time.
+**Insights** (this repo) discovers what audiences are saying across social platforms. **[Harness](https://github.com/Crowdlisten/crowdlisten_harness)** turns that signal into planned, tracked work — with a knowledge base that compounds across every task. Together, your agent can research a topic, plan a response, execute it, and remember what it learned for next time.
 
 ```bash
 # Install both with one command
