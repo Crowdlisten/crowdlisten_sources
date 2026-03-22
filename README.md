@@ -1,46 +1,48 @@
 # CrowdListen Insights
 
-> Give your AI agent ears. Search 7 platforms, extract comments, cluster opinions, analyze sentiment — structured JSON, every time.
+> Give your AI agent ears. Search 7 platforms, extract real conversations, and turn scattered feedback into structured signal.
 
 [English](README.md) | [中文文档](README-CN.md)
 
-## Why CrowdListen
+## The Problem
 
-Your users are telling you what to build. The problem is they're saying it across Reddit, YouTube, TikTok, Twitter/X, Instagram, Xiaohongshu, and more — and your agent can't hear any of it.
+Your users are already telling you what to build. They're complaining about your onboarding flow on Reddit, requesting features in YouTube comments, debating alternatives on Twitter, and sharing workarounds on TikTok. The signal is there — it's just scattered across seven platforms in seven different formats, buried in threads your team will never read.
 
-CrowdListen gives your agent a single tool to search all of them, extract comments, and turn raw conversation into structured signal: pain points, feature requests, sentiment, consensus, and dissent.
+CrowdListen Insights gives your AI agent a single interface to search all of them at once. It extracts comments, normalizes everything into the same JSON shape, and hands it back as structured data your agent can reason about. Pain points, feature requests, sentiment, consensus, dissent — all surfaced from real conversations, not surveys.
 
-**One `npx` command. 7 platforms. Structured JSON. No API keys to start.**
+## What You Can Do With It
+
+**Find out what people actually think.** Search Reddit, YouTube, TikTok, Twitter/X, Instagram, Xiaohongshu, and Moltbook from one command. Get back structured posts with engagement metrics, timestamps, and author info — same format regardless of platform.
+
+**Drill into any discussion.** Found a Reddit thread with 500 comments about your product? Pull them all, structured and normalized. Your agent can read through them, identify patterns, and summarize what matters without you ever opening a browser tab.
+
+**Extract from any website.** CrowdListen's vision mode takes a screenshot of any URL, sends it to an LLM (Claude, Gemini, or OpenAI), and returns structured data. Forum that doesn't have an API? News site with paywalled comments? Just point vision at it.
+
+**Let your agent do the analysis.** The paid API layer adds opinion clustering (grouping hundreds of comments into themes), deep analysis (audience segments, competitive signals), and research synthesis (cross-platform reports from a single query). But the core extraction is free and open source.
 
 ## Try It Now
+
+Reddit works immediately — no API keys, no setup, no account:
 
 ```bash
 npx crowdlisten search reddit "cursor vs claude code" --limit 5
 ```
 
-## Highlights
+You'll get back structured JSON with posts, authors, engagement metrics, and timestamps. Every platform returns the same shape.
 
-1. **Zero-config start** — Reddit, TikTok, Twitter/X, Instagram, and Xiaohongshu work out of the box. No API keys, no OAuth, no setup.
-2. **7 platforms, one JSON shape** — Reddit, YouTube, TikTok, Twitter/X, Instagram, Xiaohongshu, Moltbook. Same `Post[]` and `Comment[]` every time.
-3. **MCP-native** — Built as an MCP server. Your agent calls tools directly — no REST wrappers, no middleware.
-4. **Vision mode** — Can't scrape it? Point CrowdListen at any URL and it screenshots the page, sends it to an LLM, and returns structured data. Works on any website.
-5. **Free core, paid intelligence** — Search, comments, trending, and vision run locally for free. Deep analysis and research synthesis available via the CrowdListen API.
+## Setup
 
-## Demo
+### For AI Agents (MCP)
 
-https://github.com/user-attachments/assets/DEMO_VIDEO_ID
-
-> Get the whole system, and more, deployed for you at [crowdlisten.com](https://crowdlisten.com)
-
-## Install for Your Agent
+The fastest path — one command installs both CrowdListen Insights and [CrowdListen Planner](https://github.com/Crowdlisten/crowdlisten_harness) into your agent's MCP config:
 
 ```bash
 npx @crowdlisten/planner login
 ```
 
-One command installs both CrowdListen Planner and Insights into your agent's MCP config. Just restart your agent.
+This opens your browser, signs you into CrowdListen, and auto-configures MCP for Claude Code, Cursor, Gemini CLI, Codex, and OpenClaw. Restart your agent and it can start calling tools immediately.
 
-Or add manually:
+If you only want Insights (no Planner), add it manually to your agent's MCP config:
 
 ```json
 {
@@ -53,71 +55,64 @@ Or add manually:
 }
 ```
 
-## How the Two Systems Work Together
+### For CLI Use
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                        CrowdListen Ecosystem                            │
-│                                                                         │
-│  ┌─────────────────────────────┐    ┌─────────────────────────────┐    │
-│  │   CrowdListen Insights      │    │   CrowdListen Planner       │    │
-│  │                             │    │                             │    │
-│  │   "What are people saying?" │    │   "What should we build?"   │    │
-│  │                             │    │                             │    │
-│  │   Search 7 platforms        │    │   Plan with context         │    │
-│  │   Extract comments          │    │   Execute with agents       │    │
-│  │   Cluster opinions          │    │   Capture learnings         │    │
-│  │   Vision extraction         │    │   Compound knowledge        │    │
-│  │                             │    │                             │    │
-│  └──────────────┬──────────────┘    └──────────────┬──────────────┘    │
-│                 │                                   │                   │
-│                 └────────►  Your AI Agent  ◄────────┘                   │
-│                     (Claude Code, Cursor, Gemini CLI, Codex...)         │
-│                                                                         │
-│                    npx @crowdlisten/planner login                       │
-│                    One command installs both.                            │
-└──────────────────────────────────────────────────────────────────────────┘
+No installation required — `npx` runs it directly:
+
+```bash
+npx crowdlisten search reddit "your query"
+npx crowdlisten comments youtube dQw4w9WgXcQ
+npx crowdlisten vision https://news.ycombinator.com
 ```
 
-**Insights** discovers what audiences are saying across social platforms. **Planner** turns that signal into planned, tracked work. Together, your agent can research a topic, plan a response, execute it, and remember what it learned for next time.
+### Platform Setup
 
-## Platforms
+Most platforms work with zero configuration. Here's what you actually need:
 
-| Platform | Auth | Method | Notes |
-|----------|------|--------|-------|
-| Reddit | None | Public JSON API | Works immediately, zero config |
-| YouTube | `YOUTUBE_API_KEY` | YouTube Data API v3 | Free tier: 10k units/day |
-| TikTok | None | Browser + API interception | Playwright captures internal API responses |
-| Twitter/X | `TWITTER_USERNAME` + `TWITTER_PASSWORD` | Cookie-based scraper | No developer account needed |
-| Instagram | None | Browser + API interception | Playwright captures GraphQL responses |
-| Xiaohongshu | None | Browser + API interception | Conservative rate limiting, mobile viewport |
-| Moltbook | `MOLTBOOK_API_KEY` | REST API | Direct API access |
-| Any URL | LLM API key | Vision (screenshot + LLM) | Works on any website |
+| Platform | Setup | What happens without it |
+|----------|-------|------------------------|
+| Reddit | Nothing | Works immediately |
+| TikTok | Nothing | Works immediately (browser-based) |
+| Instagram | Nothing | Works immediately (browser-based) |
+| Xiaohongshu | Nothing | Works immediately (browser-based) |
+| Twitter/X | `TWITTER_USERNAME` + `TWITTER_PASSWORD` in `.env` | Skipped — add credentials for Twitter access |
+| YouTube | `YOUTUBE_API_KEY` in `.env` | Skipped — get a free key from Google Cloud Console |
+| Vision mode | Any one of: `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY` | Vision commands return a clear error |
+| Paid analysis | `CROWDLISTEN_API_KEY` | Free tools still work; paid tools return a clear error with signup link |
+
+To configure optional platforms:
+
+```bash
+cp .env.example .env
+# Edit .env with your keys
+```
 
 ## CLI Commands
 
 ```bash
-# Search
+# Search across platforms
 crowdlisten search reddit "AI agents" --limit 20
 crowdlisten search twitter "LLM frameworks" --limit 10
 crowdlisten search all "remote work" --limit 30
 
-# Comments
+# Get comments from a specific post
 crowdlisten comments reddit t3_abc123 --limit 50
 crowdlisten comments youtube dQw4w9WgXcQ --limit 100
 
-# Vision — extract from any URL
+# Vision — extract structured data from any URL
 crowdlisten vision https://news.ycombinator.com --limit 10
 crowdlisten vision https://tiktok.com/@user/video/123 --mode comments
-crowdlisten search twitter "AI" --vision   # force vision mode
 
-# Analysis (requires CROWDLISTEN_API_KEY)
+# Force vision mode on any search
+crowdlisten search twitter "AI" --vision
+
+# Paid analysis (requires CROWDLISTEN_API_KEY)
 crowdlisten analyze reddit t3_abc123 --depth deep
 crowdlisten cluster reddit t3_abc123 --clusters 8
 crowdlisten insights reddit t3_abc123
 crowdlisten research "AI code editors" --platforms reddit,twitter,youtube
 
-# Trending / user content
+# Discovery
 crowdlisten trending reddit --limit 10
 crowdlisten user reddit spez --limit 5
 
@@ -128,108 +123,63 @@ crowdlisten health
 
 ## MCP Tools
 
-| Tool | Description | Auth |
-|------|-------------|------|
-| `search_content` | Search posts across platforms | Free |
-| `get_content_comments` | Get comments for a post | Free |
-| `get_trending_content` | Trending posts from a platform | Free |
-| `get_user_content` | Posts from a specific user | Free |
-| `extract_url` | Vision extraction from any URL | LLM API key |
-| `get_platform_status` | Available platforms and capabilities | Free |
-| `health_check` | Platform connectivity check | Free |
-| `analyze_content` | Sentiment + theme analysis | `CROWDLISTEN_API_KEY` |
-| `cluster_opinions` | Semantic opinion clustering | `CROWDLISTEN_API_KEY` |
-| `enrich_content` | Intent detection + stance analysis | `CROWDLISTEN_API_KEY` |
-| `deep_analyze` | Full audience intelligence report | `CROWDLISTEN_API_KEY` |
-| `extract_insights` | Categorized insight extraction | `CROWDLISTEN_API_KEY` |
-| `research_synthesis` | Cross-platform research report | `CROWDLISTEN_API_KEY` |
+When your agent connects via MCP, it gets access to these tools:
 
-## Configuration
+**Free tools (no API key needed):**
+
+| Tool | What it does |
+|------|-------------|
+| `search_content` | Search posts across any platform. Supports `useVision` flag. |
+| `get_content_comments` | Get comments for a specific post. Supports `useVision` flag. |
+| `get_trending_content` | Currently trending posts from a platform |
+| `get_user_content` | Recent posts from a specific user |
+| `extract_url` | Vision extraction — screenshot any URL, get structured data back |
+| `get_platform_status` | Which platforms are available and their capabilities |
+| `health_check` | Platform connectivity check |
+
+**Paid tools (require `CROWDLISTEN_API_KEY` — get one at [crowdlisten.com/api](https://crowdlisten.com/api)):**
+
+| Tool | What it does |
+|------|-------------|
+| `analyze_content` | Sentiment + theme analysis on a post and its comments |
+| `cluster_opinions` | Group comments into semantic opinion clusters by theme |
+| `enrich_content` | Intent detection, stance analysis, engagement scoring |
+| `deep_analyze` | Full audience intelligence: segments, pain points, competitive signals |
+| `extract_insights` | Categorized insight extraction (pain points, feature requests, praise) |
+| `research_synthesis` | Cross-platform research report from a single query |
+
+## How It Works Under the Hood
+
+Each platform has one adapter that does one thing well. There are no fallback chains, no tiers, no callback nesting.
+
+- **Reddit, YouTube, Moltbook** use direct HTTP APIs — fast and reliable.
+- **Twitter** uses a cookie-based scraper — no developer account needed, just a username and password.
+- **TikTok, Instagram, Xiaohongshu** launch a real browser via Playwright, navigate to the page, and intercept the platform's own internal API responses as they load. This is more reliable than reverse-engineering private APIs because you're capturing the same data the app itself renders.
+- **Vision mode** is a standalone tool. It opens a browser, takes a full-page screenshot, and sends it to an LLM with a structured extraction prompt. It works on any website — not just the supported platforms.
+
+The browser can run locally (default), in a Docker container, or via a remote CDP endpoint (for cloud browser services like Browserbase):
 
 ```bash
-cp .env.example .env
+# Default: local Playwright
+crowdlisten search tiktok "AI agents"
+
+# Docker: sandboxed browser
+BROWSER_PROVIDER=docker crowdlisten search tiktok "AI agents"
+
+# Remote: cloud browser
+BROWSER_PROVIDER=remote BROWSER_CDP_URL=wss://connect.browserbase.com?apiKey=KEY crowdlisten search tiktok "AI agents"
 ```
+
+## The CrowdListen Ecosystem
+
+CrowdListen is two MCP servers that work together:
+
+**Insights** (this repo) discovers what audiences are saying across social platforms. **[Planner](https://github.com/Crowdlisten/crowdlisten_harness)** turns that signal into planned, tracked work — with a knowledge base that compounds across every task. Together, your agent can research a topic, plan a response, execute it, and remember what it learned for next time.
 
 ```bash
-# YouTube (free tier available)
-YOUTUBE_API_KEY=your-key
-
-# Twitter/X (cookie-based auth, no developer account needed)
-TWITTER_USERNAME=your-username
-TWITTER_PASSWORD=your-password
-
-# Vision extraction (at least one needed for vision mode)
-ANTHROPIC_API_KEY=your-key    # Claude (preferred)
-GEMINI_API_KEY=your-key       # Gemini (fallback)
-OPENAI_API_KEY=your-key       # OpenAI (fallback)
-
-# Browser provider (default: local Playwright)
-# BROWSER_PROVIDER=docker
-# BROWSER_PROVIDER=remote
-# BROWSER_CDP_URL=ws://localhost:9222
-
-# Paid analysis features
-CROWDLISTEN_API_KEY=your-key
-```
-
-## Architecture
-
-```
-src/
-  cli.ts                — CLI entry (commander)
-  index.ts              — MCP server (stdio)
-  handlers.ts           — Shared handler logic (CLI + MCP)
-  service-config.ts     — Platform config factory
-  services/
-    UnifiedSocialMediaService.ts  — Coordinates all platform adapters
-  platforms/
-    reddit/             — Public JSON API (axios)
-    youtube/            — YouTube Data API v3 (axios)
-    moltbook/           — Moltbook REST API (axios)
-    twitter/            — Cookie-based scraper (twitter-scraper)
-    tiktok/             — Browser + API interception (Playwright)
-    instagram/          — Browser + API interception (Playwright)
-    xiaohongshu/        — Browser + API interception (Playwright)
-  browser/
-    BrowserPool.ts      — Browser lifecycle: local, Docker, or remote CDP
-    RequestInterceptor.ts — Captures internal API responses by URL pattern
-  vision/
-    VisionExtractor.ts  — Screenshot + LLM extraction for any URL
-  core/
-    base/               — BaseAdapter abstract class
-    interfaces/         — TypeScript types (Post, Comment, User, etc.)
-    utils/              — URL resolution helpers
-```
-
-Each platform has one adapter doing one thing well. No tiers, no fallback chains. Vision is a standalone tool you invoke explicitly — not buried in a callback chain.
-
-## Agent Onboarding
-
-**Path 1 — One command (recommended):**
-```bash
+# Install both with one command
 npx @crowdlisten/planner login
 ```
-Opens browser, sign in to CrowdListen, auto-configures MCP for 5 agents (Claude Code, Cursor, Gemini CLI, Codex, OpenClaw). Installs both Insights and Planner.
-
-**Path 2 — Manual config:**
-Add to your agent's MCP config file:
-```json
-{
-  "mcpServers": {
-    "crowdlisten/insights": {
-      "command": "npx",
-      "args": ["-y", "crowdlisten"]
-    }
-  }
-}
-```
-
-**Path 3 — Web:**
-Sign in at [crowdlisten.com](https://crowdlisten.com). Your agent can read [AGENTS.md](AGENTS.md) for tool reference.
-
-## For Agents
-
-See [AGENTS.md](AGENTS.md) for machine-readable tool descriptions, MCP config, and example calls.
 
 ## Development
 
@@ -237,21 +187,13 @@ See [AGENTS.md](AGENTS.md) for machine-readable tool descriptions, MCP config, a
 git clone https://github.com/Crowdlisten/crowdlisten_insights.git
 cd crowdlisten_insights
 npm install && npm run build
-npm test              # Unit tests
-npm run test:e2e      # E2E tests (needs API keys)
+npm test
 ```
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Highest-value contributions: new platform adapters (Threads, Bluesky, Hacker News, Product Hunt, Mastodon) and extraction fixes.
 
-## Background
-
-- [The Very Beginning](https://chenterry.com/posts/the_very_beginning/)
-- [MCPs vs Skills for Agents](https://chenterry.com/posts/skills_vs_mcps_for_agents/)
-
 ## License
 
-MIT
-
-Get the whole system, and more, deployed for you at [crowdlisten.com](https://crowdlisten.com). See also [@crowdlisten/planner](https://github.com/Crowdlisten/crowdlisten_harness).
+MIT — [crowdlisten.com](https://crowdlisten.com)
