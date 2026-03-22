@@ -36,7 +36,8 @@ const API_PATTERNS = [
 export class XiaohongshuAdapter extends BaseAdapter {
   constructor(config: PlatformConfig) {
     super(config);
-    this.maxRequestsPerWindow = 15; // Conservative to avoid blocks
+    // Browser platforms risk IP blocks above ~1/min sustained; 3/min allows interactive bursts
+    this.maxRequestsPerWindow = 3;
   }
 
   async initialize(): Promise<boolean> {

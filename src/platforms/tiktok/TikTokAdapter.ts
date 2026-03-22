@@ -35,7 +35,8 @@ const API_PATTERNS = [
 export class TikTokAdapter extends BaseAdapter {
   constructor(config: PlatformConfig) {
     super(config);
-    this.maxRequestsPerWindow = 25;
+    // Browser platforms risk IP blocks above ~2/min sustained; 5/min allows interactive bursts
+    this.maxRequestsPerWindow = 5;
   }
 
   async initialize(): Promise<boolean> {
