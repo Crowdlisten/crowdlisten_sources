@@ -34,7 +34,7 @@ npx crowdlisten search reddit "cursor vs claude code" --limit 5
 
 ### 为 AI 智能体安装（MCP）
 
-最快路径——一条命令同时安装 CrowdListen Insights 和 [CrowdListen Planner](https://github.com/Crowdlisten/crowdlisten_harness) 到你的智能体 MCP 配置：
+最快路径——一条命令同时安装 CrowdListen Insights 和 [CrowdListen Harness](https://github.com/Crowdlisten/crowdlisten_harness) 到你的智能体 MCP 配置：
 
 ```bash
 npx @crowdlisten/planner login
@@ -42,7 +42,7 @@ npx @crowdlisten/planner login
 
 浏览器打开，登录 CrowdListen，自动为 Claude Code、Cursor、Gemini CLI、Codex 和 OpenClaw 配置 MCP。重启智能体即可开始调用工具。
 
-如果只需要 Insights（不要 Planner），手动添加到智能体的 MCP 配置：
+如果只需要 Insights（不要 Harness），手动添加到智能体的 MCP 配置：
 
 ```json
 {
@@ -174,7 +174,7 @@ BROWSER_PROVIDER=remote BROWSER_CDP_URL=wss://connect.browserbase.com?apiKey=KEY
 
 CrowdListen 是两个协同工作的 MCP 服务器：
 
-**Insights**（本仓库）发现受众在各社交平台上的讨论。**[Planner](https://github.com/Crowdlisten/crowdlisten_harness)** 将信号转化为有计划、可追踪的工作——知识库在每个任务间不断积累。两者配合，你的智能体可以研究话题、规划应对、执行任务，并记住所学以备下次使用。
+**Insights**（本仓库）发现受众在各社交平台上的讨论。**[Harness](https://github.com/Crowdlisten/crowdlisten_harness)** 将信号转化为有计划、可追踪的工作——知识库在每个任务间不断积累。两者配合，你的智能体可以研究话题、规划应对、执行任务，并记住所学以备下次使用。
 
 ```bash
 # 一条命令安装两者

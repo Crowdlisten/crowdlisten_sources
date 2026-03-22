@@ -1,8 +1,11 @@
 # HTTP API Reference
 
-Start the HTTP server:
+> **Status: Planned.** The HTTP API is not yet implemented. CrowdListen Insights currently supports MCP (for AI agents) and CLI interfaces only. This document describes the planned HTTP API for future releases.
+
+~~Start the HTTP server:~~
 ```bash
-npm run start:http   # Runs on http://localhost:3001
+# Not yet available — planned for a future release
+# npm run start:http   # Will run on http://localhost:3001
 ```
 
 ## Endpoints
