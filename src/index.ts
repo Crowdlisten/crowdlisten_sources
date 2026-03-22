@@ -19,6 +19,8 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { createService } from './service-config.js';
+import { HealthMonitor } from './core/health/HealthMonitor.js';
+import { PlatformType } from './core/interfaces/SocialMediaPlatform.js';
 import {
   getTrendingContent,
   getUserContent,
@@ -34,6 +36,15 @@ import {
   researchSynthesis,
   extractWithVision,
 } from './handlers.js';
+
+// Re-export for programmatic consumers
+export { HealthMonitor } from './core/health/HealthMonitor.js';
+export type {
+  HealthStatus,
+  HealthSummary,
+  PlatformHealthState,
+  HealthCheckFn,
+} from './core/health/HealthMonitor.js';
 
 export async function main() {
   const unifiedService = createService();
@@ -404,7 +415,7 @@ export async function main() {
           return mcpText(getPlatformStatus(unifiedService));
 
         case 'health_check':
-          return mcpText(await healthCheck(unifiedService));
+          return mcpText(await healthCheck(unifiedService, healthMonitor));
 
         // ── Vision extraction ─────────────────────────────────────────
         case 'extract_url':
@@ -463,15 +474,35 @@ export async function main() {
 
   console.error(`[Setup] Successfully initialized: ${successfulPlatforms.join(', ')}`);
 
+  // --- Proactive health monitoring ---
+  const monitoredPlatforms = unifiedService.getInitializedPlatforms();
+
+  const healthCheckFn = async (platform: PlatformType) => {
+    try {
+      const results = await unifiedService.searchContent(platform, 'test', 1);
+      return { success: true, resultCount: results.length };
+    } catch {
+      return { success: false, resultCount: 0 };
+    }
+  };
+
+  const healthMonitor = new HealthMonitor(
+    healthCheckFn,
+    monitoredPlatforms
+  );
+  healthMonitor.start();
+
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
     console.error('[Shutdown] Cleaning up...');
+    healthMonitor.stop();
     await unifiedService.cleanup();
     process.exit(0);
   });
 
   process.on('SIGTERM', async () => {
     console.error('[Shutdown] Cleaning up...');
+    healthMonitor.stop();
     await unifiedService.cleanup();
     process.exit(0);
   });

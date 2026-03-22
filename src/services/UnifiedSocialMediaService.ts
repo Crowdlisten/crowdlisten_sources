@@ -167,6 +167,14 @@ export class UnifiedSocialMediaService {
   }
 
   /**
+   * Get the list of initialized platform types.
+   * Used by HealthMonitor to know which platforms to probe.
+   */
+  getInitializedPlatforms(): PlatformType[] {
+    return Array.from(this.adapters.keys());
+  }
+
+  /**
    * Get available platforms and their capabilities
    */
   getAvailablePlatforms(): { [key in PlatformType]?: any } {
