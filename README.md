@@ -155,6 +155,9 @@ Each platform has one adapter that does one thing well. There are no fallback ch
 - **Reddit, YouTube, Moltbook** use direct HTTP APIs — fast and reliable.
 - **Twitter** uses a cookie-based scraper — no developer account needed, just a username and password.
 - **TikTok, Instagram, Xiaohongshu** launch a real browser via Playwright, navigate to the page, and intercept the platform's own internal API responses as they load. This is more reliable than reverse-engineering private APIs because you're capturing the same data the app itself renders.
+
+Every adapter has built-in rate limiting (`enforceRateLimit`) to prevent IP blocks. Browser-based platforms are capped at 3–5 requests per minute; API-based platforms use higher limits that stay within official quotas. If you burst above the limit, the adapter pauses automatically — you'll see slower responses, not errors.
+
 - **Vision mode** is a standalone tool. It opens a browser, takes a full-page screenshot, and sends it to an LLM with a structured extraction prompt. It works on any website — not just the supported platforms.
 
 The browser can run locally (default), in a Docker container, or via a remote CDP endpoint (for cloud browser services like Browserbase):
@@ -180,6 +183,10 @@ CrowdListen is two MCP servers that work together:
 # Install both with one command
 npx @crowdlisten/planner login
 ```
+
+## Connected Channels
+
+**Slack and Discord** integration is available through [crowdlisten.com](https://crowdlisten.com). Connect your team channels to surface product feedback, feature requests, and pain points from internal comms. Connected channels use a different privacy model than public social platforms — they require explicit opt-in via OAuth, and access is scoped to only the channels your team grants.
 
 ## Development
 

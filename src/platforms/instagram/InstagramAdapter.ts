@@ -34,7 +34,8 @@ const API_PATTERNS = [
 export class InstagramAdapter extends BaseAdapter {
   constructor(config: PlatformConfig) {
     super(config);
-    this.maxRequestsPerWindow = 20;
+    // Browser platforms risk IP blocks above ~2/min sustained; 5/min allows interactive bursts
+    this.maxRequestsPerWindow = 5;
   }
 
   async initialize(): Promise<boolean> {
