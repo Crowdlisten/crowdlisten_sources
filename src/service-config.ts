@@ -30,10 +30,13 @@ export function createServiceConfig(): UnifiedServiceConfig {
     credentials: {},
   };
 
-  // Instagram — browser adapter
+  // Instagram — browser adapter with optional login
   config.platforms.instagram = {
     platform: 'instagram',
-    credentials: {},
+    credentials: {
+      ...(process.env.INSTAGRAM_USERNAME && { username: process.env.INSTAGRAM_USERNAME }),
+      ...(process.env.INSTAGRAM_PASSWORD && { password: process.env.INSTAGRAM_PASSWORD }),
+    },
   };
 
   // Xiaohongshu — browser adapter
